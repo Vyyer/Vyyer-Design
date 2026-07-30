@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f0efeb;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text-primary: #111110;
+  --text-secondary: #6f6e6b;
+  --text-tertiary: #9d9c99;
+  --accent: #C8FF00;
+  --valid: #3a7d1e;
+  --invalid: #d63f3f;
+  --expired: #c47a1a;
+  --underage: #2e6fb5;
+  --incomplete: #7a6c55;
+  --nav-bg: #111110;
+  --nav-text: #e8e8e6;
+  --nav-muted: #6f6e6b;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; } /* was height:100% — that capped the body box at one viewport, so the sticky nav fell off once you scrolled past it (most visible on long mobile pages) */
+
+/* ── NAV ── */
+nav { background: var(--nav-bg); height: 52px; display: flex; align-items: center; padding: 0 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; margin-right: 28px; }
+.nav-logo-mark { width: 26px; height: 26px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
+.nav-logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+.nav-links { display: flex; align-items: center; gap: 2px; flex: 1; }
+.nav-links a { font-size: 13px; font-weight: 500; color: var(--nav-muted); text-decoration: none; padding: 6px 12px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
+.nav-links a:hover { color: var(--nav-text); background: rgba(255,255,255,0.06); }
+.nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #3a6800; color: var(--accent); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.nav-user { text-align: right; }
+.nav-user-name { font-size: 12px; font-weight: 500; color: var(--nav-text); }
+.nav-user-sub { font-size: 11px; color: var(--nav-muted); }
+.nav-mobile-menu { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--nav-muted); }
+
+main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
+
+/* ── STICKY TOOLBAR ── */
+.toolbar {
+  position: sticky;
+  top: 52px; /* below nav */
+  z-index: 90;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 20px;
+  margin: 0 -20px 24px;
+  backdrop-filter: blur(8px);
+  background: rgba(248,250,252,0.95);
+}
+.toolbar-left { flex-shrink: 0; }
+.toolbar-title { font-size: 16px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.02em; white-space: nowrap; }
+.toolbar-center { display: flex; align-items: center; gap: 10px; flex: 1; justify-content: center; flex-wrap: wrap; }
+.toolbar-right { flex-shrink: 0; }
+.btn-export {
+  display: flex; align-items: center; gap: 6px;
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  color: var(--text-secondary);
+  background: var(--surface);
+  border: 1px solid var(--border-md);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn-export:hover { background: var(--surface-2); color: var(--text-primary); }
+
+/* ── FILTER CONTROLS (used inside toolbar) ── */
+.filter-group { display: flex; align-items: center; gap: 8px; }
+.filter-sep { width: 1px; height: 20px; background: var(--border-md); }
+.filter-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
+.pill-group { display: flex; border: 1px solid var(--border-md); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); }
+.pill-group button { background: var(--surface); border: none; border-right: 1px solid var(--border-md); font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-secondary); padding: 5px 11px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.pill-group button:last-child { border-right: none; }
+.pill-group button:hover:not(.active) { background: var(--surface-2); }
+.pill-group button.active { background: #007aff; color: #fff; font-weight: 600; }
+.filter-select { font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm); padding: 5px 28px 5px 10px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
+.filter-select:focus { outline: none; border-color: #3a6800; }
+
+/* ── DATE RANGE PICKER ── */
+.date-field { position: relative; }
+.date-trigger {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--font); font-size: 12px; font-weight: 500;
+  color: var(--text-primary); background: var(--surface);
+  border: 1px solid var(--border-md); border-radius: var(--radius-sm);
+  padding: 5px 10px; cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.date-trigger:hover { background: var(--surface-2); }
+.date-trigger.open { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.date-trigger .dt-cal { color: var(--text-tertiary); flex-shrink: 0; }
+.date-trigger .dt-chev { color: var(--text-tertiary); margin-left: 2px; transition: transform .15s; }
+.date-trigger.open .dt-chev { transform: rotate(180deg); }
+
+.date-popover {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 200;
+  background: var(--surface); border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  width: 620px; max-width: calc(100vw - 32px);
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .15s, transform .15s, visibility .15s;
+}
+.date-popover.open { opacity: 1; visibility: visible; transform: translateY(0); }
+.dp-body { display: flex; }
+.dp-presets { display: flex; flex-direction: column; gap: 2px; padding: 14px 12px; border-right: 1px solid var(--border); width: 140px; flex-shrink: 0; }
+.dp-preset { text-align: left; font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-secondary); background: none; border: none; border-radius: var(--radius-sm); padding: 7px 10px; cursor: pointer; transition: all .12s; }
+.dp-preset:hover { background: var(--surface-2); color: var(--text-primary); }
+.dp-preset.active { background: #007aff; color: #fff; font-weight: 600; }
+.dp-main { flex: 1; padding: 14px 16px; min-width: 0; }
+.dp-cals { display: flex; gap: 20px; }
+.dp-cal { flex: 1; min-width: 0; }
+.dp-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; height: 24px; }
+.dp-cal-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.dp-nav { background: none; border: none; cursor: pointer; color: var(--text-secondary); border-radius: 6px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: background .12s; }
+.dp-nav:hover { background: var(--surface-2); color: var(--text-primary); }
+.dp-nav:disabled { opacity: 0; pointer-events: none; }
+.dp-weekdays { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 4px; }
+.dp-weekdays span { text-align: center; font-size: 10px; font-weight: 600; color: var(--text-tertiary); }
+.dp-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; }
+.dp-day { position: relative; aspect-ratio: 1; border: none; background: none; font-family: var(--font); font-size: 12px; color: var(--text-primary); cursor: pointer; border-radius: 7px; display: flex; align-items: center; justify-content: center; transition: background .1s; }
+.dp-day.blank { visibility: hidden; cursor: default; }
+.dp-day:hover:not(.disabled):not(.endpoint) { background: var(--surface-2); }
+.dp-day.disabled { color: var(--text-tertiary); opacity: .38; cursor: default; }
+.dp-day.in-range { background: rgba(0,122,255,0.10); border-radius: 0; }
+.dp-day.endpoint { background: #007aff; color: #fff; font-weight: 600; z-index: 1; }
+.dp-day.range-start.not-single { border-radius: 7px 0 0 7px; }
+.dp-day.range-end.not-single { border-radius: 0 7px 7px 0; }
+.dp-day.today::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+.dp-day.endpoint.today::after { background: #fff; }
+.dp-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.dp-hint { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.dp-actions { display: flex; gap: 8px; }
+.dp-btn { font-family: var(--font); font-size: 12px; font-weight: 500; border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: all .12s; border: 1px solid var(--border-md); }
+.dp-cancel { background: var(--surface); color: var(--text-secondary); }
+.dp-cancel:hover { background: var(--surface-2); color: var(--text-primary); }
+.dp-apply { background: #007aff; color: #fff; border-color: #007aff; font-weight: 600; }
+.dp-apply:hover { background: #006ae0; }
+@media (max-width: 680px) {
+  .date-popover { width: calc(100vw - 32px); }
+  .dp-body { flex-direction: column; }
+  .dp-presets { flex-direction: row; flex-wrap: wrap; width: auto; border-right: none; border-bottom: 1px solid var(--border); gap: 6px; }
+  .dp-preset { flex: 1 0 auto; text-align: center; padding: 6px 10px; border: 1px solid var(--border-md); }
+  .dp-preset.active { border-color: #007aff; }
+  .dp-cals .dp-cal:first-child { display: none; }
+}
+
+/* ── SECTION HEADING ── */
+.section-heading { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; margin-top: 32px; }
+.section-heading:first-of-type { margin-top: 0; }
+.section-heading h2 { font-size: 13px; font-weight: 600; color: var(--text-primary); letter-spacing: -0.01em; }
+.section-heading-sub { font-size: 11px; color: var(--text-tertiary); }
+
+/* ── CARD BASE ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); }
+.card-body { padding: 20px; }
+.card-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.card-sub { font-size: 11px; color: var(--text-tertiary); }
+
+/* ══════════════════════════════════════
+   SECTION 1: WORKFLOWS
+══════════════════════════════════════ */
+
+/* Funnel unified card */
+.funnel-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: visible; margin-bottom: 0; }
+.funnel-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 0; overflow: visible; }
+.funnel-step { background: var(--surface); padding: 18px 20px; border-right: 1px solid var(--border); position: relative; overflow: visible; }
+.funnel-step:first-child { border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
+.funnel-step:last-child { border-right: none; border-radius: 0 var(--radius-lg) var(--radius-lg) 0; }
+.funnel-step-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-tertiary); margin-bottom: 6px; }
+.funnel-step-val { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1; margin-bottom: 4px; }
+.funnel-step-pct { font-size: 11px; color: var(--text-tertiary); margin-bottom: 10px; }
+.funnel-bar-wrap { height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; }
+.funnel-bar { height: 4px; border-radius: 2px; transition: width .6s ease; }
+.fb-created   { background: #9d9c99; }
+.fb-opened    { background: #007aff; }
+.fb-started   { background: #e8a020; }
+.fb-completed { background: var(--valid); }
+
+/* Drop-off tooltip */
+.funnel-step { cursor: default; }
+.funnel-step:first-child { cursor: default; } /* Created has no drop-off */
+.funnel-step[data-dropoff]:not([data-dropoff=""]) { cursor: pointer; }
+.funnel-step[data-dropoff]:not([data-dropoff=""]):hover { background: #fafaf8; }
+.funnel-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a18;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .15s;
+  z-index: 20;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+.funnel-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #1a1a18;
+}
+.funnel-tooltip-count { font-weight: 600; }
+.funnel-tooltip-pct { color: #ff8080; margin-left: 4px; font-weight: 500; }
+.funnel-step:hover .funnel-tooltip { opacity: 1; }
+
+/* ══════════════════════════════════════
+   SECTION 2: SCANS
+══════════════════════════════════════ */
+
+/* Verdict stat cards under Scans heading (5 across) */
+.scan-verdict-row { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+.scan-vcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.scan-vcard-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px; }
+.scan-vcard-val { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; margin-bottom: 5px; }
+.scan-vcard-val.sv-total      { color: var(--text-primary); }
+.scan-vcard-val.sv-valid      { color: var(--valid); }
+.scan-vcard-val.sv-invalid    { color: var(--invalid); }
+.scan-vcard-val.sv-caution    { color: #b0850c; }
+.scan-vcard-val.sv-expired    { color: var(--expired); }
+.scan-vcard-val.sv-underage   { color: var(--underage); }
+.scan-vcard-val.sv-incomplete { color: var(--incomplete); }
+.scan-vcard-sub { font-size: 11px; color: var(--text-tertiary); }
+.scan-vcard-sub .up      { color: var(--valid); font-weight: 500; }
+.scan-vcard-sub .down    { color: var(--invalid); font-weight: 500; }
+.scan-vcard-sub .neutral { color: var(--text-tertiary); }
+.scan-vcard-label .metric-badge { font-size: 10px; font-weight: 600; padding: 3px 8px; border-radius: 20px; display: inline-block; }
+
+/* Chart row: volume (fills space) + mini cards that match chart card height */
+.scan-charts-row { display: grid; grid-template-columns: minmax(0,1fr) 200px; gap: 16px; margin-bottom: 16px; align-items: stretch; }
+.scan-mini-stack { display: flex; flex-direction: column; gap: 16px; }
+.scan-mini { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 18px 20px; box-shadow: var(--shadow-sm); flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.scan-mini-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 6px; }
+.scan-mini-val { font-size: 28px; font-weight: 600; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1; margin-bottom: 4px; }
+.scan-mini-sub { font-size: 11px; color: var(--text-tertiary); }
+
+/* ══════════════════════════════════════
+   SECTION 3: VERDICTS
+══════════════════════════════════════ */
+
+.verdicts-top-row { display: grid; grid-template-columns: minmax(0,2fr) minmax(260px,1fr); gap: 16px; margin-bottom: 16px; }
+
+/* Verdict metric pills — horizontal */
+.verdict-pills-row { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+.verdict-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; box-shadow: var(--shadow-sm); }
+.verdict-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px; }
+.verdict-val { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; margin-bottom: 5px; }
+.verdict-val.vv-valid      { color: var(--valid); }
+.verdict-val.vv-invalid    { color: var(--invalid); }
+.verdict-val.vv-incomplete { color: #7a6c55; }
+.verdict-val.vv-other      { color: var(--text-primary); }
+.verdict-sub { font-size: 11px; color: var(--text-tertiary); }
+.metric-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-right: 4px; }
+.badge-valid      { background: #e6f5db; color: #3a7d1e; }
+.badge-invalid    { background: #fde8e8; color: #c0392b; }
+.badge-caution    { background: #fbf1cf; color: #9a7400; }
+.badge-expired    { background: #f6e6cf; color: #a5670f; }
+.badge-underage   { background: #e3eefa; color: #2e6fb5; }
+.badge-incomplete { background: #f5f0e8; color: #7a6c55; }
+.badge-other      { background: #f0eeeb; color: #6f6e6b; }
+
+/* Failure reasons */
+.failure-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 24px; }
+.failure-row { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.failure-row:last-child, .failure-grid > .failure-row:nth-last-child(1), .failure-grid > .failure-row:nth-last-child(2):nth-child(odd) { border-bottom: none; }
+.failure-name { font-size: 12px; color: var(--text-secondary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.failure-bar-wrap { flex: 1; background: var(--surface-2); border-radius: 3px; height: 4px; overflow: hidden; min-width: 40px; }
+.failure-bar { height: 4px; border-radius: 3px; background: #f07a2a; }
+.failure-bar.high { background: var(--invalid); }
+.failure-pct { font-size: 12px; font-weight: 600; color: var(--text-primary); min-width: 30px; text-align: right; }
+
+/* Verdict legend + donut */
+.verdict-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-secondary); }
+.legend-swatch { width: 8px; height: 8px; border-radius: 2px; flex-shrink: 0; }
+
+/* ── INCOMPLETE BREAKDOWN ── */
+.incomplete-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 1px; background: var(--border); border-radius: 10px; overflow: hidden; margin-top: 16px; }
+.ic-cell { background: var(--surface); padding: 16px 18px; }
+.ic-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.ic-icon { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ic-never    { background: #f0eeeb; color: #9d9c99; }
+.ic-abandon  { background: #fef5e6; color: #c47a1a; }
+.ic-afterfail { background: #fde8e8; color: #d63f3f; }
+.ic-val { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; color: var(--text-primary); line-height: 1; margin-bottom: 4px; }
+.ic-sub { font-size: 11px; color: var(--text-tertiary); margin-bottom: 12px; }
+
+/* Abandon step bars (shared style) */
+.micro-bars { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+.micro-bar-row { display: flex; align-items: center; gap: 8px; }
+.micro-step { font-size: 11px; color: var(--text-secondary); width: 110px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.micro-bar-wrap { flex: 1; height: 4px; background: var(--surface-2); border-radius: 2px; overflow: hidden; min-width: 30px; }
+.micro-bar { height: 4px; border-radius: 2px; background: #e8a020; }
+.micro-bar.top { background: var(--invalid); }
+.micro-pct { font-size: 11px; font-weight: 600; color: var(--text-primary); min-width: 28px; text-align: right; }
+.micro-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-tertiary); margin-top: 4px; margin-bottom: 4px; }
+
+footer { text-align: center; font-size: 11px; color: var(--text-tertiary); padding-top: 40px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 1120px) { .scan-verdict-row { grid-template-columns: repeat(4,1fr); } }
+@media (max-width: 1000px) {
+  .verdicts-top-row { grid-template-columns: 1fr; }
+  .scan-charts-row  { grid-template-columns: 1fr; }
+  .scan-mini-stack  { flex-direction: row; }
+  .funnel-row       { grid-template-columns: repeat(2,1fr); }
+}
+/* Hide Period/Profile labels as soon as they cause wrapping */
+@media (max-width: 900px) {
+  .filter-label { display: none; }
+  .filter-sep { display: none; }
+}
+@media (max-width: 780px)  { .verdict-pills-row { grid-template-columns: repeat(2,1fr); } .scan-verdict-row { grid-template-columns: repeat(3,1fr); } .incomplete-grid { grid-template-columns: 1fr; } }
+@media (max-width: 680px) {
+  .funnel-row { grid-template-columns: 1fr 1fr; }
+  .failure-grid { grid-template-columns: 1fr; }
+  .nav-links, .nav-user { display: none; }
+  .nav-mobile-menu { display: block; }
+  /* Toolbar: title + Export share the top row, filters wrap below */
+  .toolbar { flex-wrap: wrap; gap: 10px; padding: 10px 16px; }
+  .toolbar-left { flex: 1 1 auto; order: 1; min-width: 0; }
+  .toolbar-right { order: 2; flex: 0 0 auto; }
+  .toolbar-center { order: 3; flex: 0 0 100%; width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
+}
+@media (max-width: 520px) { .scan-verdict-row { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 420px)  {
+  .funnel-row { grid-template-columns: 1fr; }
+  .funnel-step { border-right: none; border-bottom: 1px solid var(--border); }
+  .funnel-step:last-child { border-bottom: none; }
+  main { padding: 16px 12px 32px; }
+  .pill-group button { padding: 5px 8px; font-size: 11px; }
+  /* Keep the full-bleed toolbar aligned to the tighter page gutters */
+  .toolbar { margin-left: -12px; margin-right: -12px; padding: 10px 12px; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-mark">
+      <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M0 0l7 11L14 0h-3L7 6.5 3 0z" fill="#111"/></svg>
+    </div>
+    <span class="nav-logo-text">vyyer</span>
+  </a>
+  <div class="nav-links">
+    <a href="#" class="active">Dashboard</a>
+    <a href="#">History</a>
+    <a href="#">Workflows</a>
+    <a href="#">API Keys</a>
+    <a href="#">Settings</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user">
+      <div class="nav-user-name">Produser@Vyyer.com</div>
+      <div class="nav-user-sub">Default profile</div>
+    </div>
+    <div class="nav-avatar">PR</div>
+  </div>
+  <button class="nav-mobile-menu" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect y="3" width="20" height="2" rx="1"/><rect y="9" width="20" height="2" rx="1"/><rect y="15" width="20" height="2" rx="1"/></svg>
+  </button>
+</nav>
+
+<main>
+  <!-- STICKY TOOLBAR: title + filters + export merged -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <h1 class="toolbar-title">Dashboard</h1>
+    </div>
+    <div class="toolbar-center">
+      <div class="filter-group">
+        <span class="filter-label">Date range</span>
+        <div class="date-field" id="dateField">
+          <button type="button" class="date-trigger" id="dateTrigger" aria-haspopup="dialog" aria-expanded="false">
+            <svg class="dt-cal" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><path d="M1.5 5.5h11M4.5 1v2.5M9.5 1v2.5"/></svg>
+            <span id="dateTriggerLabel">Jul 1 – Jul 28, 2026</span>
+            <svg class="dt-chev" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
+          </button>
+          <div class="date-popover" id="datePopover" role="dialog" aria-label="Select date range">
+            <div class="dp-body">
+              <div class="dp-presets" id="dpPresets"><!-- JS --></div>
+              <div class="dp-main">
+                <div class="dp-cals" id="dpCals"><!-- JS --></div>
+              </div>
+            </div>
+            <div class="dp-footer">
+              <span class="dp-hint" id="dpHint"></span>
+              <div class="dp-actions">
+                <button type="button" class="dp-btn dp-cancel" id="dpCancel">Cancel</button>
+                <button type="button" class="dp-btn dp-apply" id="dpApply">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="filter-sep"></div>
+      <div class="filter-group">
+        <span class="filter-label">Profile</span>
+        <select class="filter-select" id="profileSel" onchange="setProfile(this.value)">
+          <option value="all">All profiles</option>
+          <option value="treehouse">Treehouse Hotels</option>
+          <option value="one">One Hotels</option>
+          <option value="baccarat">Baccarat Hotels</option>
+          <option value="shopify">Shopify</option>
+          <option value="default">Default profile</option>
+        </select>
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn-export" onclick="exportToExcel()">
+        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1v7M3.5 5.5l3 3 3-3M1 9.5V11a1 1 0 001 1h9a1 1 0 001-1V9.5"/></svg>
+        Export
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════
+       SECTION 1 — WORKFLOWS
+  ══════════════════════════════ -->
+  <div class="section-heading">
+    <h2>Workflows</h2>
+    <span class="section-heading-sub" id="wf-sub">Created, opened, started &amp; completed</span>
+  </div>
+
+  <!-- Unified funnel card: steps with hover tooltips for drop-off -->
+  <div class="funnel-card">
+    <div class="funnel-row" id="funnelRow"><!-- JS --></div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SECTION 2 — SCANS
+  ══════════════════════════════ -->
+  <div class="section-heading" style="margin-top:36px">
+    <h2>Scans</h2>
+    <span class="section-heading-sub" id="scan-sub">Completed verification scans</span>
+  </div>
+
+  <!-- Verdict stat cards: total, valid, invalid, caution, expired, underage, incomplete -->
+  <div class="scan-verdict-row" id="scanVerdictRow"><!-- JS --></div>
+
+  <!-- Volume chart + avg time + avg attempts -->
+  <div class="scan-charts-row">
+    <div class="card">
+      <div class="card-body">
+        <div class="card-title">Scan volume</div>
+        <div class="card-sub" id="volume-sub">Monthly scans — all profiles</div>
+        <div style="position:relative;width:100%;height:220px;margin-top:16px">
+          <canvas id="volumeChart" role="img" aria-label="Line chart showing scan volume"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="scan-mini-stack">
+      <div class="scan-mini">
+        <div class="scan-mini-label">Avg time to verify</div>
+        <div class="scan-mini-val" id="m-avg-time">2m 14s</div>
+        <div class="scan-mini-sub">Per completed scan</div>
+      </div>
+      <div class="scan-mini">
+        <div class="scan-mini-label">Avg attempts</div>
+        <div class="scan-mini-val" id="m-avg-attempts">1.4</div>
+        <div class="scan-mini-sub">Per unique customer</div>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ══════════════════════════════
+       SECTION 3 — VERDICTS
+  ══════════════════════════════ -->
+  <div class="section-heading" style="margin-top:36px">
+    <h2>Verdicts</h2>
+    <span class="section-heading-sub" id="verdict-section-sub">Outcome breakdown for completed scans</span>
+  </div>
+
+  <!-- Verdict donut + failure reasons side by side -->
+  <div class="verdicts-top-row">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body">
+        <div class="card-title">Failure reasons</div>
+        <div class="card-sub">Sub-verdict failures as % of total invalid scans</div>
+        <div class="failure-grid" id="failureGrid" style="margin-top:16px"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-body">
+        <div class="card-title">Verdict breakdown</div>
+        <div class="card-sub" id="verdict-sub">Distribution of outcomes</div>
+        <div class="verdict-legend" id="verdictLegend" style="margin-top:14px"></div>
+        <div style="position:relative;width:100%;height:200px">
+          <canvas id="verdictChart" role="img" aria-label="Doughnut chart showing verdict distribution"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incomplete breakdown (full width) -->
+  <div class="card">
+    <div class="card-body">
+      <div class="card-title">Incomplete breakdown</div>
+      <div class="card-sub">Breakdown of incomplete outcomes by cause</div>
+      <div class="incomplete-grid" id="incompleteGrid" style="margin-top:16px"><!-- JS --></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>&copy; 2026 Vyyer · Identity Verification Platform</footer>
+
+<script>
+/* ─── DATA ─── */
+const DATA = {
+  all:{
+    month:{
+      volume:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],data:[680,820,910,870,1050,1240]},
+      verdicts:{Valid:7421,Invalid:2104,Expired:489,Underage:198,Incomplete:105},
+      failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':3},
+      incomplete:{never:62,abandoned:29,afterFail:14,abandonSteps:{'Scan face':42,'Scan ID front':33,'Scan ID back':25},afterFailAttempts:{'1 attempt':30,'2 attempts':45,'3+ attempts':25}},
+      funnel:{created:12400,opened:10820,started:8960,completed:8317},
+      avgTime:'2m 14s', fastest:'0m 38s', slowest:'18m 02s', avgAttempts:'1.4'
+    },
+    week:{
+      volume:{labels:['Mon','Tue','Wed','Thu','Fri','Sat'],data:[210,185,240,230,280,120]},
+      verdicts:{Valid:890,Invalid:310,Expired:58,Underage:22,Incomplete:18},
+      failures:{Liveliness:20,FaceMatch:22,'Scan Back':13,'ID Liveliness':8,'ID Number Verification':14,'ID Front Back Match':3,'Barcode Detective':7,'Doc Liveliness':7,'Doc OCR':4,'Doc MRZ':2},
+      incomplete:{never:10,abandoned:5,afterFail:3,abandonSteps:{'Scan face':50,'Scan ID front':30,'Scan ID back':20},afterFailAttempts:{'1 attempt':35,'2 attempts':40,'3+ attempts':25}},
+      funnel:{created:1680,opened:1460,started:1210,completed:1120},
+      avgTime:'2m 08s', fastest:'0m 41s', slowest:'14m 33s', avgAttempts:'1.3'
+    },
+    day:{
+      volume:{labels:['6am','9am','12pm','3pm','6pm','9pm'],data:[12,48,65,72,58,31]},
+      verdicts:{Valid:182,Invalid:61,Expired:11,Underage:4,Incomplete:3},
+      failures:{Liveliness:19,FaceMatch:23,'Scan Back':12,'ID Liveliness':9,'ID Number Verification':13,'ID Front Back Match':4,'Barcode Detective':7,'Doc Liveliness':8,'Doc OCR':3,'Doc MRZ':2},
+      incomplete:{never:1,abandoned:1,afterFail:1,abandonSteps:{'Scan face':50,'Scan ID front':30,'Scan ID back':20},afterFailAttempts:{'1 attempt':33,'2 attempts':44,'3+ attempts':23}},
+      funnel:{created:310,opened:272,started:228,completed:210},
+      avgTime:'2m 02s', fastest:'0m 44s', slowest:'11m 18s', avgAttempts:'1.2'
+    },
+    year:{
+      volume:{labels:['Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],data:[2100,2800,3200,2900,4100]},
+      verdicts:{Valid:7800,Invalid:2300,Expired:520,Underage:210,Incomplete:134},
+      failures:{Liveliness:17,FaceMatch:25,'Scan Back':10,'ID Liveliness':8,'ID Number Verification':16,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':2},
+      incomplete:{never:79,abandoned:37,afterFail:18,abandonSteps:{'Scan face':44,'Scan ID front':34,'Scan ID back':22},afterFailAttempts:{'1 attempt':28,'2 attempts':46,'3+ attempts':26}},
+      funnel:{created:62000,opened:54400,started:45100,completed:41500},
+      avgTime:'2m 21s', fastest:'0m 36s', slowest:'22m 14s', avgAttempts:'1.5'
+    },
+    all:{
+      volume:{labels:['Jan 25','Apr 25','Jul 25','Oct 25','Jan 26','Apr 26'],data:[1800,2400,2900,2600,3700,4200]},
+      verdicts:{Valid:14200,Invalid:4100,Expired:980,Underage:390,Incomplete:230},
+      failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':3},
+      incomplete:{never:136,abandoned:63,afterFail:31,abandonSteps:{'Scan face':43,'Scan ID front':33,'Scan ID back':24},afterFailAttempts:{'1 attempt':29,'2 attempts':45,'3+ attempts':26}},
+      funnel:{created:248000,opened:216000,started:179000,completed:164000},
+      avgTime:'2m 18s', fastest:'0m 34s', slowest:'28m 47s', avgAttempts:'1.5'
+    }
+  },
+  treehouse:{
+    month:{volume:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],data:[120,155,180,160,210,240]},verdicts:{Valid:1480,Invalid:320,Expired:80,Underage:25,Incomplete:15},failures:{Liveliness:22,FaceMatch:20,'Scan Back':15,'ID Liveliness':6,'ID Number Verification':12,'ID Front Back Match':5,'Barcode Detective':8,'Doc Liveliness':6,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:9,abandoned:4,afterFail:2,abandonSteps:{'Scan face':45,'Scan ID front':32,'Scan ID back':23},afterFailAttempts:{'1 attempt':30,'2 attempts':48,'3+ attempts':22}},funnel:{created:1240,opened:1068,started:892,completed:820},avgTime:'1m 58s',fastest:'0m 42s',slowest:'12m 18s',avgAttempts:'1.3'},
+    week:{volume:{labels:['Mon','Tue','Wed','Thu','Fri','Sat'],data:[48,42,55,52,68,28]},verdicts:{Valid:200,Invalid:58,Expired:14,Underage:5,Incomplete:3},failures:{Liveliness:22,FaceMatch:20,'Scan Back':15,'ID Liveliness':6,'ID Number Verification':12,'ID Front Back Match':5,'Barcode Detective':8,'Doc Liveliness':6,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:2,abandoned:1,afterFail:0,abandonSteps:{'Scan face':45,'Scan ID front':32,'Scan ID back':23},afterFailAttempts:{'1 attempt':30,'2 attempts':48,'3+ attempts':22}},funnel:{created:293,opened:258,started:214,completed:200},avgTime:'1m 54s',fastest:'0m 45s',slowest:'10m 02s',avgAttempts:'1.2'},
+    day:{volume:{labels:['6am','9am','12pm','3pm','6pm','9pm'],data:[4,14,18,20,16,8]},verdicts:{Valid:42,Invalid:13,Expired:3,Underage:1,Incomplete:1},failures:{Liveliness:22,FaceMatch:20,'Scan Back':15,'ID Liveliness':6,'ID Number Verification':12,'ID Front Back Match':5,'Barcode Detective':8,'Doc Liveliness':6,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:1,abandoned:0,afterFail:0,abandonSteps:{'Scan face':45,'Scan ID front':32,'Scan ID back':23},afterFailAttempts:{'1 attempt':30,'2 attempts':48,'3+ attempts':22}},funnel:{created:60,opened:54,started:46,completed:42},avgTime:'1m 52s',fastest:'0m 48s',slowest:'8m 11s',avgAttempts:'1.1'},
+    year:{volume:{labels:['Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],data:[480,620,720,660,920]},verdicts:{Valid:1800,Invalid:400,Expired:100,Underage:32,Incomplete:18},failures:{Liveliness:22,FaceMatch:20,'Scan Back':15,'ID Liveliness':6,'ID Number Verification':12,'ID Front Back Match':5,'Barcode Detective':8,'Doc Liveliness':6,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:11,abandoned:5,afterFail:2,abandonSteps:{'Scan face':45,'Scan ID front':32,'Scan ID back':23},afterFailAttempts:{'1 attempt':30,'2 attempts':48,'3+ attempts':22}},funnel:{created:3400,opened:2890,started:2400,completed:2200},avgTime:'2m 04s',fastest:'0m 40s',slowest:'14m 30s',avgAttempts:'1.3'},
+    all:{volume:{labels:['Jan 25','Apr 25','Jul 25','Oct 25','Jan 26','Apr 26'],data:[400,540,630,580,800,960]},verdicts:{Valid:2800,Invalid:600,Expired:150,Underage:48,Incomplete:22},failures:{Liveliness:22,FaceMatch:20,'Scan Back':15,'ID Liveliness':6,'ID Number Verification':12,'ID Front Back Match':5,'Barcode Detective':8,'Doc Liveliness':6,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:13,abandoned:6,afterFail:3,abandonSteps:{'Scan face':45,'Scan ID front':32,'Scan ID back':23},afterFailAttempts:{'1 attempt':30,'2 attempts':48,'3+ attempts':22}},funnel:{created:5200,opened:4420,started:3680,completed:3380},avgTime:'2m 01s',fastest:'0m 39s',slowest:'16m 44s',avgAttempts:'1.3'}
+  },
+  one:{
+    month:{volume:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],data:[90,110,140,130,160,195]},verdicts:{Valid:980,Invalid:250,Expired:60,Underage:18,Incomplete:12},failures:{Liveliness:16,FaceMatch:28,'Scan Back':10,'ID Liveliness':8,'ID Number Verification':14,'ID Front Back Match':3,'Barcode Detective':6,'Doc Liveliness':9,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:7,abandoned:3,afterFail:2,abandonSteps:{'Scan face':38,'Scan ID front':40,'Scan ID back':22},afterFailAttempts:{'1 attempt':26,'2 attempts':50,'3+ attempts':24}},funnel:{created:825,opened:668,started:540,completed:500},avgTime:'2m 28s',fastest:'0m 51s',slowest:'16m 20s',avgAttempts:'1.4'},
+    week:{volume:{labels:['Mon','Tue','Wed','Thu','Fri','Sat'],data:[34,28,40,38,48,18]},verdicts:{Valid:140,Invalid:42,Expired:9,Underage:3,Incomplete:2},failures:{Liveliness:16,FaceMatch:28,'Scan Back':10,'ID Liveliness':8,'ID Number Verification':14,'ID Front Back Match':3,'Barcode Detective':6,'Doc Liveliness':9,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:1,abandoned:1,afterFail:0,abandonSteps:{'Scan face':38,'Scan ID front':40,'Scan ID back':22},afterFailAttempts:{'1 attempt':26,'2 attempts':50,'3+ attempts':24}},funnel:{created:206,opened:168,started:134,completed:126},avgTime:'2m 22s',fastest:'0m 54s',slowest:'13m 08s',avgAttempts:'1.3'},
+    day:{volume:{labels:['6am','9am','12pm','3pm','6pm','9pm'],data:[3,10,14,15,12,6]},verdicts:{Valid:30,Invalid:9,Expired:2,Underage:1,Incomplete:0},failures:{Liveliness:16,FaceMatch:28,'Scan Back':10,'ID Liveliness':8,'ID Number Verification':14,'ID Front Back Match':3,'Barcode Detective':6,'Doc Liveliness':9,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:0,abandoned:0,afterFail:0,abandonSteps:{'Scan face':38,'Scan ID front':40,'Scan ID back':22},afterFailAttempts:{'1 attempt':26,'2 attempts':50,'3+ attempts':24}},funnel:{created:42,opened:34,started:28,completed:26},avgTime:'2m 18s',fastest:'0m 56s',slowest:'10m 44s',avgAttempts:'1.2'},
+    year:{volume:{labels:['Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],data:[360,480,540,510,740]},verdicts:{Valid:1200,Invalid:300,Expired:72,Underage:22,Incomplete:14},failures:{Liveliness:16,FaceMatch:28,'Scan Back':10,'ID Liveliness':8,'ID Number Verification':14,'ID Front Back Match':3,'Barcode Detective':6,'Doc Liveliness':9,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:8,abandoned:4,afterFail:2,abandonSteps:{'Scan face':38,'Scan ID front':40,'Scan ID back':22},afterFailAttempts:{'1 attempt':26,'2 attempts':50,'3+ attempts':24}},funnel:{created:2200,opened:1780,started:1440,completed:1330},avgTime:'2m 32s',fastest:'0m 48s',slowest:'18m 02s',avgAttempts:'1.4'},
+    all:{volume:{labels:['Jan 25','Apr 25','Jul 25','Oct 25','Jan 26','Apr 26'],data:[300,400,460,420,640,780]},verdicts:{Valid:1800,Invalid:450,Expired:108,Underage:33,Incomplete:20},failures:{Liveliness:16,FaceMatch:28,'Scan Back':10,'ID Liveliness':8,'ID Number Verification':14,'ID Front Back Match':3,'Barcode Detective':6,'Doc Liveliness':9,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:12,abandoned:5,afterFail:3,abandonSteps:{'Scan face':38,'Scan ID front':40,'Scan ID back':22},afterFailAttempts:{'1 attempt':26,'2 attempts':50,'3+ attempts':24}},funnel:{created:3400,opened:2750,started:2220,completed:2050},avgTime:'2m 29s',fastest:'0m 46s',slowest:'20m 18s',avgAttempts:'1.4'}
+  },
+  baccarat:{
+    month:{volume:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],data:[60,80,100,90,120,150]},verdicts:{Valid:760,Invalid:180,Expired:40,Underage:12,Incomplete:8},failures:{Liveliness:14,FaceMatch:26,'Scan Back':11,'ID Liveliness':9,'ID Number Verification':16,'ID Front Back Match':4,'Barcode Detective':7,'Doc Liveliness':9,'Doc OCR':3,'Doc MRZ':1},incomplete:{never:5,abandoned:2,afterFail:1,abandonSteps:{'Scan face':40,'Scan ID front':38,'Scan ID back':22},afterFailAttempts:{'1 attempt':32,'2 attempts':44,'3+ attempts':24}},funnel:{created:600,opened:498,started:406,completed:374},avgTime:'2m 08s',fastest:'0m 44s',slowest:'13m 28s',avgAttempts:'1.3'},
+    week:{volume:{labels:['Mon','Tue','Wed','Thu','Fri','Sat'],data:[22,18,28,26,34,12]},verdicts:{Valid:100,Invalid:28,Expired:6,Underage:2,Incomplete:1},failures:{Liveliness:14,FaceMatch:26,'Scan Back':11,'ID Liveliness':9,'ID Number Verification':16,'ID Front Back Match':4,'Barcode Detective':7,'Doc Liveliness':9,'Doc OCR':3,'Doc MRZ':1},incomplete:{never:1,abandoned:0,afterFail:0,abandonSteps:{'Scan face':40,'Scan ID front':38,'Scan ID back':22},afterFailAttempts:{'1 attempt':32,'2 attempts':44,'3+ attempts':24}},funnel:{created:140,opened:116,started:96,completed:88},avgTime:'2m 04s',fastest:'0m 47s',slowest:'11m 10s',avgAttempts:'1.2'},
+    day:{volume:{labels:['6am','9am','12pm','3pm','6pm','9pm'],data:[2,8,11,12,9,4]},verdicts:{Valid:22,Invalid:6,Expired:1,Underage:0,Incomplete:0},failures:{Liveliness:14,FaceMatch:26,'Scan Back':11,'ID Liveliness':9,'ID Number Verification':16,'ID Front Back Match':4,'Barcode Detective':7,'Doc Liveliness':9,'Doc OCR':3,'Doc MRZ':1},incomplete:{never:0,abandoned:0,afterFail:0,abandonSteps:{'Scan face':40,'Scan ID front':38,'Scan ID back':22},afterFailAttempts:{'1 attempt':32,'2 attempts':44,'3+ attempts':24}},funnel:{created:29,opened:24,started:20,completed:18},avgTime:'2m 00s',fastest:'0m 50s',slowest:'8m 44s',avgAttempts:'1.1'},
+    year:{volume:{labels:['Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],data:[240,320,380,340,570]},verdicts:{Valid:920,Invalid:220,Expired:50,Underage:15,Incomplete:10},failures:{Liveliness:14,FaceMatch:26,'Scan Back':11,'ID Liveliness':9,'ID Number Verification':16,'ID Front Back Match':4,'Barcode Detective':7,'Doc Liveliness':9,'Doc OCR':3,'Doc MRZ':1},incomplete:{never:6,abandoned:3,afterFail:1,abandonSteps:{'Scan face':40,'Scan ID front':38,'Scan ID back':22},afterFailAttempts:{'1 attempt':32,'2 attempts':44,'3+ attempts':24}},funnel:{created:1600,opened:1328,started:1080,completed:994},avgTime:'2m 12s',fastest:'0m 42s',slowest:'15m 20s',avgAttempts:'1.3'},
+    all:{volume:{labels:['Jan 25','Apr 25','Jul 25','Oct 25','Jan 26','Apr 26'],data:[200,270,320,280,480,600]},verdicts:{Valid:1400,Invalid:340,Expired:76,Underage:22,Incomplete:14},failures:{Liveliness:14,FaceMatch:26,'Scan Back':11,'ID Liveliness':9,'ID Number Verification':16,'ID Front Back Match':4,'Barcode Detective':7,'Doc Liveliness':9,'Doc OCR':3,'Doc MRZ':1},incomplete:{never:8,abandoned:4,afterFail:2,abandonSteps:{'Scan face':40,'Scan ID front':38,'Scan ID back':22},afterFailAttempts:{'1 attempt':32,'2 attempts':44,'3+ attempts':24}},funnel:{created:2460,opened:2042,started:1660,completed:1528},avgTime:'2m 10s',fastest:'0m 40s',slowest:'17m 38s',avgAttempts:'1.3'}
+  },
+  shopify:{
+    month:{volume:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],data:[200,260,300,280,340,410]},verdicts:{Valid:2100,Invalid:680,Expired:140,Underage:60,Incomplete:40},failures:{Liveliness:20,FaceMatch:22,'Scan Back':12,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:24,abandoned:11,afterFail:5,abandonSteps:{'Scan face':48,'Scan ID front':30,'Scan ID back':22},afterFailAttempts:{'1 attempt':38,'2 attempts':42,'3+ attempts':20}},funnel:{created:3100,opened:2850,started:2480,completed:2420},avgTime:'2m 32s',fastest:'0m 36s',slowest:'20m 44s',avgAttempts:'1.6'},
+    week:{volume:{labels:['Mon','Tue','Wed','Thu','Fri','Sat'],data:[68,62,80,76,94,40]},verdicts:{Valid:290,Invalid:98,Expired:18,Underage:8,Incomplete:6},failures:{Liveliness:20,FaceMatch:22,'Scan Back':12,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:4,abandoned:1,afterFail:1,abandonSteps:{'Scan face':48,'Scan ID front':30,'Scan ID back':22},afterFailAttempts:{'1 attempt':38,'2 attempts':42,'3+ attempts':20}},funnel:{created:740,opened:682,started:594,completed:576},avgTime:'2m 28s',fastest:'0m 38s',slowest:'16m 22s',avgAttempts:'1.5'},
+    day:{volume:{labels:['6am','9am','12pm','3pm','6pm','9pm'],data:[4,16,22,24,20,10]},verdicts:{Valid:64,Invalid:22,Expired:4,Underage:2,Incomplete:1},failures:{Liveliness:20,FaceMatch:22,'Scan Back':12,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:1,abandoned:0,afterFail:0,abandonSteps:{'Scan face':48,'Scan ID front':30,'Scan ID back':22},afterFailAttempts:{'1 attempt':38,'2 attempts':42,'3+ attempts':20}},funnel:{created:148,opened:138,started:120,completed:116},avgTime:'2m 24s',fastest:'0m 40s',slowest:'13m 08s',avgAttempts:'1.4'},
+    year:{volume:{labels:['Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],data:[800,1060,1200,1080,1560]},verdicts:{Valid:2600,Invalid:840,Expired:170,Underage:75,Incomplete:48},failures:{Liveliness:20,FaceMatch:22,'Scan Back':12,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:28,abandoned:13,afterFail:7,abandonSteps:{'Scan face':48,'Scan ID front':30,'Scan ID back':22},afterFailAttempts:{'1 attempt':38,'2 attempts':42,'3+ attempts':20}},funnel:{created:15600,opened:14350,started:12480,completed:12100},avgTime:'2m 36s',fastest:'0m 34s',slowest:'24m 18s',avgAttempts:'1.6'},
+    all:{volume:{labels:['Jan 25','Apr 25','Jul 25','Oct 25','Jan 26','Apr 26'],data:[680,900,1020,920,1340,1640]},verdicts:{Valid:4000,Invalid:1300,Expired:260,Underage:115,Incomplete:72},failures:{Liveliness:20,FaceMatch:22,'Scan Back':12,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':4,'Doc MRZ':2},incomplete:{never:42,abandoned:19,afterFail:11,abandonSteps:{'Scan face':48,'Scan ID front':30,'Scan ID back':22},afterFailAttempts:{'1 attempt':38,'2 attempts':42,'3+ attempts':20}},funnel:{created:30200,opened:27800,started:24200,completed:23500},avgTime:'2m 34s',fastest:'0m 32s',slowest:'28m 02s',avgAttempts:'1.6'}
+  },
+  default:{
+    month:{volume:{labels:['Nov','Dec','Jan','Feb','Mar','Apr'],data:[210,215,190,210,220,245]},verdicts:{Valid:2101,Invalid:674,Expired:169,Underage:83,Incomplete:30},failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':5,'Doc MRZ':2},incomplete:{never:18,abandoned:8,afterFail:4,abandonSteps:{'Scan face':41,'Scan ID front':36,'Scan ID back':23},afterFailAttempts:{'1 attempt':31,'2 attempts':46,'3+ attempts':23}},funnel:{created:2800,opened:2560,started:2260,completed:2180},avgTime:'2m 18s',fastest:'0m 38s',slowest:'17m 44s',avgAttempts:'1.4'},
+    week:{volume:{labels:['Mon','Tue','Wed','Thu','Fri','Sat'],data:[38,35,37,38,36,22]},verdicts:{Valid:160,Invalid:52,Expired:11,Underage:4,Incomplete:2},failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':5,'Doc MRZ':2},incomplete:{never:1,abandoned:1,afterFail:0,abandonSteps:{'Scan face':41,'Scan ID front':36,'Scan ID back':23},afterFailAttempts:{'1 attempt':31,'2 attempts':46,'3+ attempts':23}},funnel:{created:668,opened:612,started:540,completed:520},avgTime:'2m 14s',fastest:'0m 42s',slowest:'14m 22s',avgAttempts:'1.3'},
+    day:{volume:{labels:['6am','9am','12pm','3pm','6pm','9pm'],data:[3,10,13,14,12,5]},verdicts:{Valid:24,Invalid:8,Expired:2,Underage:1,Incomplete:0},failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':5,'Doc MRZ':2},incomplete:{never:0,abandoned:0,afterFail:0,abandonSteps:{'Scan face':41,'Scan ID front':36,'Scan ID back':23},afterFailAttempts:{'1 attempt':31,'2 attempts':46,'3+ attempts':23}},funnel:{created:130,opened:120,started:106,completed:102},avgTime:'2m 10s',fastest:'0m 46s',slowest:'10m 56s',avgAttempts:'1.2'},
+    year:{volume:{labels:['Q1 25','Q2 25','Q3 25','Q4 25','Q1 26'],data:[820,840,760,820,860]},verdicts:{Valid:2500,Invalid:820,Expired:200,Underage:100,Incomplete:40},failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':5,'Doc MRZ':2},incomplete:{never:24,abandoned:10,afterFail:6,abandonSteps:{'Scan face':41,'Scan ID front':36,'Scan ID back':23},afterFailAttempts:{'1 attempt':31,'2 attempts':46,'3+ attempts':23}},funnel:{created:14000,opened:12820,started:11320,completed:10900},avgTime:'2m 22s',fastest:'0m 36s',slowest:'20m 08s',avgAttempts:'1.4'},
+    all:{volume:{labels:['Jan 25','Apr 25','Jul 25','Oct 25','Jan 26','Apr 26'],data:[700,720,640,700,740,980]},verdicts:{Valid:3800,Invalid:1240,Expired:300,Underage:150,Incomplete:60},failures:{Liveliness:18,FaceMatch:24,'Scan Back':11,'ID Liveliness':7,'ID Number Verification':15,'ID Front Back Match':4,'Barcode Detective':6,'Doc Liveliness':8,'Doc OCR':5,'Doc MRZ':2},incomplete:{never:35,abandoned:16,afterFail:9,abandonSteps:{'Scan face':41,'Scan ID front':36,'Scan ID back':23},afterFailAttempts:{'1 attempt':31,'2 attempts':46,'3+ attempts':23}},funnel:{created:27200,opened:24900,started:21980,completed:21200},avgTime:'2m 20s',fastest:'0m 34s',slowest:'24m 44s',avgAttempts:'1.4'}
+  }
+};
+
+const VERDICT_COLORS = ['#3a7d1e','#d63f3f','#eab308','#c47a1a','#2e6fb5','#7a6c55'];
+const VERDICT_KEYS   = ['Valid','Invalid','Caution','Expired','Underage','Incomplete'];
+
+// Caution is a new verdict type — seed a placeholder value into every dataset
+Object.values(DATA).forEach(prof => Object.values(prof).forEach(d => {
+  if (d.verdicts && d.verdicts.Caution === undefined) {
+    d.verdicts.Caution = Math.round(d.verdicts.Invalid * 0.3);
+  }
+}));
+
+let period = 'month', profile = 'all';
+let volChart, verdChart;
+
+function getData() {
+  const p = DATA[profile] || DATA.all;
+  // 'quarter' has no dedicated dataset — fall back to the nearest-magnitude series
+  return p[period] || (period === 'quarter' ? p.year : null) || p.month || Object.values(p)[0];
+}
+function setProfile(p) { profile = p; updateAll(); }
+
+/* ══════════════════════════════════════
+   DATE RANGE PICKER
+   Presets map to the dashboard periods; picking one auto-fills the
+   calendar with a period-to-date range anchored to "today".
+══════════════════════════════════════ */
+const TODAY = new Date(); TODAY.setHours(0,0,0,0); // the real current date
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const WD = ['S','M','T','W','T','F','S'];
+const CHEVL = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 3.5L5 7l3.5 3.5"/></svg>';
+const CHEVR = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5.5 3.5L9 7l-3.5 3.5"/></svg>';
+
+function d0(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function sameDay(a,b){ return !!(a&&b) && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function addMonths(d,n){ return new Date(d.getFullYear(), d.getMonth()+n, 1); }
+function startOfWeek(d){ const x=d0(d); x.setDate(x.getDate()-x.getDay()); return x; }        // Sunday start
+function startOfQuarter(d){ return new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1); }
+
+const PRESETS = [
+  { key:'day',     label:'Today',        range:()=>[TODAY, TODAY] },
+  { key:'week',    label:'This week',     range:()=>[startOfWeek(TODAY), TODAY] },
+  { key:'month',   label:'This month',    range:()=>[startOfMonth(TODAY), TODAY] },
+  { key:'quarter', label:'This quarter',  range:()=>[startOfQuarter(TODAY), TODAY] },
+  { key:'year',    label:'This year',     range:()=>[new Date(TODAY.getFullYear(),0,1), TODAY] },
+  { key:'all',     label:'All time',      range:()=>[new Date(2025,0,1), TODAY] }
+];
+
+let dpStart=null, dpEnd=null, dpActivePreset=null, dpMonths=[], committed=null;
+
+function presetRange(key){ const p=PRESETS.find(x=>x.key===key); return p ? p.range().map(d0) : null; }
+function matchPreset(s,e){ for(const p of PRESETS){ const [ps,pe]=p.range(); if(sameDay(d0(ps),s)&&sameDay(d0(pe),e)) return p.key; } return null; }
+function inferPeriod(s,e){
+  const days = Math.round((d0(e)-d0(s))/86400000)+1;
+  if(days<=1)   return 'day';
+  if(days<=10)  return 'week';
+  if(days<=45)  return 'month';
+  if(days<=140) return 'quarter';
+  if(days<=400) return 'year';
+  return 'all';
+}
+
+function fmtMD(d){ return MONTHS[d.getMonth()]+' '+d.getDate(); }
+function fmtMDY(d){ return MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear(); }
+function labelForRange(s,e,preset){
+  if(preset==='all') return 'All time';
+  if(sameDay(s,e)) return fmtMDY(s);
+  if(s.getFullYear()===e.getFullYear()) return fmtMD(s)+' – '+fmtMDY(e);
+  return fmtMDY(s)+' – '+fmtMDY(e);
+}
+
+function effRange(){
+  return [ dpStart ? d0(dpStart) : null, dpEnd ? d0(dpEnd) : null ];
+}
+
+function renderPresets(){
+  document.getElementById('dpPresets').innerHTML = PRESETS.map(p =>
+    `<button type="button" class="dp-preset${p.key===dpActivePreset?' active':''}" data-preset="${p.key}">${p.label}</button>`
+  ).join('');
+}
+
+function renderCals(){
+  const [rs,re] = effRange();
+  document.getElementById('dpCals').innerHTML = dpMonths.map((mDate, idx) => {
+    const y=mDate.getFullYear(), m=mDate.getMonth();
+    const firstDow = new Date(y,m,1).getDay();
+    const dim = new Date(y,m+1,0).getDate();
+    const canNext = !(y>TODAY.getFullYear() || (y===TODAY.getFullYear() && m>=TODAY.getMonth()));
+    let cells='';
+    for(let i=0;i<firstDow;i++) cells += '<button class="dp-day blank" tabindex="-1"></button>';
+    for(let day=1; day<=dim; day++){
+      const cur=new Date(y,m,day), c=d0(cur);
+      const isFuture = c > TODAY;
+      const inR   = rs&&re && c>=rs && c<=re;
+      const isS   = rs && sameDay(cur,rs);
+      const isE   = re && sameDay(cur,re);
+      const single= rs&&re && sameDay(rs,re);
+      let cls='dp-day';
+      if(isFuture) cls+=' disabled';
+      if(isS||isE){
+        cls+=' endpoint';
+        if(!single){ if(isS) cls+=' range-start not-single'; if(isE) cls+=' range-end not-single'; }
+      } else if(inR){ cls+=' in-range'; }
+      if(sameDay(cur,TODAY)) cls+=' today';
+      cells += `<button type="button" class="${cls}" data-date="${y}-${m}-${day}"${isFuture?' disabled':''}>${day}</button>`;
+    }
+    return `<div class="dp-cal">
+      <div class="dp-cal-head">
+        <button type="button" class="dp-nav" data-nav="${idx}:-1" aria-label="Previous month">${CHEVL}</button>
+        <span class="dp-cal-title">${MONTHS[m]} ${y}</span>
+        <button type="button" class="dp-nav" data-nav="${idx}:1" aria-label="Next month"${canNext?'':' disabled'}>${CHEVR}</button>
+      </div>
+      <div class="dp-weekdays">${WD.map(w=>`<span>${w}</span>`).join('')}</div>
+      <div class="dp-days">${cells}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateRangeDisplay(){
+  const hint = document.getElementById('dpHint');
+  if (!dpStart) { hint.textContent = 'Select a date'; return; }
+  const s = d0(dpStart), e = dpEnd ? d0(dpEnd) : s;
+  hint.textContent = labelForRange(s, e, dpActivePreset);
+}
+
+function syncMonthsTo(anchor){
+  const end = startOfMonth(anchor || TODAY);
+  dpMonths = [ addMonths(end,-1), end ];
+}
+
+function selectPreset(key){
+  const r = presetRange(key); if(!r) return;
+  dpStart=r[0]; dpEnd=r[1]; dpActivePreset=key;
+  syncMonthsTo(dpEnd);
+  renderPresets(); renderCals(); updateRangeDisplay();
+}
+
+function dayClick(y,m,day){
+  const cur=new Date(y,m,day); if(d0(cur)>TODAY) return;
+  if(!dpStart || (dpStart && dpEnd)){ dpStart=cur; dpEnd=null; }
+  else if(d0(cur)<d0(dpStart)){ dpEnd=dpStart; dpStart=cur; }
+  else { dpEnd=cur; }
+  dpActivePreset = (dpStart && dpEnd) ? matchPreset(d0(dpStart), d0(dpEnd)) : null;
+  renderPresets(); renderCals(); updateRangeDisplay();
+}
+
+function navMonth(i,delta){
+  const nd = addMonths(dpMonths[i], delta);
+  if(nd.getFullYear()>TODAY.getFullYear() || (nd.getFullYear()===TODAY.getFullYear() && nd.getMonth()>TODAY.getMonth())) return;
+  dpMonths[i]=nd; renderCals();
+}
+
+function openPicker(){
+  dpStart=committed.start; dpEnd=committed.end; dpActivePreset=committed.preset;
+  syncMonthsTo(dpEnd);
+  renderPresets(); renderCals(); updateRangeDisplay();
+  document.getElementById('dateTrigger').classList.add('open');
+  document.getElementById('dateTrigger').setAttribute('aria-expanded','true');
+  document.getElementById('datePopover').classList.add('open');
+}
+function closePicker(){
+  document.getElementById('dateTrigger').classList.remove('open');
+  document.getElementById('dateTrigger').setAttribute('aria-expanded','false');
+  document.getElementById('datePopover').classList.remove('open');
+}
+
+function applyRange(){
+  if(!dpStart) return;
+  const s=d0(dpStart), e=d0(dpEnd||dpStart);
+  committed = { start:s, end:e, preset:dpActivePreset };
+  period = dpActivePreset || inferPeriod(s,e);
+  document.getElementById('dateTriggerLabel').textContent = labelForRange(s,e,dpActivePreset);
+  updateAll();
+  closePicker();
+}
+
+function initDatePicker(){
+  const [ms,me] = presetRange('month');
+  committed = { start:ms, end:me, preset:'month' };
+  period = 'month';
+  document.getElementById('dateTriggerLabel').textContent = labelForRange(ms,me,'month');
+
+  const pop = document.getElementById('datePopover');
+  document.getElementById('dateTrigger').addEventListener('click', e => {
+    e.stopPropagation();
+    pop.classList.contains('open') ? closePicker() : openPicker();
+  });
+  pop.addEventListener('click', e => {
+    e.stopPropagation(); // keep clicks inside the popover from reaching the outside-close handler
+    const preset = e.target.closest('[data-preset]'); if(preset){ selectPreset(preset.dataset.preset); return; }
+    const nav = e.target.closest('[data-nav]'); if(nav){ const [i,dl]=nav.dataset.nav.split(':').map(Number); navMonth(i,dl); return; }
+    const day = e.target.closest('[data-date]'); if(day && !day.disabled){ const [y,m,d]=day.dataset.date.split('-').map(Number); dayClick(y,m,d); }
+  });
+  document.getElementById('dpCancel').addEventListener('click', closePicker);
+  document.getElementById('dpApply').addEventListener('click', applyRange);
+  document.addEventListener('click', e => { if(pop.classList.contains('open') && !e.target.closest('#dateField')) closePicker(); });
+  document.addEventListener('keydown', e => { if(e.key==='Escape' && pop.classList.contains('open')) closePicker(); });
+}
+
+/* ── FUNNEL ── */
+function updateFunnel(d) {
+  const f = d.funnel;
+  const steps = [
+    { label:'Created',   val:f.created,   cls:'fb-created',   prev:null },
+    { label:'Opened',    val:f.opened,    cls:'fb-opened',    prev:f.created },
+    { label:'Started',   val:f.started,   cls:'fb-started',   prev:f.opened },
+    { label:'Completed', val:f.completed, cls:'fb-completed', prev:f.started }
+  ];
+
+  document.getElementById('funnelRow').innerHTML = steps.map((s, i) => {
+    const pct = i === 0 ? 100 : Math.round(s.val / f.created * 100);          // bar width: share of created (funnel shape)
+    const convPct = i === 0 ? 100 : (s.prev > 0 ? Math.round(s.val / s.prev * 100) : 0); // conversion vs the previous step
+    const prevLabel = i === 0 ? '' : steps[i - 1].label.toLowerCase();
+    const dropped = s.prev !== null ? Math.max(0, s.prev - s.val) : 0;
+    const dropPct = s.prev !== null && s.prev > 0 ? Math.round(Math.max(0, s.prev - s.val) / s.prev * 100) : 0;
+    const hasDropoff = i > 0;
+    const tooltipLabels = ['', 'did not open', 'opened but did not start', 'started but did not complete'];
+    const tooltip = hasDropoff
+      ? `<div class="funnel-tooltip"><span class="funnel-tooltip-count">${dropped.toLocaleString()}</span><span class="funnel-tooltip-pct"> (${dropPct}%)</span> ${tooltipLabels[i]}</div>`
+      : '';
+    return `<div class="funnel-step" ${hasDropoff ? `data-dropoff="true"` : `data-dropoff=""`}>
+      ${tooltip}
+      <div class="funnel-step-label">${s.label}</div>
+      <div class="funnel-step-val">${s.val.toLocaleString()}</div>
+      <div class="funnel-step-pct">${i === 0 ? 'All workflows' : `${convPct}% of ${prevLabel}`}</div>
+      <div class="funnel-bar-wrap"><div class="funnel-bar ${s.cls}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+/* ── SCANS ── */
+const SCAN_BOXES = [
+  { key:'total',      label:'Total scans', valCls:'sv-total' },
+  { key:'Valid',      badge:'valid',       valCls:'sv-valid' },
+  { key:'Invalid',    badge:'invalid',     valCls:'sv-invalid' },
+  { key:'Caution',    badge:'caution',     valCls:'sv-caution' },
+  { key:'Expired',    badge:'expired',     valCls:'sv-expired' },
+  { key:'Underage',   badge:'underage',    valCls:'sv-underage' },
+  { key:'Incomplete', badge:'incomplete',  valCls:'sv-incomplete' }
+];
+const SCAN_TREND = {
+  total:      { cls:'up',      txt:'↑ 12%' },
+  Valid:      { cls:'up',      txt:'↑ 3%' },
+  Invalid:    { cls:'down',    txt:'↑ 2%' },
+  Caution:    { cls:'down',    txt:'↑ 1%' },
+  Expired:    { cls:'neutral', txt:'—' },
+  Underage:   { cls:'neutral', txt:'—' },
+  Incomplete: { cls:'neutral', txt:'—' }
+};
+
+function updateScanMetrics(d) {
+  const v = d.verdicts;
+  const total = VERDICT_KEYS.reduce((a,k) => a + (v[k] || 0), 0);
+  // Period-aware deltas — hidden entirely for 'all'
+  const periodLabel = { day:'day', week:'week', month:'month', quarter:'quarter', year:'year', all:null }[period];
+
+  document.getElementById('scanVerdictRow').innerHTML = SCAN_BOXES.map(b => {
+    if (b.key === 'total') {
+      const tr = SCAN_TREND.total;
+      const sub = periodLabel
+        ? `<span class="${tr.cls}">${tr.txt}</span><span> from last ${periodLabel}</span>`
+        : '&nbsp;';
+      return `<div class="scan-vcard">
+        <div class="scan-vcard-label">Total scans</div>
+        <div class="scan-vcard-val sv-total">${total.toLocaleString()}</div>
+        <div class="scan-vcard-sub">${sub}</div>
+      </div>`;
+    }
+    const val = v[b.key] || 0;
+    const pct = total ? (Math.round(val / total * 1000) / 10) : 0;
+    const tr = SCAN_TREND[b.key];
+    const trend = (periodLabel && tr.txt !== '—') ? ` &nbsp;<span class="${tr.cls}">${tr.txt}</span>` : '';
+    return `<div class="scan-vcard">
+      <div class="scan-vcard-label"><span class="badge-${b.badge} metric-badge">${b.key.toUpperCase()}</span></div>
+      <div class="scan-vcard-val ${b.valCls}">${val.toLocaleString()}</div>
+      <div class="scan-vcard-sub"><span>${pct}%</span>${trend}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('m-avg-time').textContent     = d.avgTime;
+  document.getElementById('m-avg-attempts').textContent = d.avgAttempts;
+}
+
+/* ══════════════════════════════════════
+   ADAPTIVE SCAN-VOLUME SERIES
+   One rule keyed on the range span picks the x-axis bucket
+   (hour → day → week → month → quarter → year), so every preset
+   AND every custom range renders a sensible number of points.
+   Volume is synthesised deterministically per day from the profile's
+   monthly scale (the mock has no real per-timestamp data).
+══════════════════════════════════════ */
+const UNIT_WORD    = { hour:'Hourly', day:'Daily', week:'Weekly', month:'Monthly', quarter:'Quarterly', year:'Yearly' };
+const HOUR_WEIGHTS = [2,1,1,1,2,4,9,16,22,26,28,30,31,30,28,26,27,29,32,30,24,16,9,4]; // intraday shape
+const VOL_CUR_MONTHS = (TODAY.getFullYear()-2025)*12 + TODAY.getMonth();
+
+function baseDailyFor(prof){
+  const m = (DATA[prof] || DATA.all).month;
+  return VERDICT_KEYS.reduce((a,k)=>a+(m.verdicts[k]||0),0) / 28; // ~scans/day for this profile
+}
+function volTrend(date){ return Math.pow(1.03, ((date.getFullYear()-2025)*12+date.getMonth()) - VOL_CUR_MONTHS); } // gentle growth toward today
+function volNoise(date){ const s=date.getFullYear()*10000+(date.getMonth()+1)*100+date.getDate(); return 0.85 + Math.abs(Math.sin(s))*0.30; }
+function dailyScans(prof, date){
+  const wd = date.getDay();
+  const wk = wd===0 ? 0.5 : wd===6 ? 0.62 : wd===5 ? 1.12 : 1.0; // weekday seasonality
+  return Math.max(1, Math.round(baseDailyFor(prof) * wk * volTrend(date) * volNoise(date)));
+}
+function sumDaily(prof, from, to){ let s=0; for(let day=new Date(from); day<=to; day.setDate(day.getDate()+1)) s+=dailyScans(prof,new Date(day)); return s; }
+function fmtHour(h){ const ap=h<12?'a':'p'; let hh=h%12; if(hh===0)hh=12; return hh+ap; }
+
+function chooseUnit(start, end){
+  const days = Math.round((d0(end)-d0(start))/86400000)+1;
+  if(days<=1)    return 'hour';     // single date
+  if(days<=31)   return 'day';      // week / month-to-date / short custom
+  if(days<=120)  return 'week';     // quarter / two-months / custom
+  if(days<=730)  return 'month';    // year / multi-month custom
+  if(days<=2920) return 'quarter';  // multi-year (up to ~8y)
+  return 'year';                    // very long All-time
+}
+
+function buildVolumeSeries(prof, start, end){
+  const unit = chooseUnit(start, end);
+  const s = d0(start), e = d0(end), points = [];
+  const endsToday = sameDay(e, TODAY);
+  const yy = d => String(d.getFullYear()).slice(2);
+
+  if(unit==='hour'){
+    const isToday = sameDay(s, TODAY);
+    const lastHour = isToday ? new Date().getHours() : 23;
+    const dayTotal = dailyScans(prof, s), wsum = HOUR_WEIGHTS.reduce((a,b)=>a+b,0);
+    for(let h=0; h<=lastHour; h++) points.push({ label:fmtHour(h), full:fmtHour(h).toUpperCase(), value:Math.round(dayTotal*HOUR_WEIGHTS[h]/wsum) });
+    return { unit, points, partialLast:isToday };
+  }
+  if(unit==='day'){
+    for(let t=new Date(s); t<=e; t.setDate(t.getDate()+1)){ const dd=new Date(t);
+      points.push({ label:MONTHS[dd.getMonth()]+' '+dd.getDate(), full:MONTHS[dd.getMonth()]+' '+dd.getDate()+', '+dd.getFullYear(), value:dailyScans(prof,dd) }); }
+    return { unit, points, partialLast:endsToday };
+  }
+  if(unit==='week'){
+    for(let t=new Date(s); t<=e; t.setDate(t.getDate()+7)){
+      const bStart=new Date(t), bEnd=new Date(t); bEnd.setDate(bEnd.getDate()+6);
+      const clamp = bEnd>e ? e : bEnd;
+      points.push({ label:MONTHS[bStart.getMonth()]+' '+bStart.getDate(), full:MONTHS[bStart.getMonth()]+' '+bStart.getDate()+' – '+MONTHS[clamp.getMonth()]+' '+clamp.getDate(), value:sumDaily(prof,bStart,clamp) });
+    }
+    return { unit, points, partialLast:endsToday };
+  }
+  if(unit==='month'){
+    const multiYr = s.getFullYear()!==e.getFullYear();
+    for(let t=new Date(s.getFullYear(),s.getMonth(),1); t<=new Date(e.getFullYear(),e.getMonth(),1); t.setMonth(t.getMonth()+1)){
+      const mS=new Date(Math.max(new Date(t.getFullYear(),t.getMonth(),1), s));
+      const mE=new Date(Math.min(new Date(t.getFullYear(),t.getMonth()+1,0), e));
+      points.push({ label:MONTHS[t.getMonth()]+(multiYr?" '"+yy(t):''), full:MONTHS[t.getMonth()]+' '+t.getFullYear(), value:sumDaily(prof,mS,mE) });
+    }
+    return { unit, points, partialLast:endsToday };
+  }
+  if(unit==='quarter'){
+    for(let t=startOfQuarter(s); t<=e; t=new Date(t.getFullYear(),t.getMonth()+3,1)){
+      const qS=new Date(Math.max(t, s)), qE=new Date(Math.min(new Date(t.getFullYear(),t.getMonth()+3,0), e));
+      const q=Math.floor(t.getMonth()/3)+1;
+      points.push({ label:'Q'+q+" '"+yy(t), full:'Q'+q+' '+t.getFullYear(), value:sumDaily(prof,qS,qE) });
+    }
+    return { unit, points, partialLast:endsToday };
+  }
+  for(let y=s.getFullYear(); y<=e.getFullYear(); y++){
+    const yS=new Date(Math.max(new Date(y,0,1), s)), yE=new Date(Math.min(new Date(y,11,31), e));
+    points.push({ label:String(y), full:String(y), value:sumDaily(prof,yS,yE) });
+  }
+  return { unit, points, partialLast:endsToday };
+}
+
+function updateVolumeChart() {
+  if (volChart) volChart.destroy();
+  const range  = committed || { start: presetRange('month')[0], end: presetRange('month')[1] };
+  const series = buildVolumeSeries(profile, range.start, range.end);
+  const labels = series.points.map(p=>p.label);
+  const data   = series.points.map(p=>p.value);
+  const fulls  = series.points.map(p=>p.full);
+  const n = data.length, lastIdx = n-1;
+  const partial = series.partialLast && n>0; // trailing bucket runs up to "now" → in progress
+
+  // Point styling: thinner dots when dense; the partial last point is hollow.
+  const baseR = n>25 ? 1.5 : n>14 ? 2.5 : 4;
+  const ptRad = data.map((_,i)=> (partial&&i===lastIdx) ? baseR+2 : baseR);
+  const ptBg  = data.map((_,i)=> (partial&&i===lastIdx) ? '#ffffff' : '#007aff');
+  const ptBd  = data.map((_,i)=> (partial&&i===lastIdx) ? '#007aff' : '#005fcc');
+
+  const profSel  = document.getElementById('profileSel');
+  const profText = profSel.options[profSel.selectedIndex].text;
+  document.getElementById('volume-sub').textContent = `${UNIT_WORD[series.unit]} scan volume — ${profText}`;
+
+  const ctx = document.getElementById('volumeChart').getContext('2d');
+  const xHL = {
+    id:'xHL',
+    beforeDraw(chart){
+      const {ctx:c,chartArea,scales}=chart,active=chart._active;
+      if(!active||!active.length)return;
+      const idx=active[0].index,x=scales.x.getPixelForValue(idx),tw=scales.x.width/chart.data.labels.length;
+      c.save();c.fillStyle='rgba(0,122,255,0.07)';c.beginPath();c.roundRect(x-tw/2,chartArea.top,tw,chartArea.bottom-chartArea.top,4);c.fill();c.restore();
+    }
+  };
+  volChart = new Chart(ctx, {
+    type:'line',
+    data:{labels,datasets:[{
+      label:'Scans', data, borderColor:'#007aff', backgroundColor:'rgba(0,122,255,0.07)',
+      borderWidth:2, pointRadius:ptRad, pointHoverRadius:5, pointBackgroundColor:ptBg, pointBorderColor:ptBd, pointBorderWidth:1.5,
+      fill:true, tension:0.4,
+      segment:{ borderDash: c => (partial && c.p1DataIndex===lastIdx) ? [5,4] : undefined }
+    }]},
+    plugins:[xHL],
+    options:{responsive:true,maintainAspectRatio:false,interaction:{mode:'index',intersect:false,axis:'x'},
+      plugins:{legend:{display:false},tooltip:{
+        callbacks:{
+          title: items => fulls[items[0].dataIndex] + ((partial && items[0].dataIndex===lastIdx) ? '  ·  in progress' : ''),
+          label: c => c.parsed.y.toLocaleString() + ' scans',
+          labelColor: () => ({ borderColor:'transparent', backgroundColor:'#007aff', borderRadius:3 })
+        },
+        displayColors: true,
+        usePointStyle: true,
+        pointStyle: 'circle',
+        boxWidth: 8, boxHeight: 8, boxPadding: 8,
+        titleFont:{ size:12, weight:'600', family:'Inter' },
+        bodyFont:{ size:12, family:'Inter' }
+      }}
+      ,scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',autoSkip:true,maxTicksLimit:12}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v}}}}
+  });
+}
+
+function updateFailures(d) {
+  const f=d.failures,total=Object.values(f).reduce((a,b)=>a+b,0);
+  const sorted=Object.entries(f).sort((a,b)=>b[1]-a[1]),maxVal=sorted[0][1];
+  document.getElementById('failureGrid').innerHTML=sorted.map(([name,val])=>{
+    const pct=Math.round(val/total*100),barW=Math.round(val/maxVal*100);
+    return `<div class="failure-row"><span class="failure-name">${name}</span><div class="failure-bar-wrap"><div class="failure-bar${pct>=20?' high':''}" style="width:${barW}%"></div></div><span class="failure-pct">${pct}%</span></div>`;
+  }).join('');
+}
+
+/* ── VERDICTS ── */
+
+function updateVerdictChart(d) {
+  if (verdChart) verdChart.destroy();
+  const vals=VERDICT_KEYS.map(k=>d.verdicts[k]||0),total=vals.reduce((a,b)=>a+b,0);
+  document.getElementById('verdictLegend').innerHTML = VERDICT_KEYS.map((k,i)=>
+    `<span class="legend-item"><span class="legend-swatch" style="background:${VERDICT_COLORS[i]}"></span>${k} <strong style="color:#111110;margin-left:2px">${Math.round(vals[i]/total*100)}%</strong></span>`
+  ).join('');
+  const ctx=document.getElementById('verdictChart').getContext('2d');
+  verdChart = new Chart(ctx, {
+    type:'doughnut',
+    data:{labels:VERDICT_KEYS,datasets:[{data:vals,backgroundColor:VERDICT_COLORS,borderWidth:2,borderColor:'#ffffff',hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',
+      plugins:{legend:{display:false},tooltip:{
+        callbacks:{
+          title: items => items[0].label,
+          label: c => `${c.parsed.toLocaleString()} scans`,
+          labelColor: c => ({ borderColor:'transparent', backgroundColor: VERDICT_COLORS[c.dataIndex], borderRadius:50 })
+        },
+        displayColors: true,
+        usePointStyle: true,
+        pointStyle: 'circle',
+        boxWidth: 8, boxHeight: 8, boxPadding: 6,
+        titleFont:{ size:12, weight:'600', family:'Inter' },
+        bodyFont:{ size:12, family:'Inter' }
+      }}}
+  });
+}
+
+function updateIncomplete(d) {
+  const ic=d.incomplete;
+  const totalIc=ic.never+ic.abandoned+ic.afterFail;
+  const pOf=n=>totalIc>0?Math.round(n/totalIc*100):0;
+
+  /* Abandon mid-flow step bars */
+  const steps=ic.abandonSteps,stepTotal=Object.values(steps).reduce((a,b)=>a+b,0),maxStep=Math.max(...Object.values(steps));
+  const abandonBars=Object.entries(steps).map(([s,v],i)=>{
+    const pct=stepTotal>0?Math.round(v/stepTotal*100):0;
+    return `<div class="micro-bar-row"><span class="micro-step">${s}</span><div class="micro-bar-wrap"><div class="micro-bar${i===0?' top':''}" style="width:${Math.round(v/maxStep*100)}%"></div></div><span class="micro-pct">${pct}%</span></div>`;
+  }).join('');
+
+  /* After-fail attempt bars */
+  const att=ic.afterFailAttempts,attTotal=Object.values(att).reduce((a,b)=>a+b,0),maxAtt=Math.max(...Object.values(att));
+  const attBars=Object.entries(att).map(([s,v],i)=>{
+    const pct=attTotal>0?Math.round(v/attTotal*100):0;
+    return `<div class="micro-bar-row"><span class="micro-step">${s}</span><div class="micro-bar-wrap"><div class="micro-bar${i===1?' top':''}" style="width:${Math.round(v/maxAtt*100)}%;background:${i===0?'#e8a020':i===1?'var(--invalid)':'#9d9c99'}"></div></div><span class="micro-pct">${pct}%</span></div>`;
+  }).join('');
+
+  document.getElementById('incompleteGrid').innerHTML = `
+    <!-- Never opened -->
+    <div class="ic-cell">
+      <div class="ic-label">
+        <span class="ic-icon ic-never">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="5" cy="5" r="4"/><path d="M5 3v2.2"/><circle cx="5" cy="7" r=".5" fill="currentColor"/></svg>
+        </span>
+        Never opened
+      </div>
+      <div class="ic-val">${ic.never}</div>
+      <div class="ic-sub">${pOf(ic.never)}% of incompletes · Created but not opened</div>
+    </div>
+
+    <!-- Abandoned mid-flow -->
+    <div class="ic-cell">
+      <div class="ic-label">
+        <span class="ic-icon ic-abandon">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M2 2l6 6M8 2L2 8"/></svg>
+        </span>
+        Abandoned mid-flow
+      </div>
+      <div class="ic-val">${ic.abandoned}</div>
+      <div class="ic-sub">${pOf(ic.abandoned)}% of incompletes · User exited before completing</div>
+      <div class="micro-bars">
+        <div class="micro-section-label">Abandoned at step</div>
+        ${abandonBars}
+      </div>
+    </div>
+
+    <!-- Abandoned after failed result -->
+    <div class="ic-cell">
+      <div class="ic-label">
+        <span class="ic-icon ic-afterfail">
+          <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M5 1v4"/><circle cx="5" cy="7.5" r="1" fill="currentColor" stroke="none"/><path d="M1.5 9h7"/></svg>
+        </span>
+        Abandoned after failed result
+      </div>
+      <div class="ic-val">${ic.afterFail}</div>
+      <div class="ic-sub">${pOf(ic.afterFail)}% of incompletes · Got a result, did not retry</div>
+      <div class="micro-bars">
+        <div class="micro-section-label">Abandoned after N attempts</div>
+        ${attBars}
+      </div>
+    </div>
+  `;
+}
+
+/* ── SUBTITLES ── */
+function updateSubtitles() {
+  const sel=document.getElementById('profileSel'),profText=sel.options[sel.selectedIndex].text;
+  document.getElementById('verdict-sub').textContent = `Distribution — ${profText}`;
+  document.getElementById('scan-sub').textContent    = `Completed verification scans — ${profText}`;
+  document.getElementById('wf-sub').textContent      = `Created, opened, started & completed — ${profText}`;
+  document.getElementById('verdict-section-sub').textContent = `Outcome breakdown — ${profText}`;
+}
+
+function updateAll() {
+  const d=getData();
+  updateSubtitles();
+  updateFunnel(d);
+  updateScanMetrics(d);
+  updateVolumeChart(d);
+  updateFailures(d);
+  updateVerdictChart(d);
+  updateIncomplete(d);
+}
+
+initDatePicker(); // sets the committed range the chart buckets from
+updateAll();
+
+/* ── EXPORT TO EXCEL ── */
+function exportToExcel() {
+  const sel = document.getElementById('profileSel');
+  const profText = sel.options[sel.selectedIndex].text;
+  const pLabel = period.charAt(0).toUpperCase() + period.slice(1);
+  const d = getData();
+  const v = d.verdicts;
+  const total = Object.values(v).reduce((a,b)=>a+b,0);
+  const f = d.funnel;
+  const ic = d.incomplete;
+
+  // Build TSV rows (Excel-compatible)
+  const rows = [
+    ['Vyyer Dashboard Export'],
+    [`Period: ${pLabel}`, `Profile: ${profText}`],
+    [],
+    // Workflow funnel
+    ['WORKFLOWS'],
+    ['Step','Count','% of Created'],
+    ['Created',   f.created,  '100%'],
+    ['Opened',    f.opened,   Math.round(f.opened/f.created*100)+'%'],
+    ['Started',   f.started,  Math.round(f.started/f.created*100)+'%'],
+    ['Completed', f.completed,Math.round(f.completed/f.created*100)+'%'],
+    [],
+    // Scans
+    ['SCANS'],
+    ['Metric','Value'],
+    ['Total scans', total],
+    ['Valid',       v.Valid],
+    ['Invalid',     v.Invalid],
+    ['Caution',     v.Caution],
+    ['Expired',     v.Expired],
+    ['Underage',    v.Underage],
+    ['Incomplete',  v.Incomplete],
+    ['Avg time to verify', d.avgTime],
+    ['Avg attempts',       d.avgAttempts],
+    [],
+    // Failure reasons
+    ['FAILURE REASONS'],
+    ['Check','% of Invalids'],
+    ...Object.entries(d.failures).sort((a,b)=>b[1]-a[1]).map(([k,v2])=>{
+      const ft = Object.values(d.failures).reduce((a,b)=>a+b,0);
+      return [k, Math.round(v2/ft*100)+'%'];
+    }),
+    [],
+    // Incomplete breakdown
+    ['INCOMPLETE BREAKDOWN'],
+    ['Cause','Count'],
+    ['Never opened',                 ic.never],
+    ['Abandoned mid-flow',           ic.abandoned],
+    ['Abandoned after failed result',ic.afterFail],
+  ];
+
+  const tsv = rows.map(r => r.join('\t')).join('\n');
+  const blob = new Blob([tsv], { type: 'text/tab-separated-values' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `vyyer-dashboard-${pLabel.toLowerCase()}-${profText.replace(/\s+/g,'-').toLowerCase()}.xls`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+</script>
+</body>
+</html>

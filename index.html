@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Design Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-base: #0a0a0b;
+  --accent: #A0D959; /* Vyyer logo green */
+  --glass-bg: rgba(255,255,255,0.04);
+  --glass-bg-strong: rgba(255,255,255,0.07);
+  --glass-border: rgba(255,255,255,0.10);
+  --glass-border-strong: rgba(255,255,255,0.22);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+body {
+  font-family: var(--font);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Ambient lime glow */
+.glow { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.glow-blob { position: absolute; border-radius: 50%; filter: blur(120px); }
+.glow-blob.g1 { width: 620px; height: 620px; top: -260px; left: -160px; background: rgba(160,217,89,0.12); }
+.glow-blob.g2 { width: 460px; height: 460px; top: 120px; right: -180px; background: rgba(160,217,89,0.06); }
+.glow-blob.g3 { width: 520px; height: 520px; bottom: -280px; left: 30%; background: rgba(160,217,89,0.04); }
+
+.wrap { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 72px 32px 64px; }
+
+/* Header */
+.header { display: flex; align-items: center; gap: 11px; margin-bottom: 60px; }
+.logo-mark { width: 36px; height: 36px; flex-shrink: 0; display: block; }
+.brand-name { font-size: 22px; font-weight: 600; letter-spacing: -0.02em; }
+
+/* Hero */
+.hero { margin-bottom: 56px; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.12em;
+  text-transform: uppercase; color: var(--accent);
+  margin-bottom: 18px;
+}
+.eyebrow::before { content: ''; width: 20px; height: 1px; background: var(--accent); opacity: 0.6; }
+.title {
+  font-size: clamp(34px, 5.5vw, 54px);
+  font-weight: 600; letter-spacing: -0.03em; line-height: 1.05;
+  margin-bottom: 20px;
+}
+.title .accent { color: var(--accent); }
+.lede { font-size: 16px; color: var(--text-secondary); line-height: 1.6; max-width: 620px; }
+
+/* Section */
+.section { margin-bottom: 48px; }
+.section-head {
+  display: flex; align-items: baseline; gap: 10px;
+  margin-bottom: 22px; padding-bottom: 14px;
+  border-bottom: 1px solid var(--glass-border);
+}
+.section-head h2 { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; }
+.section-head .section-sub { font-size: 13px; color: var(--text-tertiary); }
+
+/* Grid */
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 380px)); gap: 18px; }
+
+/* Card */
+.card {
+  position: relative;
+  display: flex; flex-direction: column; gap: 16px;
+  padding: 22px 22px 18px;
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  text-decoration: none; color: var(--text-primary);
+  transition: background 0.2s, border-color 0.2s, transform 0.2s;
+  min-height: 210px;
+}
+.card:hover { background: var(--glass-bg-strong); border-color: var(--glass-border-strong); transform: translateY(-3px); }
+
+.card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.card-icon {
+  width: 46px; height: 46px; border-radius: var(--radius-md);
+  background: rgba(160,217,89,0.14);
+  color: var(--accent);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.card-icon svg { width: 23px; height: 23px; }
+.card-tag {
+  font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase;
+  padding: 4px 10px; border-radius: 100px;
+  background: rgba(160,217,89,0.14); color: var(--accent);
+}
+
+.card-body { flex: 1; }
+.card-title { font-size: 18px; font-weight: 600; letter-spacing: -0.01em; margin-bottom: 5px; }
+.card-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.55; }
+
+.card-foot {
+  display: flex; align-items: center; justify-content: space-between;
+  padding-top: 14px; border-top: 1px solid var(--glass-border);
+}
+.card-path {
+  font-family: 'Menlo', 'Monaco', monospace; font-size: 11px; color: var(--text-tertiary);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.card-arrow {
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.07);
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  transition: background 0.15s, transform 0.15s, color 0.15s;
+  color: var(--text-secondary);
+}
+.card:hover .card-arrow { background: var(--accent); color: #111; transform: translateX(3px); }
+.card-arrow svg { width: 14px; height: 14px; }
+
+/* Footer */
+.footer {
+  margin-top: 64px; padding-top: 26px;
+  border-top: 1px solid var(--glass-border);
+  font-size: 12px; color: var(--text-tertiary); line-height: 1.6;
+}
+
+@media (max-width: 560px) {
+  .wrap { padding: 48px 20px 48px; }
+  .grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="glow">
+  <div class="glow-blob g1"></div>
+  <div class="glow-blob g2"></div>
+  <div class="glow-blob g3"></div>
+</div>
+
+<div class="wrap">
+
+  <div class="header">
+    <svg class="logo-mark" viewBox="0 0 138 138" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vyyer">
+      <defs>
+        <mask id="vyyerVcut">
+          <rect width="138" height="138" fill="#fff"></rect>
+          <path fill="#000" transform="translate(69, 75) rotate(90) translate(-69, -75)" d="M29,125.844843 C29,125.988984 29.0993882,126.042108 29.221238,125.96398 L42.8635356,117.216859 C42.9857221,117.138516 43.0817329,116.956668 43.0780385,116.812901 L42.5846021,97.6106244 C42.5808823,97.4658673 42.6828508,97.4006824 42.813659,97.4656777 L59.8424361,105.926824 C59.9726607,105.991529 60.1771625,105.981341 60.3002155,105.903427 L108.81628,75.1843301 C109.061495,75.029067 109.060982,74.7768014 108.816289,74.6216104 L29,24 L29,44.1001278 C29,44.2443585 29.0994846,44.4250153 29.2204829,44.5025328 L76.4529161,74.761949 C76.5746856,74.8399604 76.5738029,74.9672807 76.4526502,75.0452293 L58.7903256,86.4090233 C58.6684094,86.4874633 58.4711441,86.487857 58.3485647,86.40916 L29.2210118,67.7090431 C29.0989503,67.6306786 29,67.6849074 29,67.8281421 L29,125.844843 Z"></path>
+        </mask>
+      </defs>
+      <circle cx="69" cy="69" r="69" fill="#A0D959" mask="url(#vyyerVcut)"></circle>
+    </svg>
+    <div class="brand-name">vyyer</div>
+  </div>
+
+  <div class="hero">
+    <h1 class="title">Design Hub</h1>
+    <p class="lede">A living index of the product designs we build together. Click into any tile to explore it live — fully interactive, with real data controls.</p>
+  </div>
+
+  <div class="section">
+    <div class="section-head">
+      <h2>Dashboard</h2>
+      <span class="section-sub">— Analytics &amp; verification insights</span>
+    </div>
+    <div class="grid">
+
+      <a class="card" href="dashboard.html">
+        <div class="card-head">
+          <div class="card-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <span class="card-tag">Analytics</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title">Dashboard</div>
+          <div class="card-desc">Verification analytics — a workflow funnel, seven verdict metrics, and an adaptive scan-volume chart with a custom date-range picker that rebuckets by span.</div>
+        </div>
+        <div class="card-foot">
+          <span class="card-path">dashboard.html</span>
+          <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></span>
+        </div>
+      </a>
+
+    </div>
+  </div>
+
+  <div class="footer">
+    Vyyer Design Hub — more screens land here as we build them.
+  </div>
+
+</div>
+
+</body>
+</html>
