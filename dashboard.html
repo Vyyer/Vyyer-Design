@@ -928,6 +928,12 @@ function dailyScans(prof, date){
 }
 function sumDaily(prof, from, to){ let s=0; for(let day=new Date(from); day<=to; day.setDate(day.getDate()+1)) s+=dailyScans(prof,new Date(day)); return s; }
 function fmtHour(h){ const ap=h<12?'a':'p'; let hh=h%12; if(hh===0)hh=12; return hh+ap; }
+function fmtH12(h){ const hh=(h%12)||12; return hh + ((h%24)<12 ? ' AM' : ' PM'); }
+function hourBlockFull(h){ return fmtH12(h) + ' – ' + fmtH12((h+1)%24); }        // "12 AM – 1 AM"  (tooltip)
+function hourBlockShort(h){                                                        // "12–1am" / "11pm–12am"  (axis)
+  const e=(h+1)%24, sh=(h%12)||12, eh=(e%12)||12, sap=h<12?'am':'pm', eap=e<12?'am':'pm';
+  return sap===eap ? `${sh}–${eh}${eap}` : `${sh}${sap}–${eh}${eap}`;
+}
 
 function chooseUnit(start, end){
   const days = Math.round((d0(end)-d0(start))/86400000)+1;
@@ -949,7 +955,7 @@ function buildVolumeSeries(prof, start, end){
     const isToday = sameDay(s, TODAY);
     const lastHour = isToday ? new Date().getHours() : 23;
     const dayTotal = dailyScans(prof, s), wsum = HOUR_WEIGHTS.reduce((a,b)=>a+b,0);
-    for(let h=0; h<=lastHour; h++) points.push({ label:fmtHour(h), full:fmtHour(h).toUpperCase(), value:Math.round(dayTotal*HOUR_WEIGHTS[h]/wsum) });
+    for(let h=0; h<=lastHour; h++) points.push({ label:hourBlockShort(h), full:hourBlockFull(h), value:Math.round(dayTotal*HOUR_WEIGHTS[h]/wsum) });
     return { unit, points, partialLast:isToday };
   }
   if(unit==='day'){
@@ -1042,7 +1048,7 @@ function updateVolumeChart() {
         titleFont:{ size:12, weight:'600', family:'Inter' },
         bodyFont:{ size:12, family:'Inter' }
       }}
-      ,scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',autoSkip:true,maxTicksLimit:12}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v}}}}
+      ,scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',autoSkip:true,maxTicksLimit:12,maxRotation:0,minRotation:0,autoSkipPadding:14}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v}}}}
   });
 }
 
