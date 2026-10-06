@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Verification Detail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #f0efeb;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text-primary: #111110;
+  --text-secondary: #6f6e6b;
+  --text-tertiary: #9d9c99;
+  --valid: #3a7d1e;
+  --invalid: #d63f3f;
+  --expired: #c47a1a;
+  --caution: #b0850c;
+  --underage: #2e6fb5;
+  --incomplete: #7a6c55;
+  --nav-bg: #111110;
+  --nav-text: #e8e8e6;
+  --nav-muted: #6f6e6b;
+  --accent: #C8FF00;
+  --blue: #007aff;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; }
+
+/* NAV */
+nav { background: var(--nav-bg); height: 52px; display: flex; align-items: center; padding: 0 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
+.nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; margin-right: 28px; }
+.nav-logo-mark { width: 28px; height: 28px; flex-shrink: 0; display: block; }
+.nav-logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
+.nav-links { display: flex; align-items: center; gap: 2px; flex: 1; }
+.nav-links a { font-size: 13px; font-weight: 500; color: var(--nav-muted); text-decoration: none; padding: 6px 12px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
+.nav-links a:hover { color: var(--nav-text); background: rgba(255,255,255,0.06); }
+.nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
+.nav-right { display: flex; align-items: center; gap: 12px; }
+.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #3a6800; color: var(--accent); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
+.nav-user-name { font-size: 12px; font-weight: 500; color: var(--nav-text); }
+.nav-user-sub { font-size: 11px; color: var(--nav-muted); }
+.nav-mobile-menu { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--nav-muted); }
+
+/* LAYOUT */
+main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
+.back-link { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-secondary); text-decoration: none; margin-bottom: 20px; transition: color .15s; }
+.back-link:hover { color: var(--text-primary); }
+.back-link svg { color: var(--text-tertiary); }
+.detail-layout { display: grid; grid-template-columns: 300px 1fr; gap: 20px; align-items: start; }
+
+/* SIDEBAR */
+.sidebar { display: flex; flex-direction: column; gap: 14px; position: sticky; top: 72px; }
+.sidebar-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 20px; box-shadow: var(--shadow-sm); }
+.subject-head { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.subject-avatar { width: 42px; height: 42px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; }
+.subject-name { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; color: var(--text-primary); line-height: 1.2; }
+.verdict-pill { display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: var(--radius-md); padding: 10px 16px; font-size: 13px; font-weight: 600; margin-bottom: 18px; }
+.verdict-pill svg { flex-shrink: 0; }
+.vp-valid      { background: #e6f5db; color: var(--valid); }
+.vp-invalid    { background: #fde8e8; color: var(--invalid); }
+.vp-expired    { background: #f6e6cf; color: var(--expired); }
+.vp-caution    { background: #fbf1cf; color: var(--caution); }
+.vp-underage   { background: #e3eefa; color: var(--underage); }
+.vp-incomplete { background: #f1ede6; color: var(--incomplete); }
+
+.meta-rows { display: flex; flex-direction: column; gap: 0; }
+.meta-row { display: flex; flex-direction: column; padding: 10px 0; border-bottom: 1px solid var(--border); }
+.meta-row:last-child { border-bottom: none; padding-bottom: 0; }
+.meta-row:first-child { padding-top: 0; }
+.meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); margin-bottom: 3px; }
+.meta-val { font-size: 12px; color: var(--text-primary); word-break: break-all; display: flex; align-items: center; gap: 6px; }
+.meta-val-mono { font-family: 'SF Mono', 'Monaco', monospace; font-size: 11px; color: var(--text-secondary); }
+.copy-btn { background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 2px; border-radius: 4px; display: flex; align-items: center; transition: color .12s; flex-shrink: 0; }
+.copy-btn:hover { color: var(--text-primary); }
+.created-note { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: flex-start; gap: 6px; margin-top: 12px; line-height: 1.4; }
+
+/* MAIN CONTENT */
+.content { display: flex; flex-direction: column; gap: 16px; }
+.section-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.section-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.section-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.section-badge { font-size: 10px; font-weight: 600; padding: 2px 8px; border-radius: 20px; }
+.sb-pass { background: #e6f5db; color: #3a7d1e; }
+.sb-fail { background: #fde8e8; color: #c0392b; }
+.sb-warn { background: #fbf1cf; color: #9a7400; }
+.sb-skip { background: var(--surface-2); color: var(--text-tertiary); }
+.section-body { padding: 20px; }
+
+.check-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; }
+.check-item-label { font-size: 11px; font-weight: 500; color: var(--text-secondary); margin-bottom: 4px; }
+.check-item-val { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; }
+.check-dot { width: 16px; height: 16px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.cd-pass { background: #e6f5db; color: #3a7d1e; }
+.cd-fail { background: #fde8e8; color: #c0392b; }
+.cd-warn { background: #fbf1cf; color: #9a7400; }
+.cd-skip { background: var(--surface-2); color: var(--text-tertiary); }
+.check-text-pass { color: var(--valid); }
+.check-text-fail { color: var(--invalid); }
+.check-text-warn { color: var(--caution); }
+.check-text-skip { color: var(--text-tertiary); }
+
+.data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+.data-field-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); margin-bottom: 3px; }
+.data-field-val { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+.data-field-val.empty { color: var(--text-tertiary); font-weight: 400; }
+.expired-tag { font-size: 10px; font-weight: 600; background: #fde8e8; color: var(--invalid); padding: 1px 6px; border-radius: 10px; margin-left: 4px; }
+
+.images-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.img-placeholder { width: 120px; height: 80px; border-radius: var(--radius-md); border: 1px dashed var(--border-md); background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
+
+/* WORKFLOW TIMELINE */
+.timeline-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
+.timeline-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.timeline-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+.timeline-duration { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
+.timeline-body { padding: 8px 0; }
+.tl-event { display: flex; align-items: flex-start; gap: 0; padding: 0 20px; position: relative; }
+.tl-left { display: flex; flex-direction: column; align-items: center; width: 32px; flex-shrink: 0; padding-top: 14px; }
+.tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; z-index: 1; }
+.tl-line { width: 2px; flex: 1; background: var(--border); min-height: 16px; }
+.tl-event:last-child .tl-line { display: none; }
+.tl-dot-success   { background: var(--valid); box-shadow: 0 0 0 3px #e6f5db; }
+.tl-dot-fail      { background: var(--invalid); box-shadow: 0 0 0 3px #fde8e8; }
+.tl-dot-warn      { background: var(--caution); box-shadow: 0 0 0 3px #fbf1cf; }
+.tl-dot-info      { background: var(--blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.tl-dot-neutral   { background: var(--text-tertiary); box-shadow: 0 0 0 3px var(--surface-2); }
+.tl-dot-abandoned { background: var(--invalid); box-shadow: 0 0 0 3px #fde8e8; }
+.tl-right { flex: 1; padding: 10px 0 10px 12px; border-bottom: 1px solid var(--border); }
+.tl-event:last-child .tl-right { border-bottom: none; }
+.tl-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+.tl-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.tl-time { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.tl-sub { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
+.tl-duration { font-size: 11px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; }
+.tl-duration-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-tertiary); }
+.tl-flag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
+.tf-slow    { background: #fbf1cf; color: #9a7400; }
+.tf-abandon { background: #fde8e8; color: #c0392b; }
+.tf-success { background: #e6f5db; color: #3a7d1e; }
+
+.step-timing { margin-top: 20px; padding: 16px 20px; background: var(--surface-2); border-top: 1px solid var(--border); }
+.step-timing-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); margin-bottom: 12px; }
+.timing-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.timing-row:last-child { margin-bottom: 0; }
+.timing-step { font-size: 12px; color: var(--text-secondary); width: 150px; flex-shrink: 0; }
+.timing-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.timing-bar { height: 5px; border-radius: 3px; background: var(--blue); }
+.timing-bar.slow { background: #e8a020; }
+.timing-val { font-size: 12px; font-weight: 600; color: var(--text-primary); min-width: 44px; text-align: right; }
+
+@media (max-width: 900px) { .detail-layout { grid-template-columns: 1fr; } .sidebar { position: static; } .check-grid { grid-template-columns: repeat(2,1fr); } .data-grid { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 680px) { .nav-links, .nav-right .nav-user { display: none; } .nav-mobile-menu { display: block; } }
+@media (max-width: 600px) { .check-grid, .data-grid { grid-template-columns: 1fr 1fr; } main { padding: 16px 12px 48px; } .timing-step { width: 110px; } }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="#">
+    <svg class="nav-logo-mark" viewBox="0 0 138 138" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vyyer">
+      <circle cx="69" cy="69" r="69" fill="#000"></circle>
+      <path fill="#A0D959" transform="translate(69, 75) rotate(90) translate(-69, -75)" d="M29,125.844843 C29,125.988984 29.0993882,126.042108 29.221238,125.96398 L42.8635356,117.216859 C42.9857221,117.138516 43.0817329,116.956668 43.0780385,116.812901 L42.5846021,97.6106244 C42.5808823,97.4658673 42.6828508,97.4006824 42.813659,97.4656777 L59.8424361,105.926824 C59.9726607,105.991529 60.1771625,105.981341 60.3002155,105.903427 L108.81628,75.1843301 C109.061495,75.029067 109.060982,74.7768014 108.816289,74.6216104 L29,24 L29,44.1001278 C29,44.2443585 29.0994846,44.4250153 29.2204829,44.5025328 L76.4529161,74.761949 C76.5746856,74.8399604 76.5738029,74.9672807 76.4526502,75.0452293 L58.7903256,86.4090233 C58.6684094,86.4874633 58.4711441,86.487857 58.3485647,86.40916 L29.2210118,67.7090431 C29.0989503,67.6306786 29,67.6849074 29,67.8281421 L29,125.844843 Z"></path>
+    </svg>
+    <span class="nav-logo-text">vyyer</span>
+  </a>
+  <div class="nav-links">
+    <a href="dashboard.html">Dashboard</a>
+    <a href="history.html" class="active">History</a>
+    <a href="#">Workflows</a>
+    <a href="#">API Keys</a>
+    <a href="#">Settings</a>
+  </div>
+  <div class="nav-right">
+    <div class="nav-user" style="text-align:right">
+      <div class="nav-user-name">Produser@Vyyer.com</div>
+      <div class="nav-user-sub">Default profile</div>
+    </div>
+    <div class="nav-avatar">PR</div>
+  </div>
+  <button class="nav-mobile-menu" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect y="3" width="20" height="2" rx="1"/><rect y="9" width="20" height="2" rx="1"/><rect y="15" width="20" height="2" rx="1"/></svg>
+  </button>
+</nav>
+
+<main>
+  <a href="history.html" class="back-link">
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9 2L4 7l5 5"/></svg>
+    Back to History
+  </a>
+
+  <div class="detail-layout">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sidebar-card" id="sidebarCard"><!-- JS --></div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="content">
+      <!-- IDV CHECKS -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">IDV Checks</div>
+          <span class="section-badge" id="idvBadge"></span>
+        </div>
+        <div class="section-body"><div class="check-grid" id="checkGrid"></div></div>
+      </div>
+
+      <!-- FRONT OCR DATA -->
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">Front OCR Data</div></div>
+        <div class="section-body"><div class="data-grid" id="ocrGrid"></div></div>
+      </div>
+
+      <!-- BARCODE DATA -->
+      <div class="section-card">
+        <div class="section-head"><div class="section-title">Barcode Data</div></div>
+        <div class="section-body"><div class="data-grid" id="barcodeGrid"></div></div>
+      </div>
+
+      <!-- ID IMAGES -->
+      <div class="section-card">
+        <div class="section-head">
+          <div class="section-title">ID Verification Images</div>
+          <span style="font-size:11px;color:var(--text-tertiary)">3 images captured</span>
+        </div>
+        <div class="section-body">
+          <div class="images-row">
+            <div class="img-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="12" cy="12" r="3"/></svg></div>
+            <div class="img-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 9h18"/></svg></div>
+            <div class="img-placeholder"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#ccc" stroke-width="1.5"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M6 15l3-3 3 3 3-4 3 4"/></svg></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WORKFLOW TIMELINE -->
+      <div class="timeline-section">
+        <div class="timeline-head">
+          <div>
+            <div class="timeline-title">Verification journey</div>
+            <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">Step-by-step activity with timestamps</div>
+          </div>
+          <div class="timeline-duration">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="6" r="5"/><path d="M6 3.5V6l1.5 1.5"/></svg>
+            <span id="totalTime">Total time: —</span>
+          </div>
+        </div>
+        <div class="timeline-body" id="timelineBody"></div>
+        <div class="step-timing">
+          <div class="step-timing-title">Time spent per step</div>
+          <div class="timing-row"><div class="timing-step">Start screen</div><div class="timing-bar-wrap"><div class="timing-bar" style="width:6%"></div></div><div class="timing-val">16s</div></div>
+          <div class="timing-row"><div class="timing-step">Scan face</div><div class="timing-bar-wrap"><div class="timing-bar" style="width:22%"></div></div><div class="timing-val">36s</div></div>
+          <div class="timing-row"><div class="timing-step">Scan ID front</div><div class="timing-bar-wrap"><div class="timing-bar slow" style="width:100%"></div></div><div class="timing-val">58s</div></div>
+          <div class="timing-row"><div class="timing-step">Scan ID back</div><div class="timing-bar-wrap"><div class="timing-bar" style="width:34%"></div></div><div class="timing-val">56s</div></div>
+        </div>
+      </div>
+    </div><!-- /content -->
+  </div><!-- /detail-layout -->
+</main>
+
+<script>
+/* ─── ICONS ─── */
+const IC = {
+  check:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 7.5l3 3 6-6.5"/></svg>',
+  x:'<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2.5l9 9M11.5 2.5l-9 9"/></svg>',
+  warn:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 1.5L13 12H1z"/><path d="M7 6v2.4M7 10.2v.1"/></svg>',
+  dash:'<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.5 7h7"/></svg>'
+};
+const DOT = { pass:'<svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M1.5 4l2 2 3-3"/></svg>', fail:'<svg width="7" height="7" viewBox="0 0 7 7" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M1 1l5 5M6 1L1 6"/></svg>', warn:'<svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 2v2.6M4 6.2v.1"/></svg>', skip:'<svg width="8" height="8" viewBox="0 0 8 8" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M2 4h4"/></svg>' };
+const COPY = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="4" y="4" width="8" height="8" rx="1.5"/><path d="M9 4V2.5A1.5 1.5 0 007.5 1h-5A1.5 1.5 0 001 2.5v5A1.5 1.5 0 002.5 9H4"/></svg>';
+
+/* ─── RESULT ARCHETYPES ─── */
+const ARCH = {
+  Valid:      { j:'valid',      pill:{cls:'vp-valid',ic:'check',label:'Valid'},                 badge:{cls:'sb-pass',text:'All passed'},
+                checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','pass','Verified'],['ID Front Back Match','pass','Matched'],['Face Match','pass','Matched'],['Barcode Detective','pass','Passed']] },
+  Invalid:    { j:'fail',       pill:{cls:'vp-invalid',ic:'x',label:'Invalid — ID mismatch'},   badge:{cls:'sb-fail',text:'2 failed'},
+                checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','fail','Failed'],['ID Front Back Match','fail','Mismatch'],['Face Match','pass','Matched'],['Barcode Detective','pass','Passed']],
+                failStep:'Scan ID back', failMsg:'ID number could not be verified against issuing records', verdictColor:'--invalid' },
+  Expired:    { j:'fail',       pill:{cls:'vp-expired',ic:'x',label:'Invalid — Expired ID'},    badge:{cls:'sb-fail',text:'1 failed'},
+                checks:[['Scan Front','pass','Passed'],['Scan Back','fail','Expired ID'],['ID Number Verification','skip','Skipped'],['ID Front Back Match','pass','Matched'],['Face Match','pass','Matched'],['Barcode Detective','skip','Skipped']],
+                failStep:'Scan ID back', failMsg:'Expiry date detected as past — the ID has expired', verdictColor:'--expired', expired:true },
+  Underage:   { j:'underage',   pill:{cls:'vp-underage',ic:'warn',label:'Underage'},            badge:{cls:'sb-warn',text:'Underage'},
+                checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','pass','Verified'],['ID Front Back Match','pass','Matched'],['Face Match','pass','Matched'],['Barcode Detective','pass','Passed']],
+                failMsg:'Date of birth indicates the holder is under 21', verdictColor:'--underage', underage:true },
+  Caution:    { j:'caution',    pill:{cls:'vp-caution',ic:'warn',label:'Caution — review advised'}, badge:{cls:'sb-warn',text:'1 flagged'},
+                checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','pass','Verified'],['ID Front Back Match','pass','Matched'],['Face Match','warn','Low confidence'],['Barcode Detective','pass','Passed']],
+                failMsg:'Face match confidence fell below the auto-approve threshold', verdictColor:'--caution' },
+  Incomplete: { j:'incomplete', pill:{cls:'vp-incomplete',ic:'dash',label:'Incomplete — abandoned'}, badge:{cls:'sb-skip',text:'Abandoned'},
+                checks:[['Scan Front','pass','Passed'],['Scan Back','skip','Not reached'],['ID Number Verification','skip','Not reached'],['ID Front Back Match','skip','Not reached'],['Face Match','pass','Passed'],['Barcode Detective','skip','Not reached']],
+                abandonStep:'Scan ID front' }
+};
+
+const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MON_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+function ampm(d){ let h=d.getHours(); const ap=h<12?'AM':'PM'; h=h%12||12; return {h,ap,m:String(d.getMinutes()).padStart(2,'0'),s:String(d.getSeconds()).padStart(2,'0')}; }
+function fmtDT(d){ const t=ampm(d); return MON[d.getMonth()]+' '+d.getDate()+' · '+t.h+':'+t.m+':'+t.s+' '+t.ap; }
+function fmtScanned(d){ const t=ampm(d); return MON_FULL[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear()+' · '+t.h+':'+t.m+' '+t.ap; }
+
+/* ─── LOAD RECORD ─── */
+function loadRecord(){
+  let r;
+  try { r = JSON.parse(sessionStorage.getItem('vyyerDetailRecord')); } catch(e){ r = null; }
+  if(!r) r = { id:'VYR-8K2QX', name:'Steven Elkins', email:'steven.elkins@icloud.com', result:'Expired', workflow:'ID Verification', platformLabel:'iOS', version:'v1.8.12/362', profile:'Default profile', ts:'2026-06-03T05:37:02' };
+  r.ts = new Date(r.ts);
+  return r;
+}
+function initials(n){ const p=n.split(/\s+/); return ((p[0][0]||'')+(p[p.length-1][0]||'')).toUpperCase(); }
+function avatarColors(n){ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))%360; return {bg:`hsl(${h} 52% 91%)`, fg:`hsl(${h} 42% 34%)`}; }
+function domainFor(r){ return r.platformLabel==='Web SDK' ? 'checkout.merchant.com' : 'id.vyyer'; }
+
+const REC = loadRecord();
+const A = ARCH[REC.result] || ARCH.Valid;
+
+/* ─── SIDEBAR ─── */
+(function renderSidebar(){
+  const c = avatarColors(REC.name);
+  const created = new Date(REC.ts.getTime() - 262000);
+  const sessionUid = REC.id.toLowerCase().replace('vyr-','ef0c07fe-8153-4847-') + '…b97';
+  const html = `
+    <div class="subject-head">
+      <span class="subject-avatar" style="background:${c.bg};color:${c.fg}">${initials(REC.name)}</span>
+      <div class="subject-name">${REC.name}</div>
+    </div>
+    <div class="verdict-pill ${A.pill.cls}">${IC[A.pill.ic]}${A.pill.label}</div>
+    <div class="meta-rows">
+      <div class="meta-row"><div class="meta-label">Session UID</div><div class="meta-val"><span class="meta-val-mono">${sessionUid}</span><button class="copy-btn" data-copy="${sessionUid}" title="Copy">${COPY}</button></div></div>
+      <div class="meta-row"><div class="meta-label">Customer UID</div><div class="meta-val"><span class="meta-val-mono">eTR5DBMb0cfy…M325s=</span><button class="copy-btn" data-copy="eTR5DBMb0cfyM325s=" title="Copy">${COPY}</button></div></div>
+      <div class="meta-row"><div class="meta-label">Workflow</div><div class="meta-val">${REC.workflow}</div></div>
+      <div class="meta-row"><div class="meta-label">Domain</div><div class="meta-val">${domainFor(REC)}</div></div>
+      <div class="meta-row"><div class="meta-label">Platform</div><div class="meta-val">${REC.platformLabel} · ${REC.version||''}</div></div>
+      <div class="meta-row"><div class="meta-label">Profile</div><div class="meta-val">${REC.profile}</div></div>
+      <div class="meta-row"><div class="meta-label">Scanned</div><div class="meta-val">${fmtScanned(REC.ts)}</div></div>
+    </div>
+    <div class="created-note">
+      <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" style="flex-shrink:0;margin-top:1px"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M6.5 5v3M6.5 9.5v.2"/></svg>
+      Workflow pre-created ${fmtScanned(created)}
+    </div>`;
+  document.getElementById('sidebarCard').innerHTML = html;
+})();
+
+/* ─── IDV CHECKS ─── */
+(function renderChecks(){
+  const badge = document.getElementById('idvBadge');
+  badge.className = 'section-badge ' + A.badge.cls; badge.textContent = A.badge.text;
+  document.getElementById('checkGrid').innerHTML = A.checks.map(([label,st,txt])=>`
+    <div class="check-item">
+      <div class="check-item-label">${label}</div>
+      <div class="check-item-val"><div class="check-dot cd-${st}">${DOT[st]}</div><span class="check-text-${st}">${txt}</span></div>
+    </div>`).join('');
+})();
+
+/* ─── OCR + BARCODE DATA ─── */
+(function renderData(){
+  const parts = REC.name.split(/\s+/), first = parts[0], last = parts[parts.length-1];
+  const dob = A.underage ? '05/14/06' : '07/27/86';
+  const expVal = A.expired
+    ? `<span style="color:var(--invalid)">07/27/21 <span class="expired-tag">EXPIRED</span></span>`
+    : '09/14/30';
+  const field = (l,v)=> `<div><div class="data-field-label">${l}</div><div class="data-field-val${v?'':' empty'}">${v||'—'}</div></div>`;
+  document.getElementById('ocrGrid').innerHTML = [
+    field('First name', first), field('Last name', last), field('DOB', dob),
+    field('Gender',''), field('Address',''), field('Address line 2',''),
+    field('City',''), field('State','Indiana'), field('Zipcode',''),
+    field('Issue Date','01/07/16'), field('Document number',''), field('Expiry Date', expVal)
+  ].join('');
+  document.getElementById('barcodeGrid').innerHTML = [
+    field('First name', first), field('Last name', last), field('DOB', dob),
+    field('Gender','Male'), field('Address','320 Gra Roy Dr'), field('Address line 2',''),
+    field('City','Goshen'), field('State','IN'), field('Zipcode','46526'),
+    field('Document number','2398466427'), field('Issue Date','01/07/16'),
+    field('Expiry Date', A.expired?`<span style="color:var(--invalid)">07/27/21</span>`:'09/14/30')
+  ].join('');
+})();
+
+/* ─── TIMELINE ─── */
+(function renderTimeline(){
+  const end = REC.ts.getTime();
+  const at = s => fmtDT(new Date(end - s*1000));
+  const vc = A.verdictColor ? `var(${A.verdictColor})` : 'var(--valid)';
+  const ev = [];
+  ev.push({ t:at(262), dot:'neutral', label:'Workflow created', sub:'Verification session initialized · '+domainFor(REC) });
+  ev.push({ t:at(170), dot:'info', label:'Link opened', sub:'User opened the verification widget', dur:'1m 32s after creation' });
+  ev.push({ t:at(154), dot:'info', label:'Started verification', sub:'User tapped “Start verification”', dur:'16s on start screen' });
+
+  if(A.j==='caution'){
+    ev.push({ t:at(118), dot:'warn', label:'Scan face', sub:'Liveness passed · Face match confidence below threshold', dur:'36s on this step', flag:['tf-slow','⚠ Low confidence'] });
+  } else {
+    ev.push({ t:at(118), dot:'success', label:'Scan face', sub:'Liveness check passed · Face captured', dur:'36s on this step', flag:['tf-success','✓ Passed'] });
+  }
+
+  if(A.j==='incomplete'){
+    ev.push({ t:at(0), dot:'abandoned', label:'Scan ID front', sub:'User exited the widget before capturing their ID', dur:'Last activity', flag:['tf-abandon','✗ Abandoned'] });
+    document.getElementById('totalTime').textContent = 'Abandoned after 2m 24s';
+    finish(ev); return;
+  }
+
+  ev.push({ t:at(60), dot:'success', label:'Scan ID front', sub:'Front of ID captured · OCR successful', dur:'58s on this step', flag:['tf-slow','⚠ Slow — 58s'] });
+
+  if(A.j==='fail'){
+    ev.push({ t:at(4), dot:'fail', label:'Scan ID back', sub:'Back of ID captured · '+A.failMsg, dur:'56s on this step', flag:['tf-abandon','✗ '+A.pill.label.replace(/^Invalid — /,'')] });
+    ev.push({ t:at(0), dot:'fail', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">${A.pill.label}</strong>`, dur:'4s to process' });
+  } else if(A.j==='underage'){
+    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', dur:'56s on this step', flag:['tf-success','✓ Passed'] });
+    ev.push({ t:at(0), dot:'warn', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Underage</strong> · ${A.failMsg}`, dur:'4s to process' });
+  } else if(A.j==='caution'){
+    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', dur:'56s on this step', flag:['tf-success','✓ Passed'] });
+    ev.push({ t:at(0), dot:'warn', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Caution</strong> · ${A.failMsg}`, dur:'4s to process' });
+  } else {
+    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', dur:'56s on this step', flag:['tf-success','✓ Passed'] });
+    ev.push({ t:at(0), dot:'success', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Valid</strong> · All checks passed`, dur:'4s to process' });
+  }
+  document.getElementById('totalTime').textContent = 'Total time: 4m 22s';
+  finish(ev);
+
+  function finish(events){
+    document.getElementById('timelineBody').innerHTML = events.map(e=>`
+      <div class="tl-event">
+        <div class="tl-left"><div class="tl-dot tl-dot-${e.dot}"></div><div class="tl-line"></div></div>
+        <div class="tl-right">
+          <div class="tl-row"><div class="tl-label">${e.label}</div><div class="tl-time">${e.t}</div></div>
+          ${e.sub?`<div class="tl-sub">${e.sub}</div>`:''}
+          ${e.dur?`<div class="tl-duration"><span class="tl-duration-dot"></span>${e.dur}</div>`:''}
+          ${e.flag?`<div><span class="tl-flag ${e.flag[0]}">${e.flag[1]}</span></div>`:''}
+        </div>
+      </div>`).join('');
+  }
+})();
+
+/* ─── COPY BUTTONS ─── */
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    navigator.clipboard?.writeText(btn.dataset.copy || '').catch(()=>{});
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#3a7d1e" stroke-width="1.6"><path d="M2 7l3 3 6-6"/></svg>';
+    setTimeout(() => btn.innerHTML = orig, 1500);
+  });
+});
+</script>
+</body>
+</html>
