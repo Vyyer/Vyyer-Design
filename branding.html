@@ -1,0 +1,1837 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Branding Studio</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<!-- the stored dashboard theme is applied before paint, so the page never flashes the other one -->
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'dark'}catch(e){}</script>
+<!--
+  ============================================================================
+  VYYER DASHBOARD — SETTINGS ▸ BRANDING  (concept)
+
+  THE MODEL, in four rules:
+
+  1. ONE MODE. There is no preview/edit toggle. Clicking an element always
+     selects it. The widget is never "operated" in here — every screen (and
+     every per-document variant of it) is a row in the rail, reachable by the
+     arrows too. Screen STATES (checked, open, error) are chips on the canvas
+     toolbar. So a click never has two possible meanings.
+
+     Desktop is a SEPARATE FLOW, not a breakpoint: QR / email hand-off, then the
+     modal updates with progress and the verdict. There is no Mobile/Desktop
+     switcher — screens render in their own frame. Add the switcher only when
+     "Enable desktop scanning" ships and the mobile flow can run on desktop.
+
+  2. SELECTION DRIVES THE PANEL. Nothing selected → brand-wide settings.
+     Something selected → only that element's properties. The client never
+     sees 300 fields; they see the six that belong to what they clicked.
+
+  3. INHERITANCE IS VISIBLE. Every property shows where its value comes from:
+     Global (inherited) or Custom (overridden here). Overriding is deliberate,
+     and one click puts it back.
+
+  4. EDIT ONE, APPLY TO THE SET. Walkthrough/Tips/Not-detected/Verdict screens
+     repeat per document type. Any change offers "apply to all N" so clients
+     style a set once instead of four or six times.
+  THE SHELL: the dashboard nav is part of this page — logo, section tabs and the
+  account cluster on one row. BRANDING IS A TOP-LEVEL TAB now (it used to sit
+  inside Settings). The light/dark switch beside the account button themes the
+  DASHBOARD; the widget's own light/dark values are a client setting and stay in
+  the inspector, so a client on a dark widget still previews a dark widget.
+  ============================================================================
+-->
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+
+:root{
+  --bg:#0a0a0b; --panel:#121214; --panel-2:#17171a; --sunken:#0e0e10;
+  --line:rgba(255,255,255,.09); --line-2:rgba(255,255,255,.16);
+  --ink:rgba(255,255,255,.95); --ink-2:rgba(255,255,255,.56); --ink-3:rgba(255,255,255,.36);
+  --accent:#A0D959; --accent-ink:#16240a; --accent-text:#A0D959;
+  --tint:rgba(160,217,89,.12); --tint-2:rgba(160,217,89,.18);
+  --hover:rgba(255,255,255,.05); --chip:rgba(255,255,255,.07);
+  --field:#0e0e10;
+  /* checkerboard, so a colour with opacity reads as transparent and not as grey */
+  --checker:linear-gradient(45deg,rgba(130,130,130,.6) 25%,transparent 25%,transparent 75%,rgba(130,130,130,.6) 75%),
+            linear-gradient(45deg,rgba(130,130,130,.6) 25%,transparent 25%,transparent 75%,rgba(130,130,130,.6) 75%);
+  --checker-size:10px 10px; --checker-pos:0 0, 5px 5px;
+  --warn:#E5A33C; --danger:#F26B5B;
+  --shadow-pop:0 18px 44px -14px rgba(0,0,0,.85);
+  --shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --caret-img:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+  --bar-h:52px;
+  --r:10px; --font:'Inter',system-ui,sans-serif;
+}
+/* ---- DASHBOARD LIGHT MODE ----------------------------------------------
+   Only the dashboard chrome flips. The device preview keeps rendering the
+   CLIENT's widget theme, which is their setting, not the operator's: a client
+   on a dark widget must still see a dark widget while working in light mode. */
+[data-theme="light"]{
+  --bg:#eff1f5; --panel:#ffffff; --panel-2:#f6f7f9; --sunken:#e9ecf1;
+  --line:rgba(17,20,24,.10); --line-2:rgba(17,20,24,.18);
+  --ink:#14171c; --ink-2:rgba(20,23,28,.66); --ink-3:rgba(20,23,28,.46);
+  --accent-text:#4C7A15;
+  --tint:rgba(109,165,41,.14); --tint-2:rgba(109,165,41,.2);
+  --hover:rgba(17,20,24,.05); --chip:rgba(17,20,24,.06);
+  --field:#F7F8F9;
+  --danger:#D4503C;
+  --shadow-pop:0 18px 44px -16px rgba(17,20,24,.26);
+  --shadow-seg:0 1px 2px rgba(17,20,24,.12);
+  --caret-img:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314171c' stroke-width='2.4' stroke-linecap='round'><path d='M6 9l6 6 6-6'/></svg>");
+}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+
+/* ---------- shell ---------- */
+.top{height:var(--bar-h);display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--line);background:var(--panel)}
+.top .crumb{font-size:13px;color:var(--ink-3)}
+.top .crumb b{color:var(--ink);font-weight:600}
+.top .sp{flex:1}
+.btn{font:600 12.5px var(--font);border:1px solid var(--line-2);background:transparent;color:var(--ink);
+  padding:7px 13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;gap:7px}
+.btn:hover{border-color:var(--ink-3)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.btn svg{width:14px;height:14px}
+.count{min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:var(--accent);color:var(--accent-ink);
+  font-size:11px;font-weight:700;display:inline-flex;align-items:center;justify-content:center}
+
+.app{display:grid;grid-template-columns:252px 1fr 324px;height:calc(100vh - var(--sh-h) - var(--bar-h))}
+
+/* ---------- rail ---------- */
+.rail{background:var(--panel);border-right:1px solid var(--line);overflow-y:auto;padding:10px}
+.rail h4{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);padding:12px 8px 6px}
+.brandbtn{width:100%;display:flex;align-items:center;gap:10px;padding:11px 10px;border-radius:var(--r);
+  border:1px solid var(--line);background:var(--panel-2);color:var(--ink);cursor:pointer;text-align:left;font:600 13px var(--font)}
+.brandbtn:hover{border-color:var(--line-2)}
+.brandbtn.on{border-color:var(--accent);background:var(--tint)}
+.brandbtn .sub{display:block;font-size:11px;font-weight:400;color:var(--ink-3);margin-top:2px}
+.brandbtn .ic{width:28px;height:28px;border-radius:8px;background:var(--tint-2);color:var(--accent-text);
+  display:grid;place-items:center;flex:0 0 auto}
+.brandbtn .ic svg{width:15px;height:15px}
+
+.grp{margin-bottom:2px}
+.grp>button{width:100%;display:flex;align-items:center;gap:8px;padding:8px 8px;border:0;background:transparent;
+  color:var(--ink-2);font:600 12px var(--font);cursor:pointer;border-radius:8px}
+.grp>button:hover{background:var(--hover);color:var(--ink)}
+.grp>button .chev{width:12px;height:12px;transition:transform .15s;opacity:.6}
+.grp.open>button .chev{transform:rotate(90deg)}
+.grp .items{display:none;padding-left:6px}
+.grp.open .items{display:block}
+.screenbtn{width:100%;display:flex;align-items:center;gap:8px;padding:7px 9px;border:0;border-radius:8px;
+  background:transparent;color:var(--ink-2);font:500 12.5px var(--font);cursor:pointer;text-align:left}
+.screenbtn:hover{background:var(--hover);color:var(--ink)}
+.screenbtn.on{background:var(--tint);color:var(--ink)}
+.screenbtn .nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);flex:0 0 auto}
+.screenbtn.off .nm{opacity:.5;text-decoration:line-through;text-decoration-thickness:1px}
+.skip{font:700 9px var(--font);letter-spacing:.06em;text-transform:uppercase;color:var(--warn);
+  background:rgba(229,163,60,.16);padding:2px 5px;border-radius:4px;flex:0 0 auto}
+
+/* ---------- canvas ---------- */
+.canvas{display:flex;flex-direction:column;background:var(--sunken);min-width:0}
+.cbar{height:46px;display:flex;align-items:center;gap:10px;padding:0 14px;border-bottom:1px solid var(--line)}
+.cbar .nm{font-size:13px;font-weight:600}
+.cbar .sp{flex:1}
+.segcap{font:600 10.5px var(--font);letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-left:6px}
+.seg{display:inline-flex;gap:2px;background:var(--panel);border:1px solid var(--line);border-radius:9px;padding:3px}
+.seg button{border:0;background:transparent;color:var(--ink-3);font:600 11.5px var(--font);
+  padding:5px 10px;border-radius:6px;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
+.seg button:hover{color:var(--ink)}
+.seg button.on{background:var(--panel-2);color:var(--ink);box-shadow:var(--shadow-seg)}
+.seg svg{width:13px;height:13px}
+.nav{width:34px;height:34px;flex:0 0 auto;border-radius:9px;border:1px solid var(--line);background:var(--panel);
+  color:var(--ink-2);cursor:pointer;font-size:18px;line-height:1}
+.nav:hover{color:var(--ink);border-color:var(--line-2)}
+
+.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;overflow:auto;padding:22px;position:relative}
+.hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11.5px;color:var(--ink-3);
+  background:var(--panel);border:1px solid var(--line);padding:6px 12px;border-radius:99px;pointer-events:none}
+
+/* device frames — rendered at true device size, then scaled to fit the stage,
+   so every value in the inspector is a real device value */
+.fitwrap{position:relative;display:flex;align-items:center;justify-content:center;flex:0 0 auto;overflow:visible}
+.fitwrap>.frame{transform:scale(var(--fit,1));transform-origin:center center;flex:0 0 auto}
+.frame{position:relative;background:#000;overflow:hidden;box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
+.frame.mobile{width:390px;height:844px;border-radius:38px;border:10px solid #0e0e10}
+.frame.desktop{width:620px;height:470px;border-radius:14px;border:1px solid var(--line)}
+/* background selection outlines the whole device, like any other element */
+.frame.selbg{box-shadow:0 0 0 2px var(--accent),0 0 0 6px rgba(160,217,89,.18),0 30px 70px -30px rgba(0,0,0,.9)}
+.bgtag{position:absolute;top:-12px;right:0;background:var(--accent);color:var(--accent-ink);
+  font:700 10px var(--font);padding:3px 7px;border-radius:5px;pointer-events:none;z-index:6}
+.screen{width:100%;height:100%;overflow:hidden;position:relative;display:flex;flex-direction:column}
+
+/* selectable elements */
+[data-el]{position:relative;cursor:pointer}
+[data-el]::after{content:'';position:absolute;inset:-5px;border:1.5px solid transparent;border-radius:7px;pointer-events:none;transition:border-color .12s}
+[data-el]:hover::after{border-color:rgba(160,217,89,.55)}
+/* The screen clips its contents to the device corners, so a selection outline drawn
+   inside it gets cut off at the edges. Draw it in the wrapper instead, above the frame. */
+.selbox{position:absolute;z-index:7;border:1.5px solid var(--accent);border-radius:7px;
+  box-shadow:0 0 0 3px rgba(160,217,89,.18);pointer-events:none}
+.selbox .tagline{top:-19px;left:-1.5px}
+.screen::after{display:none}   /* the background draws its outline on the frame instead */
+.tagline{position:absolute;top:-21px;left:-5px;background:var(--accent);color:var(--accent-ink);
+  font:700 10px var(--font);padding:2px 6px;border-radius:5px;white-space:nowrap;pointer-events:none;z-index:5}
+
+/* ---------- inspector ---------- */
+.insp{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;overflow-x:hidden}
+.insp .hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.insp .hd .k{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+.insp .hd h3{font-size:15px;font-weight:600;margin-top:3px}
+.insp .hd p{font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.45}
+.sec{padding:12px 16px;border-bottom:1px solid var(--line)}
+.sec>h5{font-size:10.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--ink-3);margin-bottom:10px}
+
+.row{margin-bottom:12px}
+/* a colour that a custom image has taken over still shows its value, but
+   reads as inactive rather than looking like a setting that does nothing */
+.row.dim{opacity:.42}
+.row.dim .ctl,.row.dim .picker{pointer-events:none}
+.row:last-child{margin-bottom:0}
+.row .lbl{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.row .lbl span{font-size:12px;color:var(--ink-2);flex:1}
+.src{font:600 9.5px var(--font);letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:4px;
+  background:var(--chip);color:var(--ink-3);cursor:default}
+.src.custom{background:rgba(229,163,60,.18);color:var(--warn)}
+.reset{border:0;background:transparent;color:var(--ink-3);cursor:pointer;padding:2px;display:grid;place-items:center}
+.reset:hover{color:var(--accent-text)}
+.reset svg{width:12px;height:12px}
+
+.ctl{display:flex;align-items:center;gap:8px}
+input[type=text],textarea,select{width:100%;background:var(--field);border:1px solid var(--line);color:var(--ink);
+  font:400 12.5px var(--font);padding:8px 10px;border-radius:8px}
+textarea{resize:vertical;min-height:112px;max-height:300px;line-height:1.5}
+input[type=text]:focus,textarea:focus,select:focus{outline:0;border-color:var(--accent)}
+select{appearance:none;background-image:var(--caret-img);
+  background-repeat:no-repeat;background-position:right 9px center;background-size:12px;padding-right:28px;cursor:pointer}
+.swatch{width:30px;height:30px;border-radius:7px;border:1px solid var(--line-2);flex:0 0 auto;cursor:pointer;padding:0;overflow:hidden}
+.swatch input{opacity:0;width:100%;height:100%;cursor:pointer;border:0}
+.hex{flex:1;font-family:ui-monospace,Menlo,monospace!important;text-transform:uppercase}
+.stepper{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--field)}
+.stepper button{border:0;background:transparent;color:var(--ink-2);width:26px;height:30px;cursor:pointer;font-size:14px}
+.stepper button:hover{color:var(--ink);background:var(--hover)}
+.stepper .v{min-width:44px;text-align:center;font-size:12.5px}
+
+.applyall{width:100%;margin-top:4px;border:1px dashed var(--line-2);background:transparent;color:var(--ink-2);
+  font:600 11.5px var(--font);padding:8px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.applyall:hover{border-color:var(--accent);color:var(--accent-text)}
+.applyall svg{width:12px;height:12px}
+
+.empty{padding:26px 16px;text-align:center;color:var(--ink-3);font-size:12px;line-height:1.6}
+.empty svg{width:26px;height:26px;margin-bottom:8px;opacity:.5}
+
+/* slider + typable number — no step-clicking */
+.sliderrow{display:flex;align-items:center;gap:9px}
+.sliderrow input[type=range]{flex:1;-webkit-appearance:none;appearance:none;height:3px;border-radius:2px;
+  background:var(--line-2);outline:0}
+.sliderrow input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;
+  background:var(--accent);cursor:pointer;border:0}
+.sliderrow input[type=range]::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:var(--accent);cursor:pointer;border:0}
+.sliderrow input[type=range]{min-width:0}
+.sliderrow .numbox{width:56px;flex:0 0 auto;padding:8px 4px;text-align:center;font-family:ui-monospace,Menlo,monospace!important}
+
+/* on/off */
+.toggle{display:inline-flex;align-items:center;gap:8px;cursor:pointer;background:transparent;border:0;padding:0;
+  -webkit-appearance:none;appearance:none}
+.toggle .track{width:34px;height:20px;border-radius:99px;background:var(--line-2);position:relative;transition:background .15s}
+.toggle .track i{position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.toggle.on .track{background:var(--accent)}
+.toggle.on .track i{transform:translateX(14px)}
+.toggle span{font-size:12px;color:var(--ink-2)}
+
+/* mode badge on sections whose values differ per theme */
+.modechip{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--field);
+  color:var(--ink-2);font:600 9.5px var(--font);letter-spacing:.04em;text-transform:uppercase;
+  padding:3px 7px;border-radius:99px;cursor:pointer}
+.modechip:hover{border-color:var(--accent);color:var(--accent-text)}
+.modechip svg{width:10px;height:10px}
+.sec>h5{display:flex;align-items:center;gap:8px}
+.sec>h5 .sp{flex:1}
+.shared{font:500 9.5px var(--font);letter-spacing:.02em;text-transform:none;color:var(--ink-3)}
+
+/* file upload + recently-used picker */
+.upload{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.thumb{padding:0;border:0;background:transparent;cursor:pointer;position:relative;line-height:0;border-radius:7px}
+.thumbplain{display:inline-block;line-height:0}
+.thumb::after{content:'';position:absolute;right:4px;bottom:4px;width:0;height:0;
+  border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--ink-3)}
+.thumb:hover::after{border-top-color:var(--accent)}
+.upload{position:relative}
+.recent{display:none;position:absolute;top:calc(100% + 6px);left:0;z-index:20;min-width:180px;
+  background:var(--panel-2);border:1px solid var(--line-2);border-radius:10px;padding:10px;
+  box-shadow:var(--shadow-pop)}
+.upload.open .recent{display:block}
+.rh{font:600 9.5px var(--font);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-bottom:7px}
+.recent .row2{display:flex;gap:6px;flex-wrap:wrap}
+.rthumb{width:52px;height:34px;padding:3px;border:1px solid var(--line);border-radius:6px;background:var(--field);cursor:pointer}
+.rthumb:hover{border-color:var(--accent)}
+/* custom colour picker — the native one can't carry a recents palette */
+.cpop{position:fixed;z-index:60;width:218px;display:none;background:var(--panel-2);
+  border:1px solid var(--line-2);border-radius:12px;padding:11px;box-shadow:var(--shadow-pop)}
+.cpop.open{display:block}
+.sv{position:relative;height:118px;border-radius:8px;cursor:crosshair;margin-bottom:11px}
+.svdot{position:absolute;width:12px;height:12px;border-radius:50%;border:2px solid #fff;
+  box-shadow:0 0 0 1px rgba(0,0,0,.6);transform:translate(-50%,-50%);pointer-events:none}
+.hue{width:100%;-webkit-appearance:none;appearance:none;height:10px;border-radius:5px;outline:0;cursor:pointer;
+  background:linear-gradient(to right,#f00 0%,#ff0 17%,#0f0 33%,#0ff 50%,#00f 67%,#f0f 83%,#f00 100%)}
+.hue::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,.45);cursor:pointer}
+.hue::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,.45);cursor:pointer}
+.cprow{display:flex;align-items:center;gap:9px;margin-bottom:10px}
+.sliders{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+.alpha{width:100%;-webkit-appearance:none;appearance:none;height:10px;border-radius:5px;outline:0;cursor:pointer;
+  background-size:auto,var(--checker-size);background-position:0 0,var(--checker-pos)}
+.alpha::-webkit-slider-thumb{-webkit-appearance:none;width:15px;height:15px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,.45);cursor:pointer}
+.alpha::-moz-range-thumb{width:15px;height:15px;border-radius:50%;background:#fff;border:1px solid rgba(0,0,0,.45);cursor:pointer}
+.eyed{width:26px;height:26px;flex:0 0 auto;border:0;background:transparent;color:var(--ink-2);cursor:pointer;display:grid;place-items:center;border-radius:6px}
+.eyed:hover{color:var(--accent-text);background:var(--hover)}
+.eyed svg{width:16px;height:16px}
+.eyed[disabled]{opacity:.28;cursor:not-allowed}
+.cpreview{width:28px;height:28px;flex:0 0 auto;border-radius:50%;border:1px solid var(--line-2);
+  background-size:auto,var(--checker-size);background-position:0 0,var(--checker-pos)}
+.frow{display:flex;align-items:flex-start;gap:6px}
+.frow label{flex:1;display:block;text-align:center;min-width:0}
+.frow input[type=text]{width:100%;text-align:center;padding:6px 2px;font-family:ui-monospace,Menlo,monospace!important;font-size:11.5px}
+.frow label span{display:block;font-size:9.5px;color:var(--ink-3);margin-top:4px;letter-spacing:.04em}
+.fmt{width:18px;height:30px;flex:0 0 auto;border:0;background:transparent;color:var(--ink-3);cursor:pointer;display:grid;place-items:center}
+.fmt:hover{color:var(--ink)}
+.fmt svg{width:12px;height:12px}
+.cpop .rh{margin:12px 0 6px}
+.swatches{display:flex;gap:5px;flex-wrap:wrap}
+.cchip{width:21px;height:21px;border-radius:5px;border:1px solid var(--line-2);cursor:pointer;padding:0}
+.cchip:hover{border-color:var(--accent)}
+.recent .rthumb img{width:100%;height:100%;padding:0;border:0;border-radius:0;object-fit:contain;display:block}
+.recent .none{font-size:11px;color:var(--ink-3)}
+.upload img{width:66px;height:38px;object-fit:contain;background:var(--field);border:1px solid var(--line);border-radius:7px;padding:4px}
+.upload .ph{width:66px;height:38px;display:grid;place-items:center;border:1px dashed var(--line-2);border-radius:7px;color:var(--ink-3);font-size:9px}
+.upload label.btn{cursor:pointer}
+
+/* custom dropdown — a native select popup can't be styled, can't show a font
+   in its own face, and doesn't match anything else in here */
+.dd{position:relative}
+.dd>button{width:100%;display:flex;align-items:center;gap:8px;background:var(--field);border:1px solid var(--line);
+  color:var(--ink);font:400 12.5px var(--font);padding:8px 10px;border-radius:8px;cursor:pointer;text-align:left}
+.dd>button:hover{border-color:var(--line-2)}
+.dd.open>button{border-color:var(--accent)}
+.dd .v{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dd .cv{width:12px;height:12px;flex:0 0 auto;opacity:.55;transition:transform .15s}
+.dd.open .cv{transform:rotate(180deg)}
+.ddm{display:none;position:absolute;top:calc(100% + 5px);left:0;right:0;z-index:30;padding:5px;
+  max-height:252px;overflow-y:auto;background:var(--panel-2);border:1px solid var(--line-2);
+  border-radius:10px;box-shadow:var(--shadow-pop)}
+.dd.open .ddm{display:block}
+.ddrow{display:flex;align-items:center;border-radius:7px}
+.ddrow:hover{background:var(--hover)}
+.ddrow.on{background:var(--tint)}
+.ddpick{flex:1;min-width:0;display:flex;align-items:center;gap:8px;border:0;background:transparent;color:var(--ink-2);
+  font:400 12.5px var(--font);padding:7px 8px;border-radius:7px;cursor:pointer;text-align:left}
+.ddrow:hover .ddpick,.ddrow.on .ddpick{color:var(--ink)}
+.ddpick.up{color:var(--accent-text);font-weight:600}
+.ddpick .mut{color:var(--ink-3);font-weight:400;font-size:11px;flex:0 0 auto}
+.ddm .tk{width:12px;height:12px;flex:0 0 auto;opacity:0;color:var(--accent-text)}
+.ddrow.on .tk{opacity:1}
+/* a client manages their uploaded faces where they pick them — removing one
+   anywhere removes it everywhere, so there is no second place to keep in sync */
+.ddx{width:22px;height:22px;margin-right:5px;flex:0 0 auto;border:0;background:transparent;color:var(--ink-3);
+  border-radius:5px;cursor:pointer;display:grid;place-items:center;opacity:0}
+.ddrow:hover .ddx,.ddx:focus-visible{opacity:1}
+.ddx:hover{color:var(--danger);background:var(--hover)}
+.ddx svg{width:11px;height:11px}
+.ddnote{font:500 11px var(--font);color:var(--ink-3);padding:7px 9px 5px;line-height:1.45}
+.ddm .sep{height:1px;background:var(--line);margin:5px 2px}
+
+/* custom typefaces — Inter is always there, the client may add three */
+/* alignment + bullet style pickers */
+.picker{display:flex;gap:5px}
+.picker button{flex:1;border:1px solid var(--line);background:var(--field);color:var(--ink-2);
+  border-radius:8px;padding:7px 0;cursor:pointer;display:grid;place-items:center;font:600 13px var(--font)}
+.picker button:hover{border-color:var(--line-2);color:var(--ink)}
+.picker button.on{border-color:var(--accent);background:var(--tint);color:var(--ink)}
+.picker svg{width:15px;height:15px}
+
+/* list editor — the bullets are shown in the gutter so they read as a list */
+.listfield{position:relative}
+.listfield .gutter{position:absolute;top:9px;left:11px;width:18px;pointer-events:none;
+  color:var(--ink-3);font:400 12.5px/1.5 var(--font);white-space:pre;text-align:center}
+.listfield textarea{padding-left:30px;white-space:pre;overflow-x:auto}
+
+/* background style picker */
+.bgstyles{display:grid;grid-template-columns:repeat(2,1fr);gap:6px}
+.bgstyles button{border:1px solid var(--line);background:var(--field);color:var(--ink-2);
+  font:600 11px var(--font);padding:9px 6px;border-radius:8px;cursor:pointer}
+.bgstyles button:hover{border-color:var(--line-2);color:var(--ink)}
+.bgstyles button.on{border-color:var(--accent);background:var(--tint);color:var(--ink)}
+.note{font-size:10.5px;color:var(--ink-3);line-height:1.45;margin-top:7px;display:flex;gap:6px}
+.note svg{width:12px;height:12px;flex:0 0 auto;margin-top:1px}
+
+/* capture sweep — each dash turns to the capture colour in turn */
+@keyframes dashOn{to{fill:var(--cap)}}
+.sweep{animation:dashOn .34s ease forwards;animation-delay:calc(var(--i) * 0.022s)}
+
+/* logo-blur bokeh layer */
+.bokeh{position:absolute;inset:-25%;display:grid;place-items:center;filter:blur(44px) saturate(1.7);
+  opacity:.85;pointer-events:none;z-index:0}
+.bokeh>*{width:70%;transform:scale(1.5)}
+.screen>*:not(.bokeh){position:relative;z-index:1}
+
+@media (max-width:1100px){ .app{grid-template-columns:200px 1fr 292px} }
+</style>
+</head>
+<body>
+
+<header class="sh-nav" data-tab="branding"></header>
+
+<div class="top">
+  <span class="crumb"><b>Branding</b> · widget appearance</span>
+  <span class="sp"></span>
+  <span class="seg">
+    <button id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h11a5 5 0 010 10h-3"/><path d="M3 10l5-5M3 10l5 5"/></svg>Undo</button>
+    <button id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10H10a5 5 0 000 10h3"/><path d="M21 10l-5-5M21 10l-5 5"/></svg>Redo</button>
+  </span>
+  <button class="btn" id="discardBtn">Discard</button>
+  <button class="btn primary" id="saveBtn" disabled>Save</button>
+</div>
+
+<div class="app">
+  <!-- rail -->
+  <aside class="rail">
+    <h4>Screens</h4>
+    <div id="railGroups"></div>
+  </aside>
+
+  <!-- canvas -->
+  <main class="canvas">
+    <div class="cbar">
+      <span class="nm" id="screenName">Start screen</span>
+      <span class="segcap" id="stateCap">State</span>
+      <span class="seg" id="stateSeg"></span>
+      <span class="sp"></span>
+      <span class="seg" id="modeSeg"></span>
+    </div>
+    <div class="stage" id="stage"></div>
+  </main>
+
+  <!-- inspector -->
+  <aside class="insp" id="insp"></aside>
+</div>
+
+<div class="cpop" id="cpop">
+  <div class="sv" id="svArea"><div class="svdot" id="svDot"></div></div>
+  <div class="cprow">
+    <button class="eyed" id="eyeBtn" title="Pick a colour from the screen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3.5a2.1 2.1 0 013 3l-2 2-3-3zM15.5 5.5l3 3-8.5 8.5H7v-3z"/><path d="M4 20h4"/></svg>
+    </button>
+    <span class="cpreview" id="cpPreview"></span>
+    <span class="sliders">
+      <input type="range" class="hue" id="hueSlider" min="0" max="360" value="0">
+      <input type="range" class="alpha" id="alphaSlider" min="0" max="100" value="100" title="Opacity">
+    </span>
+  </div>
+  <div id="cFields"></div>
+  <div class="rh" id="cpopRh">Recently used</div>
+  <div class="swatches" id="cpopSwatches"></div>
+</div>
+
+<script src="shell.js"></script>
+<script>
+/* ============================================================================
+   1. BRAND TOKENS
+      `modal:true` means the token holds TWO values — one per theme mode.
+      Fonts and radii are deliberately shared: a client's typeface doesn't
+      change between light and dark, but every colour and logo does.
+   ============================================================================ */
+const TOKENS = {
+  merchant:      {label:'Merchant name',    type:'text',    group:'Identity',   value:'',
+                  placeholder:'e.g. Stewart', note:'Fills in {Merchant} wherever it appears. Each line can still be reworded on its own.'},
+  logo:          {label:'Company logo',     type:'logo',    group:'Identity',   modal:true, values:{light:'',dark:''}},
+  theme:         {label:'Color theme',      type:'select',  group:'Identity',   value:'Dark', options:['Light','Dark','Dynamic']},
+
+  bgStyle:       {label:'Background style', type:'bgstyle', group:'Background', modal:true, values:{light:'Solid',dark:'Solid'}},
+  pageBg:        {label:'Background color', type:'color',   group:'Background', modal:true, values:{light:'#FFFFFF',dark:'#1E1E1E'}},
+  pageBg2:       {label:'Gradient end',     type:'color',   group:'Background', modal:true, values:{light:'#E9E4F5',dark:'#0B0B0C'}},
+  pageImg:       {label:'Background image', type:'upload',  group:'Background', modal:true, values:{light:'',dark:''}},
+
+  primaryText:   {label:'Primary text',     type:'color',   group:'Colors',     modal:true, values:{light:'#111111',dark:'#FFFFFF'}},
+  secondaryText: {label:'Secondary text',   type:'color',   group:'Colors',     modal:true, values:{light:'#656565',dark:'#A4A4A4'}},
+  accent:        {label:'Accent',           type:'color',   group:'Colors',     modal:true, values:{light:'#3E7A2E',dark:'#A0D959'}},
+
+  buttonBg:      {label:'Button fill',      type:'color',   group:'Buttons',    modal:true, values:{light:'#111111',dark:'#FFFFFF'}},
+  buttonText:    {label:'Button text',      type:'color',   group:'Buttons',    modal:true, values:{light:'#FFFFFF',dark:'#111111'}},
+  buttonRadius:  {label:'Corner radius',    type:'radius',  group:'Buttons',    value:10},
+
+  cardBg:        {label:'Card fill',        type:'color',   group:'Cards',      modal:true, values:{light:'#F4F5F7',dark:'#2A2A2D'}},
+  cardBorder:    {label:'Card border',      type:'color',   group:'Cards',      modal:true, values:{light:'#E3E5E9',dark:'#3A3A3D'}},
+  cardRadius:    {label:'Corner radius',    type:'radius',  group:'Cards',      value:12},
+
+  hideClose:     {label:'Hide close icon',  type:'toggle',  group:'Navigation', value:false,
+                  note:'Used in mobile applications where you use your own navigation.'},
+
+  requireConsent:{label:'Show consent screen', type:'toggle', group:'Consent', value:true,
+                  note:'Strongly advised. We recommend collecting this consent before you verify a '
+                     + 'customer\u2019s identity. It can be switched off, and verification will then start '
+                     + 'straight after the start screen.'},
+
+  fontTitle:     {label:'Title font',       type:'font',    group:'Typefaces',  value:'Inter'},
+  fontHeader:    {label:'Header font',      type:'font',    group:'Typefaces',  value:'Inter'},
+  fontBody:      {label:'Body font',        type:'font',    group:'Typefaces',  value:'Inter'},
+};
+const GROUP_ORDER=['Identity','Background','Colors','Buttons','Cards','Typefaces','Navigation','Consent'];
+
+/* which mode are we previewing and editing? */
+let mode='dark';
+function activeMode(){
+  const t=TOKENS.theme.value;
+  return t==='Dynamic' ? mode : (t==='Light'?'light':'dark');
+}
+const tok = k => TOKENS[k].modal ? TOKENS[k].values[activeMode()] : TOKENS[k].value;
+
+/* ============================================================================
+   2. SCREENS
+   ============================================================================ */
+/* role defaults: a title is 600 in the title face, body copy is 400 in the body face */
+const T = (text,sz)=>({text:{value:text}, align:{value:'Center'}, color:{bind:'primaryText'}, font:{bind:'fontTitle'}, size:{value:sz||20}, weight:{value:600}});
+const S = (text,sz)=>({text:{value:text}, align:{value:'Center'}, color:{bind:'secondaryText'}, font:{bind:'fontBody'}, size:{value:sz||15}, weight:{value:400}});
+/* a bulleted block: content sets its own width, text inside is left aligned,
+   and the block is centred in the screen — the way the live widget does it */
+const L = (text,sz)=>({text:{value:text}, bullet:{value:'Disc'}, align:{value:'Center'},
+  color:{bind:'secondaryText'}, font:{bind:'fontBody'}, size:{value:sz||14}, weight:{value:400}});
+const BTN = (label)=>({label:{value:label}, bg:{bind:'buttonBg'}, fg:{bind:'buttonText'}, radius:{bind:'buttonRadius'}, weight:{value:700}});
+
+const SCREENS = [
+ {id:'start', group:'Start', name:'Start screen', els:{
+    logo:   {label:'Logo',        type:'logo',  props:{align:{value:'Center'}, src:{bind:'logo'}, scale:{value:1}}},
+    title:  {label:'Title',       type:'text',  props:T('Please verify your identity to continue')},
+    sub:    {label:'Subtitle',    type:'texticon',props:Object.assign(S('Time to verify: Instant'),
+              {show:{value:true}, iconShow:{value:true}, iconColor:{bind:'secondaryText'}, iconCustom:{value:''}})},
+    cards:  {label:'Info cards',  type:'card',  props:{bg:{bind:'cardBg'}, border:{bind:'cardBorder'}, radius:{bind:'cardRadius'}, count:{value:3}}},
+    i1:     {label:'Step 1 icon', type:'stepicon',props:{bg:{bind:'accent'}, fg:{bind:'pageBg'}, custom:{value:''}}},
+    i2:     {label:'Step 2 icon', type:'stepicon',props:{bg:{bind:'accent'}, fg:{bind:'pageBg'}, custom:{value:''}}},
+    i3:     {label:'Step 3 icon', type:'stepicon',props:{bg:{bind:'accent'}, fg:{bind:'pageBg'}, custom:{value:''}}},
+    c1:     {label:'Step 1 text', type:'step',  props:{title:{value:'Step 1'}, desc:{value:'Choose an ID document to verify'}, titleWeight:{value:600}, descWeight:{value:400}}},
+    c2:     {label:'Step 2 text', type:'step',  props:{title:{value:'Step 2'}, desc:{value:'Scan your face'}, titleWeight:{value:600}, descWeight:{value:400}}},
+    c3:     {label:'Step 3 text', type:'step',  props:{title:{value:'Step 3'}, desc:{value:'Scan your document'}, titleWeight:{value:600}, descWeight:{value:400}}},
+    btn:    {label:'Start button',type:'button',props:BTN('Start')},
+    terms:  {label:'Terms & privacy',type:'links',props:{
+              aLabel:{value:'Terms'},   aUrl:{value:'https://example.com/terms'},
+              bLabel:{value:'Privacy'}, bUrl:{value:'https://example.com/privacy'},
+              align:{value:'Center'}, color:{bind:'secondaryText'}, font:{bind:'fontBody'},
+              size:{value:14}, weight:{value:400}, underline:{value:true}}},
+ }},
+ {id:'choose', group:'Start', name:'Choose document', els:{
+    title:  {label:'Title',       type:'text',  props:T('Choose Document Type')},
+    sub:    {label:'Description', type:'text',  props:S('Select your issuing country and document type')},
+    country:{label:'Country row', type:'card',  props:{bg:{bind:'cardBg'}, border:{bind:'cardBorder'}, radius:{bind:'cardRadius'}}},
+    optTitle:{label:'“Verify using” label',type:'text',props:{text:{value:'Verify using'}, align:{value:'Left'}, color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:600}}},
+    opts:   {label:'Document options',type:'card',props:{bg:{bind:'cardBg'}, border:{bind:'cardBorder'}, radius:{bind:'cardRadius'}}},
+    check:  {label:'Selected check',type:'icon',props:{color:{bind:'accent'}, custom:{value:''}}},
+    btn:    {label:'Next button', type:'button',props:BTN('Next')},
+ }},
+ {id:'country', group:'Start', name:'Choose country', els:{
+    back:   {label:'Back icon',   type:'icon',   props:{color:{bind:'primaryText'}, custom:{value:''}}},
+    search: {label:'Search field',type:'search', props:{placeholder:{value:'Type country name...'},
+              bg:{bind:'cardBg'}, color:{bind:'secondaryText'}, radius:{bind:'cardRadius'}}},
+    searchIcon:{label:'Search icon',type:'icon', props:{color:{bind:'secondaryText'}, custom:{value:''}}},
+    clist:  {label:'Country list',type:'countrylist',props:{color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:15}, weight:{value:400}}},
+    check:  {label:'Selected check',type:'icon',  props:{color:{bind:'accent'}, custom:{value:''}}},
+ }},
+ /* The consent gate is a POPOVER over the start screen, not a screen of its
+    own — same as the handoff files in vyyer-consent-{light,dark}.html. */
+ {id:'consent', group:'Start', name:'Consent gate', els:{
+    sheet:  {label:'Popover surface',type:'card',props:{bg:{bind:'pageBg'}, border:{bind:'cardBorder'}, radius:{value:18}}},
+    close:  {label:'Close icon',  type:'icon',  props:{color:{bind:'secondaryText'}, custom:{value:''}}},
+    logo:   {label:'Logo',        type:'logo',  props:{align:{value:'Center'}, src:{bind:'logo'}, scale:{value:.8}}},
+    title:  {label:'Title',       type:'text',  props:Object.assign(T('{Merchant} is requesting access to',18), {weight:{value:700}})},
+    list:   {label:'Collection list',type:'fixedlist',props:Object.assign(L('A live face scan\nBiometric data from your ID photo\nA scan of your ID document\nYour name, DOB, address and ID number'), {align:{value:'Left'}, color:{bind:'primaryText'}})},
+    note:   {label:'Purpose & retention',type:'text',props:{text:{value:'Vyyer LLC, {Merchant}’s data processor, collects this only to verify your identity, and deletes face scans within 3 months.'}, align:{value:'Left'}, color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:400}}},
+    learn:  {label:'“Learn more” link',type:'text',props:{text:{value:'Learn more'}, align:{value:'Left'}, color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:600}}},
+    release:{label:'Consent checkbox',type:'consentbox',props:{
+              text:{value:'I consent to {Merchant} and Vyyer LLC collecting and storing a scan of my face and ID data.'},
+              color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:600},
+              boxColor:{bind:'cardBorder'},
+              bg:{bind:'cardBg'}, border:{bind:'cardBorder'}, radius:{value:10}}},
+    btn:    {label:'Agree button',type:'button',props:BTN('Agree and continue')},
+    decline:{label:'Decline link',type:'text',  props:{text:{value:'I don’t consent'}, align:{value:'Center'}, color:{bind:'secondaryText'}, font:{bind:'fontBody'}, size:{value:13}, weight:{value:600}}},
+ }},
+ {id:'walk', group:'Walkthrough', name:'Walkthrough', variants:['Face','ID front','ID back','Passport'], els:{
+    img:    {label:'Illustration',type:'image', props:{custom:{value:''}, scale:{value:1}}},
+    title:  {label:'Title',       type:'text',  props:T('Get ready to scan your face')},
+    desc:   {label:'Description', type:'text',  props:S('Make sure you’re in a well lit room. Avoid any bright lights behind you.')},
+    btn:    {label:'Button',      type:'button',props:BTN('Let’s go')},
+ }},
+ {id:'scan', group:'Scanning', name:'Scanning', variants:['Face','ID front','ID back','Passport'], els:{
+    navbar: {label:'Navigation bar',type:'navbar', props:{
+              logoShow:{value:true}, logoSrc:{bind:'logo'}, logoScale:{value:.8},
+              helpShow:{value:true}, helpColor:{bind:'secondaryText'}, helpCustom:{value:''},
+              closeColor:{bind:'primaryText'}, closeCustom:{value:''}}},
+    guide:  {label:'Camera guide',type:'guide', props:{color:{value:'#B1B1B1'}, successColor:{value:'#5FC52E'}, width:{value:3}}},
+    status: {label:'Status message',type:'status',props:{
+              text:{value:'Center your face in the frame'},
+              bg:{value:'#3A3A3AE6'}, color:{value:'#FFFFFF'},
+              errorBg:{value:'#F4524D'},  errorColor:{value:'#FFFFFF'},
+              successBg:{value:'#3CBF68'},successColor:{value:'#FFFFFF'}}},
+ }},
+ {id:'tips', group:'Tips', name:'Scanning tips', variants:['Face','ID front','ID back','Passport'], els:{
+    img:    {label:'Illustration',type:'image', props:{custom:{value:''}, scale:{value:1}}},
+    title:  {label:'Title',       type:'text',  props:T('Face Scanning Tips')},
+    bullets:{label:'Bullets',     type:'list',  props:L('Scan in a well lit room\nPosition your face in the oval\nMake sure your face is fully visible\nAvoid bright lights behind you')},
+    btn:    {label:'Button',      type:'button',props:BTN('Scan my Face')},
+ }},
+ {id:'nodetect', group:'Not detected', name:'Not detected', variants:['Face','ID front','ID back','Passport'], els:{
+    img:    {label:'Illustration',type:'image', props:{custom:{value:''}, scale:{value:1}}},
+    title:  {label:'Title',       type:'text',  props:T('Face Not Detected')},
+    bullets:{label:'Bullets',     type:'list',  props:L('Position your face in the oval\nMake sure your face is fully visible\nAvoid dark lighting\nAvoid bright lights behind you')},
+    btn:    {label:'Button',      type:'button',props:BTN('Retry')},
+ }},
+ {id:'verdict', group:'Verdicts', name:'Verdict', variants:['Verified','Failed','Underage','Expired','In review','Max attempts'], els:{
+    icon:   {label:'Verdict icon',type:'icon',  props:{color:{bind:'accent'}, shape:{value:'check'}, custom:{value:''}}},
+    title:  {label:'Title',       type:'text',  props:T('Thank You!')},
+    desc:   {label:'Description', type:'text',  props:S('Your identity was successfully verified.')},
+    btn:    {label:'Button',      type:'button',props:BTN('Done')},
+ }},
+ {id:'qr', group:'Desktop hand-off', name:'QR code', device:'desktop', els:{
+    logo:   {label:'Logo',        type:'logo',  props:{src:{bind:'logo'}, scale:{value:.8}}},
+    title:  {label:'Title',       type:'text',  props:T('Scan the QR Code to continue verifying on your mobile device')},
+    qr:     {label:'QR frame',    type:'card',  props:{bg:{value:'#FFFFFF'}, border:{bind:'cardBorder'}, radius:{bind:'cardRadius'}}},
+    link:   {label:'Email link',  type:'text',  props:{text:{value:'Email me a link instead'}, color:{bind:'accent'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:500}}},
+ }},
+];
+
+/* The background is an element like any other — so a client can give the
+   Verified screen a green wash and Failed a red one without touching globals. */
+SCREENS.forEach(s=> s.els.__bg = {label:'Background', type:'bg', props:{
+  style:{bind:'bgStyle'}, color:{bind:'pageBg'}, color2:{bind:'pageBg2'}, image:{bind:'pageImg'}
+}});
+
+const VARIANT_COPY = {
+  walk:{'Face':['Get ready to scan your face','Make sure you’re in a well lit room. Avoid any bright lights behind you.','Let’s go'],
+        'ID front':['Scan the front of your ID','Keep the document well lit. All document fields should be visible.','Let’s go'],
+        'ID back':['Scan the back of your ID','Keep the document well lit. The barcode should be crisp and clear.','Let’s go'],
+        'Passport':['Scan the passport photo page','Keep the document well lit. All document fields should be visible.','Let’s go']},
+  tips:{'Face':['Face Scanning Tips','Scan in a well lit room\nPosition your face in the oval\nMake sure your face is fully visible\nAvoid bright lights behind you','Scan my Face'],
+        'ID front':['ID Scanning Tips','Avoid dark lighting\nText should be clear and readable\nScan your ID in a well lit room\nDon’t cover text or photos','Scan my ID'],
+        'ID back':['ID Scanning Tips','Avoid dark lighting\nAvoid any glare on the barcode\nBarcode should be crisp and clear\nDon’t cover text or barcode','Scan my ID'],
+        'Passport':['Passport scanning tips','Scan in a well lit room\nAvoid any glare on the passport\nText should be clear and readable\nDon’t cover text or photos','Scan my Passport']},
+  nodetect:{'Face':['Face Not Detected','Position your face in the oval\nMake sure your face is fully visible\nAvoid dark lighting\nAvoid bright lights behind you','Retry'],
+        'ID front':['ID not detected','Scan your ID in a well lit room\nAvoid any glare on the ID\nText should be clear and readable\nDon’t cover text or photos','Retry'],
+        'ID back':['ID not detected','Scan your ID in a well lit room\nAvoid any glare on the barcode\nBarcode should be crisp and clear\nDon’t cover text or barcode','Retry'],
+        'Passport':['Passport not detected','Scan in a well lit room\nAvoid any glare on the passport\nText should be clear and readable\nDon’t cover text or photos','Retry']},
+  scan:{'Face':['','Center your face in the frame',''],
+        'ID front':['','Scan the front side of your ID',''],
+        'ID back':['','Scan the back side of your ID',''],
+        'Passport':['','Scan passport photo page','']},
+  verdict:{'Verified':['Thank You!','Your identity was successfully verified.','Done','check','#4ADE80'],
+        'Failed':['Verification Failed','We were unable to verify your identity, please try again.','Close','cross','#F87171'],
+        'Underage':['Must be 18','Sorry, you must be at least 18 years old to use our services.','Retry','warn','#E5A33C'],
+        'Expired':['Expired ID','Please try again using a currently valid ID document.','Retry','warn','#E5A33C'],
+        'In review':['Thank You','Your data has been sent to us for review','Done','check','#4ADE80'],
+        'Max attempts':['Max Attempts Reached','You have reached the max number of attempts for verification.','Close','cross','#F87171']},
+};
+
+const FLAT=[];
+SCREENS.forEach(s=>{
+  if(s.variants) s.variants.forEach((v,i)=> FLAT.push({id:s.id, v:i, label:v, group:s.group, screen:s.name}));
+  else FLAT.push({id:s.id, v:0, label:s.name, group:s.group, screen:s.name});
+});
+const flatIndex = ()=> FLAT.findIndex(f=>f.id===state.screen && f.v===state.variant);
+
+/* ============================================================================
+   3. STATE + HISTORY
+      Overrides are keyed screen|variant|element|prop|mode — mode is part of the
+      key only for properties that resolve to a mode-dependent token.
+   ============================================================================ */
+let state = {screen:'start', variant:0, sel:null, panel:'brand'};
+let overrides = {};
+const isModal = (scrId, elId, prop)=>{
+  const spec = SCREENS.find(s=>s.id===scrId).els[elId].props[prop];
+  return !!(spec && spec.bind && TOKENS[spec.bind].modal);
+};
+const key = (s,v,e,p)=> s+'|'+v+'|'+e+'|'+p + (isModal(s,e,p) ? '|'+activeMode() : '');
+
+function resolve(scrId, variant, elId, prop){
+  const scr = SCREENS.find(s=>s.id===scrId), el = scr.els[elId];
+  if(!el) return {value:undefined, source:'default'};
+  const spec = el.props[prop];
+  const k = key(scrId, variant, elId, prop);
+  if (k in overrides) return {value:overrides[k], source:'custom'};
+  const vc = VARIANT_COPY[scrId];
+  if (vc && scr.variants){
+    const row = vc[scr.variants[variant]];
+    if (row){
+      if (prop==='text' && elId==='title')   return {value:row[0], source:'default'};
+      if (prop==='text' && (elId==='desc'||elId==='bullets'||elId==='status')) return {value:row[1], source:'default'};
+      if (prop==='label'&& elId==='btn')     return {value:row[2], source:'default'};
+      if (prop==='shape'&& elId==='icon')    return {value:row[3], source:'default'};
+      if (prop==='color'&& elId==='icon')    return {value:row[4], source:'default'};
+    }
+  }
+  if (!spec) return {value:undefined, source:'default'};
+  if (spec.bind) return {value:tok(spec.bind), source:'global', bind:spec.bind};
+  return {value:spec.value, source:'default'};
+}
+const val = (e,p)=> resolve(state.screen, state.variant, e, p).value;
+const curScreen = ()=> SCREENS.find(s=>s.id===state.screen);
+
+/* history — every mutation is undoable */
+let past=[], future=[];
+function snapshot(){
+  return JSON.stringify({
+    t:Object.fromEntries(Object.entries(TOKENS).map(([k,v])=>[k, v.modal?{...v.values}:v.value])),
+    o:{...overrides}, m:mode
+  });
+}
+function restore(str){
+  const d=JSON.parse(str);
+  Object.entries(d.t).forEach(([k,v])=>{ if(TOKENS[k].modal) TOKENS[k].values={...v}; else TOKENS[k].value=v; });
+  overrides={...d.o}; mode=d.m;
+}
+function mark(){ past.push(snapshot()); if(past.length>80) past.shift(); future=[]; }
+function undo(){ if(!past.length) return; future.push(snapshot()); restore(past.pop()); touch(); }
+function redo(){ if(!future.length) return; past.push(snapshot()); restore(future.pop()); touch(); }
+
+/* ============================================================================
+   4. CANVAS
+   ============================================================================ */
+function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
+/* {Merchant} stays in the copy so the three consent lines keep one shared name
+   — set it once, in whichever of them you happen to be editing. */
+const attrEsc = v => esc(v==null?'':v).replace(/"/g,'&quot;');
+const MERCHANT_RE=/\{Merchant\}/g;
+const hasMerchant = v => /\{Merchant\}/.test(String(v==null?'':v));
+function merchantify(s){
+  const m=(TOKENS.merchant.value||'').trim();
+  return String(s==null?'':s).replace(MERCHANT_RE, m || '{Merchant}');
+}
+
+const BULLETS={None:'', Disc:'\u2022', Circle:'\u25E6', Square:'\u25AA', Triangle:'\u2023', Check:'\u2713', Dash:'\u2013'};
+/* a hidden element stays on the canvas as a ghost, so it can be switched back on */
+const ghostCss = el => (val(el,'show')===false)
+  ? 'opacity:.25;outline:1px dashed currentColor;outline-offset:4px;' : '';
+
+/* Alignment moves the BLOCK as well as the text — left-aligning a short line has to
+   put it at the left margin, otherwise the setting looks like it does nothing.
+   A list is the exception: its lines always align with each other, and the
+   alignment setting positions the whole group. */
+function alignBox(el, isList){
+  const al=(val(el,'align')||'Center').toLowerCase();
+  const m = al==='left'  ? 'margin-right:auto'
+          : al==='right' ? 'margin-left:auto'
+          :                'margin-left:auto;margin-right:auto';
+  return isList
+    ? `width:fit-content;max-width:100%;${m};text-align:left`
+    : `width:100%;${m};text-align:${al}`;
+}
+function textBlock(el, inner, extra, isList){
+  const c=val(el,'color'), f=val(el,'font'), s=val(el,'size'), w=val(el,'weight')||400;
+  return `<div data-el="${el}" style="color:${c};font-family:${fontStack(f)};font-size:${s}px;font-weight:${w};line-height:1.45;
+    ${alignBox(el,isList)};${ghostCss(el)}${extra||''}">${inner}</div>`;
+}
+function txt(el, extra){ return textBlock(el, esc(merchantify(val(el,'text'))).replace(/\n/g,'<br>'), extra, false); }
+function list(el, extra){
+  const g=BULLETS[val(el,'bullet')||'Disc'];
+  const rows=String(merchantify(val(el,'text'))).split('\n').map(l=> g
+    ? `<div style="display:flex;gap:9px;margin-bottom:6px"><span style="flex:0 0 auto">${g}</span><span>${esc(l)}</span></div>`
+    : `<div style="margin-bottom:6px">${esc(l)}</div>`).join('');
+  return textBlock(el, rows, extra, true);
+}
+/* text + icon are ONE selectable block: hide the icon and the text re-centres */
+function textIcon(el, extra){
+  const showIcon=val(el,'iconShow'), custom=val(el,'iconCustom'), ic=val(el,'iconColor'), s=val(el,'size');
+  const sz=Math.round(s*1.1);
+  const icon = !showIcon ? '' : (custom
+    ? `<img src="${custom}" style="height:${sz}px;width:auto;object-fit:contain;display:block">`
+    : `<svg viewBox="0 0 24 24" style="width:${sz}px;height:${sz}px;flex:0 0 auto" fill="none" stroke="${ic}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 7.5V12l3 2" stroke-linecap="round"/></svg>`);
+  const al=(val(el,'align')||'Center').toLowerCase();
+  const just = al==='left'?'flex-start':al==='right'?'flex-end':'center';
+  return `<div data-el="${el}" style="display:flex;align-items:center;justify-content:${just};gap:7px;width:100%;
+    color:${val(el,'color')};font-family:${fontStack(val(el,'font'))};font-size:${s}px;font-weight:${val(el,'weight')||400};
+    ${ghostCss(el)}${extra||''}">${icon}<span>${esc(merchantify(val(el,'text')))}</span></div>`;
+}
+function button(el){
+  const l=val(el,'label'), bg=val(el,'bg'), fg=val(el,'fg'), r=val(el,'radius'), w=val(el,'weight')||700;
+  return `<div data-el="${el}" style="background:${bg};color:${fg};border-radius:${r}px;height:55px;display:flex;
+    align-items:center;justify-content:center;font-family:${fontStack(tok('fontBody'))};font-size:17px;font-weight:${w};width:100%">${esc(l)}</div>`;
+}
+/* A logo is sized by HEIGHT and keeps its own aspect ratio — square, circular or
+   a wide wordmark all just fit the box height. Scale is a MULTIPLIER (0.5–2),
+   never a pixel size, because the widget is responsive. */
+const LOGO_H = 21;   // 1x — matches the live widget's logo box
+function logoMark(scale, color, custom, markOnly){
+  const h = LOGO_H * (scale||1);
+  if(custom) return `<img src="${custom}" style="height:${h}px;width:auto;max-width:100%;object-fit:contain;display:block">`;
+  const roundel = `<circle cx="23" cy="23" r="23" fill="${tok('accent')}"/>
+    <path d="M14 15l9 16 9-16" fill="none" stroke="${tok('pageBg')}" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"/>`;
+  if(markOnly) return `<svg viewBox="0 0 46 46" style="height:${h}px;width:auto;display:block">${roundel}</svg>`;
+  return `<svg viewBox="0 0 176 46" style="height:${h}px;width:auto;display:block">${roundel}
+    <text x="56" y="34" font-family="Inter" font-size="30" font-weight="700" fill="${color}">vyyer</text></svg>`;
+}
+const JUST = {Left:'flex-start', Center:'center', Right:'flex-end'};
+/* The consent gate opens over the start screen, so the preview shows that
+   screen behind it. It is drawn without data-el attributes — it's context,
+   not something to click: the start screen has its own entry in the rail. */
+function ghostStart(){
+  const ink=tok('primaryText'), cb=tok('cardBg'), cbd=tok('cardBorder'), cr=tok('cardRadius');
+  const steps=[['Step 1','Choose an ID document to verify'],['Step 2','Scan your face'],['Step 3','Scan your document']]
+    .map(([t,d],i)=>`<div style="background:${cb};border:1px solid ${cbd};border-radius:${cr}px;padding:15px 16px;
+      display:flex;gap:14px;align-items:center;margin-bottom:12px">
+      <span style="width:28px;height:28px;flex:0 0 auto;border-radius:50%;background:${tok('accent')};color:${tok('pageBg')};
+        display:grid;place-items:center;font-family:${fontStack(tok('fontHeader'))};font-size:14px;font-weight:700">${i+1}</span>
+      <div><div style="color:${ink};font-family:${fontStack(tok('fontHeader'))};font-size:15px;font-weight:600;line-height:1.3">${t}</div>
+      <div style="color:${tok('secondaryText')};font-family:${fontStack(tok('fontBody'))};font-size:14px;line-height:1.35">${d}</div></div></div>`).join('');
+  return `<div style="position:absolute;inset:0;padding:26px 22px;display:flex;flex-direction:column">
+    <div style="display:flex;justify-content:center;margin:46px 0 0">${logoMark(1, ink, tok('logo'))}</div>
+    <div style="color:${ink};font-family:${fontStack(tok('fontTitle'))};font-size:20px;font-weight:600;text-align:center;line-height:1.28;margin-top:34px">Please verify your identity to continue</div>
+    <div style="margin-top:30px">${steps}</div></div>`;
+}
+/* The footer links are the client's own documents: they set the wording AND
+   where each one points. An empty label drops that link entirely. */
+function linkRow(el, extra){
+  const col=val(el,'color'), sz=val(el,'size'), w=val(el,'weight')||400;
+  const ul = val(el,'underline') ? 'text-decoration:underline;text-underline-offset:2px' : 'text-decoration:none';
+  const one = (label,url)=> !String(label||'').trim() ? '' :
+    `<span title="${esc(url||'')}" style="${ul}">${esc(label)}</span>`;
+  const items=[one(val(el,'aLabel'), val(el,'aUrl')), one(val(el,'bLabel'), val(el,'bUrl'))].filter(Boolean).join('');
+  return `<div data-el="${el}" style="display:flex;gap:22px;justify-content:${JUST[(val(el,'align')||'Center')]};
+    color:${col};font-family:${fontStack(val(el,'font'))};font-size:${sz}px;font-weight:${w};${ghostCss(el)}${extra||''}">${items}</div>`;
+}
+
+function artwork(el){
+  const custom=val(el,'custom'), sc=val(el,'scale')||1, w=112*sc;
+  if(custom) return `<img src="${custom}" style="width:${w}px;max-height:${w*1.25}px;object-fit:contain;display:block">`;
+  return `<svg viewBox="0 0 64 64" style="width:${(w*0.62).toFixed(0)}px;opacity:.85" fill="none" stroke="${tok('secondaryText')}" stroke-width="2">
+    <rect x="20" y="6" width="24" height="46" rx="4"/><circle cx="32" cy="26" r="6"/><path d="M24 44c2-5 5-7 8-7s6 2 8 7"/></svg>`;
+}
+/* one close icon for every screen, so the global switch has a single place to act */
+function closeIcon(color, custom){
+  /* keep the slot so hiding it doesn't pull the whole screen upward */
+  if(tok('hideClose')) return `<span style="width:20px;height:20px;display:block;flex:0 0 auto"></span>`;
+  if(custom) return `<img src="${custom}" style="width:20px;height:20px;object-fit:contain;display:block">`;
+  return `<svg viewBox="0 0 24 24" style="width:20px;height:20px;display:block;flex:0 0 auto" fill="none" stroke="${color}"
+    stroke-width="2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>`;
+}
+/* The production oval is a Lottie export with #b1b1b1 and #5fc52e baked in.
+   Generating the ring instead makes both colours real settings — and the capture
+   sweep is a CSS animation with a per-dash delay, same read as the original. */
+function ovalRing(idle, capture, weight, sweeping){
+  /* matches the live face-scan oval: ~266 x 440 inside a 390pt screen */
+  const W=266, H=440, cx=W/2, cy=H/2, rx=126, ry=206, N=46;
+  let d='';
+  for(let i=0;i<N;i++){
+    const a=(i/N)*Math.PI*2 - Math.PI/2;
+    const x=cx+rx*Math.cos(a), y=cy+ry*Math.sin(a);
+    d+=`<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="${(weight*1.15).toFixed(1)}"
+        style="--i:${i}" fill="${idle}"${sweeping?' class="sweep"':''}/>`;
+  }
+  return `<svg viewBox="0 0 ${W} ${H}" style="width:${W}px;height:${H}px;display:block;--cap:${capture}">${d}</svg>`;
+}
+function checkMark(){
+  const custom=val('check','custom');
+  if(custom) return `<img src="${custom}" style="width:20px;height:20px;object-fit:contain;display:block">`;
+  return `<svg viewBox="0 0 24 24" style="width:20px;height:20px;display:block" fill="none" stroke="${val('check','color')}"
+    stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>`;
+}
+function stepIcon(el, n){
+  const custom=val(el,'custom'), bg=val(el,'bg'), fg=val(el,'fg');
+  const inner = custom
+    ? `<img src="${custom}" style="width:28px;height:28px;object-fit:contain;display:block">`
+    : `<span style="font-family:${fontStack(tok('fontHeader'))};font-size:14px;font-weight:700">${n}</span>`;
+  return `<span data-el="${el}" style="width:28px;height:28px;flex:0 0 auto;border-radius:50%;
+    background:${custom?'transparent':bg};color:${fg};display:grid;place-items:center">${inner}</span>`;
+}
+function verdictIcon(){
+  const c=val('icon','color'), shape=val('icon','shape'), custom=val('icon','custom');
+  if(custom) return `<div data-el="icon"><img src="${custom}" style="width:46px;height:46px;object-fit:contain;display:block"></div>`;
+  const inner = shape==='check' ? '<path d="M8 12.5l3 3 5-6" />'
+              : shape==='cross' ? '<path d="M9 9l6 6M15 9l-6 6" />'
+              : '<path d="M12 7v6M12 16.5v.01" />';
+  return `<div data-el="icon" style="display:grid;place-items:center"><svg viewBox="0 0 24 24" style="width:42px;height:42px" fill="none"
+    stroke="${c}" stroke-width="1.6" stroke-linecap="round"><circle cx="12" cy="12" r="10"/>${inner}</svg></div>`;
+}
+function backgroundCss(){
+  const st=val('__bg','style'), c=val('__bg','color'), c2=val('__bg','color2'), img=val('__bg','image');
+  if(st==='Gradient') return `background:linear-gradient(160deg, ${c} 0%, ${c2} 100%)`;
+  if(st==='Image' && img) return `background:${c} url(${img}) center/cover no-repeat`;
+  return `background:${c}`;
+}
+function bokehLayer(){
+  if(val('__bg','style')!=='Logo blur') return '';
+  const custom = tok('logo');
+  const inner = custom ? `<img src="${custom}" style="width:100%">`
+    : `<svg viewBox="0 0 170 46" style="width:100%"><path d="M6 10 20 36 34 10" fill="none" stroke="${tok('accent')}" stroke-width="6"/>
+       <text x="44" y="33" font-family="Inter" font-size="27" font-weight="700" fill="${tok('accent')}">vyyer</text></svg>`;
+  return `<div class="bokeh">${inner}</div>`;
+}
+
+function renderScreen(){
+  const id=state.screen, pad='padding:22px 18px';
+  const ink=tok('primaryText');
+  let body='';
+
+  if(id==='start'){
+    const cb=val('cards','bg'), cbd=val('cards','border'), cr=val('cards','radius'), n=val('cards','count');
+    const steps=['c1','c2','c3'].slice(0,n).map((c,i)=>`
+      <div style="background:${cb};border:1px solid ${cbd};border-radius:${cr}px;padding:15px 16px;display:flex;gap:14px;align-items:center;margin-bottom:12px">
+        ${stepIcon(['i1','i2','i3'][i], i+1)}
+        <div data-el="${c}">
+          <div style="color:${ink};font-family:${fontStack(tok('fontHeader'))};font-size:15px;font-weight:${val(c,'titleWeight')||600};line-height:1.3">${esc(val(c,'title'))}</div>
+          <div style="color:${tok('secondaryText')};font-family:${fontStack(tok('fontBody'))};font-size:14px;font-weight:${val(c,'descWeight')||400};line-height:1.35;margin-top:1px">${esc(val(c,'desc'))}</div>
+        </div></div>`).join('');
+    body=`<div style="padding:26px 22px 26px;display:flex;flex-direction:column;height:100%">
+      ${closeIcon(ink)}
+      <div data-el="logo" style="display:flex;justify-content:${JUST[(val('logo','align')||'Center')]};margin:46px 0 0">${logoMark(val('logo','scale'), ink, val('logo','src'))}</div>
+      ${txt('title','line-height:1.28;margin-top:34px')}
+      ${textIcon('sub','margin-top:30px')}
+      <div data-el="cards" style="margin-top:30px">${steps}</div>
+      <div style="flex:1"></div>
+      ${button('btn')}
+      ${linkRow('terms','margin-top:20px')}
+    </div>`;
+  }
+  else if(id==='choose'){
+    const cb=val('country','bg'), cbd=val('country','border'), cr=val('country','radius');
+    const ob=val('opts','bg'), obd=val('opts','border'), or_=val('opts','radius');
+    const opts=['Driver\u2019s License','Identification Card','Passport'].map((o,i)=>`
+      <div style="background:${ob};border:1px solid ${obd};border-radius:${or_}px;height:58px;padding:0 16px;margin-bottom:12px;
+        display:flex;align-items:center;color:${ink};font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:500">${o}<span style="flex:1"></span>
+        ${i===0?`<span data-el="check" style="display:grid;place-items:center;flex:0 0 auto">${checkMark()}</span>`:''}</div>`).join('');
+    body=`<div style="padding:26px 22px;display:flex;flex-direction:column;height:100%">
+      ${closeIcon(ink)}
+      ${txt('title','margin-top:30px')}
+      ${txt('sub','line-height:1.45;margin-top:18px')}
+      <div data-el="country" style="background:${cb};border:1px solid ${cbd};border-radius:${cr}px;height:60px;padding:0 16px;margin-top:30px;
+        display:flex;align-items:center;gap:12px;color:${ink};font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:500">
+        <span style="width:24px;height:24px;border-radius:50%;overflow:hidden;flex:0 0 auto;display:grid;place-items:center;font-size:22px;line-height:1">\u{1F1FA}\u{1F1F8}</span>
+        United States<span style="flex:1"></span>
+        <svg viewBox="0 0 24 24" style="width:17px;height:17px" fill="none" stroke="${tok('secondaryText')}" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg></div>
+      ${txt('optTitle','margin-top:26px;margin-bottom:12px')}
+      <div data-el="opts">${opts}</div>
+      <div style="margin-top:14px">${button('btn')}</div>
+      <div style="flex:1"></div></div>`;
+  }
+  else if(id==='country'){
+    const sb=val('search','bg'), sc=val('search','color'), sr=val('search','radius');
+    const lc=val('clist','color'), lf=val('clist','font'), ls=val('clist','size'), lw=val('clist','weight')||400;
+    const icon=(el,path,size)=>{ const c=val(el,'custom');
+      return c ? `<img src="${c}" style="width:${size}px;height:${size}px;object-fit:contain;display:block">`
+        : `<svg viewBox="0 0 24 24" style="width:${size}px;height:${size}px;display:block" fill="none" stroke="${val(el,'color')}"
+             stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round">${path}</svg>`; };
+    const countries=[['\u{1F1FA}\u{1F1F8}','United States',1],['\u{1F1E6}\u{1F1FA}','Australia',0],['\u{1F1E8}\u{1F1E6}','Canada',0],
+      ['\u{1F1EC}\u{1F1E7}','United Kingdom',0],['\u{1F1E6}\u{1F1EB}','Afghanistan',0],['\u{1F1E6}\u{1F1F1}','Albania',0],
+      ['\u{1F1E9}\u{1F1FF}','Algeria',0],['\u{1F1E6}\u{1F1E9}','Andorra',0],['\u{1F1E6}\u{1F1F4}','Angola',0]];
+    const rows=countries.map(([flag,name,sel])=>`
+      <div style="display:flex;align-items:center;gap:14px;height:56px">
+        <span style="width:30px;height:30px;flex:0 0 auto;border-radius:50%;overflow:hidden;display:grid;place-items:center;font-size:26px;line-height:1">${flag}</span>
+        <span style="font-weight:${sel?700:lw}">${name}</span><span style="flex:1"></span>
+        ${sel?`<span data-el="check" style="display:grid;place-items:center">${icon('check','<path d="M5 12.5l4.5 4.5L19 7"/>',20)}</span>`:''}</div>`).join('');
+    body=`<div style="padding:20px 22px;display:flex;flex-direction:column;height:100%">
+      <div style="display:flex;align-items:center;gap:14px">
+        <span data-el="back" style="display:grid;place-items:center;flex:0 0 auto">${icon('back','<path d="M15 5l-7 7 7 7"/>',22)}</span>
+        <div data-el="search" style="flex:1;height:46px;background:${sb};border-radius:${sr}px;display:flex;align-items:center;gap:10px;padding:0 14px">
+          <span data-el="searchIcon" style="display:grid;place-items:center;flex:0 0 auto">${icon('searchIcon','<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',18)}</span>
+          <span style="color:${sc};font-family:${fontStack(tok('fontBody'))};font-size:15px">${esc(val('search','placeholder'))}</span></div>
+      </div>
+      <div data-el="clist" style="margin-top:22px;color:${lc};font-family:${fontStack(lf)};font-size:${ls}px;font-weight:${lw}">${rows}</div>
+    </div>`;
+  }
+  else if(id==='consent' && !tok('requireConsent')){
+    /* Off is a real state of the flow, so the screen shows it rather than
+       disappearing from the rail — and offers the switch back on right here. */
+    body=`<div style="position:absolute;inset:0;overflow:hidden">
+      ${ghostStart()}
+      <div style="position:absolute;inset:0;background:rgba(4,6,10,.62)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 22px 30px;text-align:center">
+        <div style="width:42px;height:42px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
+          background:rgba(229,163,60,.16);color:#E5A33C">
+          <svg viewBox="0 0 24 24" style="width:22px;height:22px" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M12 3l9.5 17H2.5z"/><path d="M12 10v4M12 17v.01"/></svg></div>
+        <div style="color:${tok('primaryText')};font-family:${fontStack(tok('fontBody'))};font-size:16px;font-weight:600;line-height:1.35">Consent screen is off</div>
+        <div style="color:${tok('secondaryText')};font-family:${fontStack(tok('fontBody'))};font-size:13.5px;line-height:1.5;margin-top:7px">
+          Verification starts straight after the start screen. We strongly advise collecting consent first.</div>
+        <button onclick="event.stopPropagation();setToken('requireConsent',true)"
+          style="margin-top:18px;width:100%;height:46px;border:0;border-radius:${tok('buttonRadius')}px;cursor:pointer;
+          background:${tok('buttonBg')};color:${tok('buttonText')};font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:600">Turn it back on</button>
+      </div></div>`;
+  }
+  else if(id==='consent'){
+    const sb=val('sheet','bg'), sbd=val('sheet','border'), sr=val('sheet','radius');
+    const rb=val('release','bg'), rbd=val('release','border'), rr=val('release','radius');
+    const cl=val('close','color'), cc=val('close','custom');
+    const closeBtn = cc
+      ? `<img src="${cc}" style="width:16px;height:16px;object-fit:contain;display:block">`
+      : `<svg viewBox="0 0 24 24" style="width:16px;height:16px;display:block" fill="none" stroke="${cl}" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>`;
+    body=`<div style="position:absolute;inset:0;overflow:hidden">
+      ${ghostStart()}
+      <div style="position:absolute;inset:0;background:rgba(4,6,10,.5);-webkit-backdrop-filter:blur(16px) saturate(140%);backdrop-filter:blur(16px) saturate(140%)"></div>
+      <div data-el="sheet" style="position:absolute;left:0;right:0;bottom:0;background:${sb};border-top:1px solid ${sbd};
+        border-radius:${sr}px ${sr}px 0 0;max-height:93%;display:flex;flex-direction:column;overflow:hidden">
+
+        <div style="padding:24px 18px 0;position:relative;flex:0 0 auto">
+          <span data-el="close" style="position:absolute;top:10px;right:10px;width:26px;height:26px;display:grid;place-items:center">${closeBtn}</span>
+          <div data-el="logo" style="display:flex;justify-content:${JUST[(val('logo','align')||'Center')]};margin-bottom:16px">${logoMark(val('logo','scale'), ink, val('logo','src'))}</div>
+          ${txt('title','padding:0 20px;line-height:1.25;text-wrap:balance')}
+        </div>
+
+        <div style="padding:16px 18px 4px;flex:1 1 auto;min-height:0;overflow:hidden">
+          ${list('list')}
+          <div style="height:1px;background:${tok('cardBorder')};margin:16px 0 14px"></div>
+          <div>${txt('note','display:inline;line-height:1.55')} ${txt('learn','display:inline-flex;align-items:center;gap:3px;width:auto;vertical-align:baseline')}</div>
+        </div>
+
+        <div style="padding:10px 18px 18px;flex:0 0 auto">
+          <div data-el="release" style="background:${rb};border:1px solid ${rbd};border-radius:${rr}px;padding:10px 11px;display:flex;gap:9px;align-items:flex-start;margin-bottom:10px">
+            <span style="width:18px;height:18px;border:1.8px solid ${val('release','boxColor')};border-radius:5px;flex:0 0 auto;margin-top:1px;background:${val('sheet','bg')}"></span>
+            <span style="color:${val('release','color')};font-family:${fontStack(val('release','font'))};font-size:${val('release','size')}px;font-weight:${val('release','weight')};line-height:1.45;text-align:left">${esc(merchantify(val('release','text'))).replace(/\n/g,'<br>')}</span></div>
+          ${button('btn')}
+          ${txt('decline','margin-top:10px;text-decoration:underline;text-underline-offset:2px')}
+        </div>
+      </div>
+    </div>`;
+  }
+  else if(id==='walk'){
+    body=`<div style="${pad};display:flex;flex-direction:column;height:100%;align-items:center">
+      <div style="flex:1"></div>
+      <div data-el="img" style="margin-bottom:18px">${artwork('img')}</div>
+      ${txt('title','margin-bottom:8px')}
+      ${txt('desc','line-height:1.5')}
+      <div style="flex:1"></div><div style="align-self:stretch">${button('btn')}</div></div>`;
+  }
+  else if(id==='tips'||id==='nodetect'){
+    body=`<div style="${pad};display:flex;flex-direction:column;height:100%">
+      <div style="flex:1"></div>
+      <div data-el="img" style="width:fit-content;margin:0 auto 16px">${artwork('img')}</div>
+      ${txt('title','margin-bottom:14px')}
+      ${list('bullets')}
+      <div style="flex:1"></div>${button('btn')}</div>`;
+  }
+  else if(id==='scan'){
+    const gc=val('guide','color'), gw=val('guide','width'), cap=val('guide','successColor');
+    const face = state.variant===0;
+    const st = scanState;                        /* default | error | success */
+    /* the message is live scanning feedback, not a caption: only the initial
+       wording is editable, the error and success states are shown so their
+       colours can be set */
+    const msg = st==='error'   ? {text:'Low light detected',       bg:val('status','errorBg'),   fg:val('status','errorColor')}
+              : st==='success' ? {text:'Face captured',            bg:val('status','successBg'), fg:val('status','successColor')}
+              :                  {text:val('status','text'),       bg:val('status','bg'),        fg:val('status','color')};
+    const bubble = `<div data-el="status" style="background:${msg.bg};color:${msg.fg};border-radius:10px;
+        padding:10px 8px;font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:600;text-align:center;max-width:80%">${esc(msg.text)}</div>`;
+    const guide = face
+      ? `<div data-el="guide">${ovalRing(gc, cap, gw, st==='success')}</div>`
+      : `<div data-el="guide" style="width:292px;height:184px;border-radius:14px;border:${gw}px solid ${st==='success'?cap:gc};position:relative">
+           <div style="position:absolute;inset:0;display:grid;place-items:center">
+             <div style="width:132px;height:132px;border-radius:50%;background:${msg.bg};color:${msg.fg};
+               display:grid;place-items:center;padding:0 14px;font-family:${fontStack(tok('fontBody'))};font-size:14px;font-weight:600;text-align:center"
+               data-el="status">${esc(msg.text)}</div></div>
+         </div>`;
+    /* the live widget washes the whole frame when it reports a problem */
+    const wash = st==='error' ? `<div style="position:absolute;inset:0;background:${val('status','errorBg')};opacity:.3;pointer-events:none"></div>` : '';
+    const navLogo = val('navbar','logoShow')
+      ? logoMark(val('navbar','logoScale'), ink, val('navbar','logoSrc'), !val('navbar','logoSrc')) : '';
+    const navHelp = val('navbar','helpShow')
+      ? (val('navbar','helpCustom')
+        ? `<img src="${val('navbar','helpCustom')}" style="width:22px;height:22px;object-fit:contain;display:block">`
+        : `<svg viewBox="0 0 24 24" style="width:22px;height:22px;display:block" fill="none" stroke="${val('navbar','helpColor')}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v.01M12 13.2c0-2 2-2.1 2-3.6A2 2 0 0010 9.4" stroke-linecap="round"/></svg>`)
+      : '<span style="width:22px;height:22px;display:block;flex:0 0 auto"></span>';   /* keep the slot */
+    /* this is a live camera feed in production — not a settable surface. Grey so a
+       client's black message text stays legible against it. */
+    body=`<div style="display:flex;flex-direction:column;height:100%;background:#6B6B6B;position:relative">
+      ${wash}
+      <div data-el="navbar" style="display:flex;align-items:center;min-height:30px;padding:20px 22px;gap:12px;position:relative">
+        ${closeIcon(val('navbar','closeColor'), val('navbar','closeCustom'))}
+        <span style="flex:1"></span>${navLogo}<span style="flex:1"></span>${navHelp}
+      </div>
+      <div style="flex:1;display:grid;place-items:center;position:relative">${guide}</div>
+      ${face ? `<div style="padding:0 22px 54px;display:flex;justify-content:center;position:relative">${bubble}</div>`
+             : '<div style="height:54px"></div>'}
+    </div>`;
+  }
+  else if(id==='verdict'){
+    body=`<div style="${pad};display:flex;flex-direction:column;height:100%;align-items:center">
+      <div style="flex:1"></div>${verdictIcon()}
+      ${txt('title','margin:16px 0 8px')}
+      ${txt('desc','line-height:1.5')}
+      <div style="flex:1"></div><div style="align-self:stretch">${button('btn')}</div></div>`;
+  }
+  else if(id==='qr'){
+    const qb=val('qr','bg'), qbd=val('qr','border'), qr_=val('qr','radius');
+    body=`<div style="${pad};display:flex;flex-direction:column;height:100%;align-items:center">
+      <div data-el="logo" style="align-self:flex-start;margin-bottom:16px">${logoMark(val('logo','scale'), ink, val('logo','src'))}</div>
+      ${txt('title','margin-bottom:16px;line-height:1.35')}
+      <div data-el="qr" style="background:${qb};border:1px solid ${qbd};border-radius:${qr_}px;width:112px;height:112px;display:grid;place-items:center">
+        <svg viewBox="0 0 24 24" style="width:78px" fill="#111"><path d="M3 3h7v7H3zM5 5v3h3V5zM14 3h7v7h-7zM16 5v3h3V5zM3 14h7v7H3zM5 16v3h3v-3zM14 14h3v3h-3zM18 14h3v3h-3zM14 18h3v3h-3zM18 18h3v3h-3z"/></svg>
+      </div>
+      <div style="margin-top:16px">${txt('link','text-decoration:underline')}</div></div>`;
+  }
+
+  const frameCls = curScreen().device==='desktop' ? 'desktop' : 'mobile';
+  const selbg = state.sel==='__bg' ? ' selbg' : '';
+  const camera = state.screen==='scan';          /* no selectable background behind a camera */
+  document.getElementById('stage').innerHTML =
+    `<button class="nav" title="Previous screen" onclick="event.stopPropagation();goTo(flatIndex()-1)">\u2039</button>
+     <div class="fitwrap" id="fitwrap">
+       <div class="frame ${frameCls}${selbg}"><div class="screen"${camera?'':' data-el="__bg"'} style="${camera?'background:#6B6B6B':backgroundCss()}">${camera?'':bokehLayer()}${body}</div></div>
+       ${selbg?'<span class="bgtag">Background</span>':''}
+     </div>
+     <button class="nav" title="Next screen" onclick="event.stopPropagation();goTo(flatIndex()+1)">\u203A</button>
+     <div class="hint">Click anything — including the background — to style it</div>`;
+  fitDevice();
+
+  document.querySelectorAll('[data-el]').forEach(n=>{
+    /* clicking the same element again clears the selection */
+    n.onclick = e=>{ e.stopPropagation(); select(n.dataset.el===state.sel ? null : n.dataset.el); };
+  });
+  paintSelection();
+  /* clicking the empty stage (outside the device) clears the selection,
+     because the background itself is now a selectable element */
+  document.getElementById('stage').onclick = ()=> select(null);
+}
+
+/* outline + label for the current selection, drawn outside the clipping frame */
+function paintSelection(){
+  const fw=document.getElementById('fitwrap'); if(!fw) return;
+  fw.querySelectorAll('.selbox').forEach(n=>n.remove());
+  if(!state.sel || state.sel==='__bg') return;          /* __bg outlines the frame itself */
+  const el=document.querySelector(`[data-el="${state.sel}"]`); if(!el) return;
+  const a=el.getBoundingClientRect(), b=fw.getBoundingClientRect();
+  const box=document.createElement('div');
+  box.className='selbox';
+  box.style.cssText=`left:${a.left-b.left-5}px;top:${a.top-b.top-5}px;width:${a.width+10}px;height:${a.height+10}px`;
+  box.innerHTML=`<span class="tagline">${curScreen().els[state.sel].label}</span>`;
+  fw.appendChild(box);
+  /* An uploaded image has no height until it decodes, so measuring straight after
+     render gives a sliver. Re-measure once each image is in. */
+  const imgs=[...(el.tagName==='IMG'?[el]:[]), ...el.querySelectorAll('img')];
+  imgs.forEach(im=>{ if(!im.complete) im.addEventListener('load', ()=>paintSelection(), {once:true}); });
+}
+
+/* The device renders at TRUE size (390x844) so every value in the inspector is a
+   real device value — then it's scaled down to a comfortable canvas size. The cap
+   keeps the preview the same size on screen regardless of the device dimensions. */
+const DISPLAY_CAP = {mobile:{w:330,h:668}, desktop:{w:560,h:430}};
+function fitDevice(){
+  const w=document.getElementById('fitwrap'); if(!w) return;
+  const f=w.querySelector('.frame'), st=document.getElementById('stage');
+  const H=f.offsetHeight, W=f.offsetWidth;
+  const cap=DISPLAY_CAP[f.classList.contains('desktop')?'desktop':'mobile'];
+  const fit=Math.min(cap.w/W, cap.h/H, (st.clientHeight-40)/H, (st.clientWidth-130)/W);
+  w.style.setProperty('--fit',fit.toFixed(3));
+  w.style.height=Math.round(H*fit)+'px'; w.style.width=Math.round(W*fit)+'px';
+  paintSelection();                      /* rects change with the scale */
+}
+
+/* ============================================================================
+   5. INSPECTOR
+   ============================================================================ */
+const BG_STYLES=['Solid','Gradient','Image','Logo blur'];
+function readFile(input, cb){ const f=input.files[0]; if(!f) return; const r=new FileReader(); r.onload=e=>cb(e.target.result); r.readAsDataURL(f); }
+
+/* the last few uploads are kept so the same mark can be reused on the next
+   element — e.g. giving all three step icons the same custom icon */
+let RECENT=[];
+function pushRecent(d){ if(!d) return; RECENT=[d, ...RECENT.filter(x=>x!==d)].slice(0,3); }
+function toggleRecent(e, btn){
+  e.stopPropagation();
+  const box=btn.closest('.upload'), was=box.classList.contains('open');
+  document.querySelectorAll('.upload.open').forEach(u=>u.classList.remove('open'));
+  if(!was) box.classList.add('open');
+}
+document.addEventListener('click', ()=> document.querySelectorAll('.upload.open').forEach(u=>u.classList.remove('open')));
+
+function applyUpload(d, target){
+  const p=target.split('|');
+  if(p[0]==='tok') setToken(p[1], d); else setProp(p[1], p[2], d);
+}
+function uploadTo(input, target){ readFile(input, d=>{ pushRecent(d); applyUpload(d, target); }); }
+
+function uploadCtl(current, target){
+  const id='u'+Math.random().toString(36).slice(2,8);
+  const recents = RECENT.length ? `<div class="recent"><div class="rh">Recently used</div>
+    <div class="row2">${RECENT.map((d,i)=>`<button class="rthumb" title="Use this"
+      onclick="applyUpload(RECENT[${i}],'${target}')"><img src="${d}"></button>`).join('')}</div></div>` : '';
+  const preview = current?`<img src="${current}" alt="">`:'<span class="ph">none</span>';
+  /* no recents yet means nothing to open — so no caret and no button */
+  const thumb = RECENT.length
+    ? `<button class="thumb" title="Recently used" onclick="toggleRecent(event,this)">${preview}</button>`
+    : `<span class="thumbplain">${preview}</span>`;
+  return `<div class="upload">
+    ${thumb}
+    <label class="btn" for="${id}">${current?'Replace':'Upload'}</label>
+    <input id="${id}" type="file" accept="image/*" hidden onchange="uploadTo(this,'${target}')">
+    ${current?`<button class="btn" onclick="applyUpload('','${target}')">Remove</button>`:''}
+    ${recents}</div>`;
+}
+
+/* ---------------------------------------------------------------------------
+   Typing must not re-render the panel. Every control edits LIVE (model +
+   canvas only) and commits on blur, so the caret stays put and a colour
+   picker stays open while you drag across it.
+   --------------------------------------------------------------------------- */
+let lastMark='';
+function markOnce(k){
+  const now=Date.now();
+  if(lastMark.k===k && now-lastMark.t<1200){ lastMark={k,t:now}; return; }
+  lastMark={k,t:now}; mark();
+}
+function liveProp(elId,prop,v,numeric){
+  const k=key(state.screen,state.variant,elId,prop);
+  overrides[k]= numeric ? (parseFloat(v)||0) : v;
+  renderScreen(); renderRail(); updateChrome();
+}
+function liveToken(k,v,numeric){
+  if(TOKENS[k].modal) TOKENS[k].values[activeMode()] = v;
+  else TOKENS[k].value = numeric ? (parseFloat(v)||0) : v;
+  renderScreen(); updateChrome();
+}
+function commit(){ renderInspector(); }
+/* keep the paired number box / hex field / swatch in sync without a re-render */
+function syncPair(input, value, swatchSel){
+  const row=input.closest('.row');
+  if(!row) return;
+  const partner=row.querySelector(input.classList.contains('numbox')?'input[type=range]':'.numbox');
+  if(partner && partner!==input) partner.value=value;
+  const hex=row.querySelector('.hex'); if(hex && input.type==='color') hex.value=value.toUpperCase();
+  const sw=row.querySelector('.swatch'); if(sw) sw.style.background=value;
+}
+
+function sliderCtl(value, min, max, step, live, markKey){
+  const n=parseFloat(value);
+  return `<div class="sliderrow">
+    <input type="range" min="${min}" max="${max}" step="${step}" value="${n}"
+      onpointerdown="markOnce('${markKey}')" oninput="${live}" onchange="commit()">
+    <input type="text" class="numbox" value="${n}" oninput="${live}" onfocus="markOnce('${markKey}')" onchange="commit()">
+  </div>`;
+}
+let RECENT_COLORS=[];
+function pushRecentColor(c){
+  if(!/^#[0-9a-f]{6}$/i.test(c||'')) return;
+  c=c.toUpperCase();
+  RECENT_COLORS=[c, ...RECENT_COLORS.filter(x=>x!==c)].slice(0,8);
+}
+function applyColor(c, target){
+  pushRecentColor(c);
+  const p=target.split('|');
+  if(p[0]==='tok') setToken(p[1], c); else setProp(p[1], p[2], c);
+}
+/* committing (not every drag frame) is what earns a place in the palette */
+function commitColor(input){ pushRecentColor(input.value); commit(); }
+
+/* ---------------------------------------------------------------------------
+   Colour picker. Built rather than borrowed: the native one can't show a
+   recently-used palette, and it closes on every drag.
+   --------------------------------------------------------------------------- */
+const PICK={target:null, mk:'', h:0, s:1, v:1, a:1, open:false};
+/* Values are stored as #RRGGBB, or #RRGGBBAA once opacity is below 100% —
+   CSS understands both, so nothing downstream has to special-case it. */
+function parseColor(v){
+  v=String(v==null?'':v).trim();
+  const m=v.match(/^rgba?\(([^)]+)\)$/i);
+  if(m){ const n=m[1].split(',').map(x=>parseFloat(x));
+    return {hex:'#'+n.slice(0,3).map(x=>Math.max(0,Math.min(255,Math.round(x||0))).toString(16).padStart(2,'0')).join('').toUpperCase(),
+            a: n.length>3 ? Math.max(0,Math.min(1,n[3])) : 1}; }
+  let h=v.replace('#','');
+  if(h.length===3||h.length===4) h=h.split('').map(c=>c+c).join('');
+  let a=1;
+  if(h.length===8){ a=parseInt(h.slice(6,8),16)/255; h=h.slice(0,6); }
+  if(!/^[0-9a-f]{6}$/i.test(h)) return {hex:'#000000', a:1};
+  return {hex:'#'+h.toUpperCase(), a};
+}
+const withAlpha=(hex,a)=> a>=.999 ? hex : hex+Math.round(a*255).toString(16).padStart(2,'0').toUpperCase();
+const pickValue=()=> withAlpha(hsv2hex(PICK.h,PICK.s,PICK.v), PICK.a);
+/* a flat colour layer over the checkerboard */
+const swatchStyle=v=>`background-image:linear-gradient(${v},${v}),var(--checker);`
+  +`background-size:auto,var(--checker-size);background-position:0 0,var(--checker-pos)`;
+function hex2rgb(h){ h=(h||'#000000').replace('#',''); if(h.length===3) h=h.split('').map(c=>c+c).join('');
+  return [parseInt(h.slice(0,2),16), parseInt(h.slice(2,4),16), parseInt(h.slice(4,6),16)]; }
+function rgb2hsv(r,g,b){ r/=255;g/=255;b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn; let h=0;
+  if(d){ h = mx===r ? ((g-b)/d+(g<b?6:0)) : mx===g ? ((b-r)/d+2) : ((r-g)/d+4); h*=60; }
+  return [h, mx?d/mx:0, mx]; }
+function hsv2hex(h,s,v){
+  const f=n=>{ const k=(n+h/60)%6, c=v-v*s*Math.max(0,Math.min(k,4-k,1));
+    return Math.round(c*255).toString(16).padStart(2,'0'); };
+  return ('#'+f(5)+f(3)+f(1)).toUpperCase(); }
+function rgb2hsl(r,g,b){ r/=255;g/=255;b/=255;
+  const mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn, l=(mx+mn)/2; let h=0,s=0;
+  if(d){ s = l>.5 ? d/(2-mx-mn) : d/(mx+mn);
+    h = mx===r ? ((g-b)/d+(g<b?6:0)) : mx===g ? ((b-r)/d+2) : ((r-g)/d+4); h*=60; }
+  return [Math.round(h), Math.round(s*100), Math.round(l*100)]; }
+function hsl2hex(h,s,l){ s/=100; l/=100;
+  const k=n=>(n+h/30)%12, a=s*Math.min(l,1-l);
+  const f=n=>Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1))))).toString(16).padStart(2,'0');
+  return ('#'+f(0)+f(8)+f(4)).toUpperCase(); }
+function setPickFromHex(hex){ const [h,s,v]=rgb2hsv(...hex2rgb(hex)); PICK.h=h; PICK.s=s; PICK.v=v; }
+
+/* HEX / RGB / HSL, the way the browser's own picker cycles them */
+let PICK_FORMAT='HEX';
+const FMT_ORDER=['HEX','RGB','HSL'];
+function cycleFormat(e){ e.stopPropagation();
+  PICK_FORMAT=FMT_ORDER[(FMT_ORDER.indexOf(PICK_FORMAT)+1)%FMT_ORDER.length]; paintPicker(); }
+function fieldsHtml(){
+  const hex=hsv2hex(PICK.h,PICK.s,PICK.v), [r,g,b]=hex2rgb(hex), [hh,ss,ll]=rgb2hsl(r,g,b);
+  const ap=Math.round(PICK.a*100);
+  const cyc=`<button class="fmt" onclick="cycleFormat(event)" title="Switch format">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg></button>`;
+  const f=(id,v,lab)=>`<label><input type="text" id="${id}" value="${v}" onchange="fieldEdit()" onkeydown="if(event.key==='Enter')fieldEdit()"><span>${lab}</span></label>`;
+  const body = PICK_FORMAT==='HEX' ? f('f1',withAlpha(hex,PICK.a),'HEX')
+    : PICK_FORMAT==='RGB' ? f('f1',r,'R')+f('f2',g,'G')+f('f3',b,'B')+f('f4',ap+'%','A')
+    : f('f1',hh,'H')+f('f2',ss+'%','S')+f('f3',ll+'%','L')+f('f4',ap+'%','A');
+  return `<div class="frow">${body}${cyc}</div>`;
+}
+function fieldEdit(){
+  const g=id=>{const e=document.getElementById(id); return e?e.value.trim().replace('%',''):''};
+  const alpha=()=>{ const v=g('f4'); return v===''?PICK.a:Math.max(0,Math.min(1,(parseFloat(v)||0)/100)); };
+  let hex=null, a=PICK.a;
+  if(PICK_FORMAT==='HEX'){ const c=parseColor(g('f1')); if(g('f1')){ hex=c.hex; a=c.a; } }
+  else if(PICK_FORMAT==='RGB'){ const n=[g('f1'),g('f2'),g('f3')].map(x=>Math.max(0,Math.min(255,parseInt(x)||0)));
+      hex='#'+n.map(x=>x.toString(16).padStart(2,'0')).join('').toUpperCase(); a=alpha(); }
+  else { hex=hsl2hex(parseFloat(g('f1'))||0, Math.max(0,Math.min(100,parseFloat(g('f2'))||0)), Math.max(0,Math.min(100,parseFloat(g('f3'))||0))); a=alpha(); }
+  if(!hex) { paintPicker(); return; }
+  setPickFromHex(hex); PICK.a=a; paintPicker(); pushPick();
+}
+/* native screen eyedropper where the browser supports it */
+async function eyedrop(e){
+  e.stopPropagation();
+  if(!window.EyeDropper) return;
+  try{ const res=await new EyeDropper().open(); setPickFromHex(res.sRGBHex.toUpperCase()); paintPicker(); pushPick(); }
+  catch(_){ /* cancelled */ }
+}
+
+function paintPicker(){
+  const hex=hsv2hex(PICK.h,PICK.s,PICK.v), out=pickValue();
+  const sv=document.getElementById('svArea');
+  sv.style.background=`linear-gradient(to top, #000, rgba(0,0,0,0)), linear-gradient(to right, #fff, hsl(${PICK.h},100%,50%))`;
+  const dot=document.getElementById('svDot');
+  dot.style.left=(PICK.s*100)+'%'; dot.style.top=((1-PICK.v)*100)+'%';
+  document.getElementById('hueSlider').value=Math.round(PICK.h);
+  const al=document.getElementById('alphaSlider');
+  al.value=Math.round(PICK.a*100);
+  const [r0,g0,b0]=hex2rgb(hex);
+  al.style.backgroundImage=`linear-gradient(to right, rgba(${r0},${g0},${b0},0), rgb(${r0},${g0},${b0})),var(--checker)`;
+  document.getElementById('cpPreview').setAttribute('style', swatchStyle(out));
+  document.getElementById('cFields').innerHTML=fieldsHtml();
+  const sw=document.getElementById('cpopSwatches');
+  sw.innerHTML=RECENT_COLORS.map(c=>`<button class="cchip" style="${swatchStyle(c)}" title="${c}" onclick="pickChip('${c}')"></button>`).join('');
+  const show=RECENT_COLORS.length?'':'none';
+  document.getElementById('cpopRh').style.display=show;
+  sw.style.display=show;
+  return hex;
+}
+function pushPick(){
+  const out=pickValue();
+  const p=PICK.target.split('|');
+  if(p[0]==='tok') liveToken(p[1],out); else liveProp(p[1],p[2],out);
+  /* keep the row's swatch and hex field in step without rebuilding the panel */
+  const live=document.querySelector(`.insp .swatch[data-target="${PICK.target}"]`);
+  if(live) PICK.swatchEl=live;
+  if(PICK.swatchEl && PICK.swatchEl.isConnected){
+    PICK.swatchEl.dataset.color=out;
+    PICK.swatchEl.setAttribute('style', swatchStyle(out));
+    const hx=PICK.swatchEl.parentElement.querySelector('.hex'); if(hx) hx.value=out; }
+}
+function openPicker(e, btn, target, mk){
+  e.stopPropagation();
+  if(PICK.open && PICK.swatchEl===btn){ closePicker(); return; }   /* click again to close */
+  /* Measure BEFORE closing the previous picker: closing repaints the panel, which
+     detaches this very button — measuring it afterwards gives a 0,0 rect and the
+     popover lands in the top-left corner. */
+  const r=btn.getBoundingClientRect();
+  const cur=btn.dataset.color||'#000000';
+  if(PICK.open) closePicker();
+  markOnce(mk);
+  const c=parseColor(cur);
+  const [h,sa,v]=rgb2hsv(...hex2rgb(c.hex));
+  /* re-find the live button in case the panel was rebuilt */
+  const liveBtn=document.querySelector(`.insp .swatch[data-target="${target}"]`)||btn;
+  Object.assign(PICK,{target, mk, h, s:sa, v, a:c.a, open:true, swatchEl:liveBtn});
+  const pop=document.getElementById('cpop');
+  pop.classList.add('open');
+  const top=Math.min(r.bottom+6, innerHeight-pop.offsetHeight-10);
+  pop.style.top=top+'px';
+  pop.style.left=Math.max(10, Math.min(r.left, innerWidth-pop.offsetWidth-10))+'px';
+  paintPicker();
+}
+function closePicker(){
+  if(!PICK.open) return;
+  PICK.open=false;
+  document.getElementById('cpop').classList.remove('open');
+  pushRecentColor(pickValue());
+  commit();                       /* repaint the panel once, at the end */
+}
+function pickChip(c){
+  const p=parseColor(c);
+  const [h,sa,v]=rgb2hsv(...hex2rgb(p.hex));
+  Object.assign(PICK,{h,s:sa,v,a:p.a});
+  paintPicker(); pushPick();
+}
+(function wirePicker(){
+  const sv=document.getElementById('svArea'), hue=document.getElementById('hueSlider'), pop=document.getElementById('cpop');
+  const move=e=>{ const r=sv.getBoundingClientRect();
+    PICK.s=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width));
+    PICK.v=Math.max(0,Math.min(1,1-(e.clientY-r.top)/r.height));
+    paintPicker(); pushPick(); };
+  sv.addEventListener('pointerdown',e=>{
+    try{ sv.setPointerCapture(e.pointerId); }catch(_){}   /* no-op without a real pointer */
+    move(e);
+    const mv=ev=>move(ev); const up=()=>{ sv.removeEventListener('pointermove',mv); removeEventListener('pointerup',up); };
+    sv.addEventListener('pointermove',mv); addEventListener('pointerup',up); });
+  hue.addEventListener('input',()=>{ PICK.h=+hue.value; paintPicker(); pushPick(); });
+  document.getElementById('alphaSlider').addEventListener('input',function(){ PICK.a=(+this.value)/100; paintPicker(); pushPick(); });
+  pop.addEventListener('click',e=>e.stopPropagation());
+  const eye=document.getElementById('eyeBtn');
+  eye.addEventListener('click', eyedrop);
+  if(!window.EyeDropper){ eye.disabled=true; eye.title='Your browser doesn\u2019t support the screen eyedropper'; }
+  document.addEventListener('click', closePicker);
+  addEventListener('scroll', closePicker, true);
+})();
+
+function colorCtl(value, live, markKey, target){
+  return `<span class="ctl">
+    <button class="swatch" data-target="${target}" data-color="${value}" style="${swatchStyle(value)}" title="Pick a colour"
+      onclick="openPicker(event,this,'${target}','${markKey}')"></button>
+    <input type="text" class="hex" value="${value}" onfocus="markOnce('${markKey}')" oninput="${live}" onchange="commitColor(this)"></span>`;
+}
+function toggleCtl(on, onclick){
+  return `<button class="toggle ${on?'on':''}" onclick="${onclick}"><span class="track"><i></i></span><span>${on?'On':'Off'}</span></button>`;
+}
+
+const ALIGN_ICON={Left:'<path d="M4 6h16M4 12h10M4 18h14"/>',
+  Center:'<path d="M4 6h16M7 12h10M5 18h14"/>', Right:'<path d="M4 6h16M10 12h10M6 18h14"/>'};
+function alignCtl(value, elId, prop){
+  return `<div class="picker">${['Left','Center','Right'].map(a=>`
+    <button class="${a===value?'on':''}" title="${a}" onclick="setProp('${elId}','${prop}','${a}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">${ALIGN_ICON[a]}</svg>
+    </button>`).join('')}</div>`;
+}
+function bulletCtl(value, elId, prop){
+  return `<div class="picker">${Object.keys(BULLETS).map(b=>`
+    <button class="${b===value?'on':''}" title="${b}" onclick="setProp('${elId}','${prop}','${b}')">${b==='None'?'\u2014':BULLETS[b]}</button>`).join('')}</div>`;
+}
+/* the list editor shows the bullets in a gutter, so what you type reads as a list */
+function listFieldCtl(value, live, mk){
+  const id='lf'+Math.random().toString(36).slice(2,8);
+  return `<div class="listfield"><div class="gutter" id="${id}"></div>
+    <textarea data-gutter="${id}" onfocus="markOnce('${mk}')" oninput="${live};autosize(this);syncGutter(this)"
+      onchange="commit()">${esc(value)}</textarea></div>`;
+}
+function syncGutter(ta){
+  const g=document.getElementById(ta.dataset.gutter); if(!g) return;
+  const el=state.sel, glyph=BULLETS[val(el,'bullet')||'Disc']||'';
+  g.textContent=ta.value.split('\n').map(()=>glyph).join('\n');
+}
+
+/* ============================================================================
+   TYPEFACES
+   Vyyer ships Inter and lets a client upload up to three faces of their own.
+   The upload registers a real @font-face — naming a family the browser can't
+   draw would make the preview a lie — and the picker shows every option set
+   in its own face.
+   ============================================================================ */
+const MAX_FONTS = 3;
+let CUSTOM_FONTS = [];                                  /* [{name, url}] */
+const fontNames  = ()=> ['Inter', ...CUSTOM_FONTS.map(f=>f.name)];
+const fontStack  = n => {
+  const f=String(n||'Inter').replace(/['"]/g,'');
+  return f==='Inter' ? 'Inter, system-ui, sans-serif' : `'${f}', Inter, system-ui, sans-serif`;
+};
+
+function syncFontFaces(){
+  let st=document.getElementById('customFonts');
+  if(!st){ st=document.createElement('style'); st.id='customFonts'; document.head.appendChild(st); }
+  st.textContent = CUSTOM_FONTS.map(f=>
+    `@font-face{font-family:'${f.name}';src:url("${f.url}");font-display:swap}`).join('\n');
+}
+function fontFileName(f){
+  return (f.name.replace(/\.(ttf|otf|woff2?|eot)$/i,'').replace(/[-_]+/g,' ').trim() || 'Custom font')
+         .replace(/['"]/g,'').slice(0,32);
+}
+function addFontFile(file, then){
+  if(!file || CUSTOM_FONTS.length>=MAX_FONTS) return;
+  let name=fontFileName(file), n=2;
+  while(fontNames().includes(name)) name = fontFileName(file)+' '+(n++);
+  const r=new FileReader();
+  r.onload=e=>{ CUSTOM_FONTS.push({name, url:e.target.result}); syncFontFaces(); if(then) then(name); touch(); };
+  r.readAsDataURL(file);
+}
+/* the file dialog is opened from a throwaway input so every font picker and
+   the manager share one code path */
+function pickFontFile(then){
+  const i=document.createElement('input');
+  i.type='file'; i.accept='.ttf,.otf,.woff,.woff2,font/ttf,font/otf,font/woff,font/woff2';
+  i.onchange=()=>addFontFile(i.files[0], then);
+  i.click();
+}
+function removeFont(i){
+  const gone=CUSTOM_FONTS[i].name;
+  CUSTOM_FONTS.splice(i,1); syncFontFaces();
+  /* anything still set to it falls back to Inter rather than rendering in a
+     family that no longer exists */
+  Object.keys(TOKENS).forEach(k=>{ if(TOKENS[k].type==='font' && TOKENS[k].value===gone) TOKENS[k].value='Inter'; });
+  Object.keys(overrides).forEach(k=>{ if(k.endsWith('|font') && overrides[k]===gone) delete overrides[k]; });
+  touch();
+}
+
+/* ---------- custom dropdown (no native select anywhere) ---------- */
+let ddSeq=0; let DD_PICK={};
+const DD_TICK='<svg class="tk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 12.5l5 5 10-11"/></svg>';
+function ddCtl(value, options, pick){
+  const id='dd'+(++ddSeq); DD_PICK[id]=pick;
+  const cur = options.find(o=>!o.sep && o.v===value);
+  const items = options.map((o,i)=>
+      o.sep  ? '<div class="sep"></div>'
+    : o.note ? `<div class="ddnote">${esc(o.note)}</div>`
+    : `<div class="ddrow${o.v===value?' on':''}">
+         <button type="button" class="ddpick${o.cls?' '+o.cls:''}" onclick="ddPick(event,'${id}',${i})"${o.style?` style="${o.style}"`:''}>
+           ${DD_TICK}<span class="v">${esc(o.label||o.v)}</span>${o.muted?`<span class="mut">${esc(o.muted)}</span>`:''}</button>
+         ${o.del==null?'':`<button type="button" class="ddx" title="Remove font" aria-label="Remove ${esc(o.label||o.v)}" onclick="ddDel(event,${o.del})">
+           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>`}
+       </div>`).join('');
+  DD_PICK[id+'_opts']=options;
+  return `<div class="dd" id="${id}"><button type="button" onclick="ddToggle(event,'${id}')">
+      <span class="v"${cur&&cur.style?` style="${cur.style}"`:''}>${esc(cur?(cur.label||cur.v):(value==null?'':value))}</span>
+      <svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+    </button><div class="ddm">${items}</div></div>`;
+}
+function ddToggle(e,id){
+  e.stopPropagation();
+  const el=document.getElementById(id), was=el.classList.contains('open');
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  if(!was) el.classList.add('open');
+}
+function ddDel(e,i){ e.stopPropagation(); removeFont(i); }
+function ddPick(e,id,i){
+  e.stopPropagation();
+  const el=document.getElementById(id); if(el) el.classList.remove('open');
+  const o=(DD_PICK[id+'_opts']||[])[i], f=DD_PICK[id];
+  if(o && f) f(o.v);
+}
+document.addEventListener('click', ()=>document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')));
+
+/* a font picker previews each face and offers the upload until three are in */
+function fontCtl(value, pick){
+  const left = MAX_FONTS - CUSTOM_FONTS.length;
+  const opts = [{v:'Inter', style:`font-family:${fontStack('Inter')}`}];
+  CUSTOM_FONTS.forEach((f,i)=> opts.push({v:f.name, style:`font-family:${fontStack(f.name)}`, del:i}));
+  opts.push({sep:true});
+  opts.push(left>0
+    ? {v:'__upload', label:'Upload custom font…', cls:'up', muted: CUSTOM_FONTS.length?`${CUSTOM_FONTS.length} of ${MAX_FONTS}`:''}
+    : {note:`All ${MAX_FONTS} custom fonts uploaded — remove one to add another.`});
+  return ddCtl(value, opts, v => v==='__upload' ? pickFontFile(pick) : pick(v));
+}
+/* 700 is the heaviest weight Vyyer ships */
+const WEIGHTS=[[300,'Light'],[400,'Regular'],[500,'Medium'],[600,'Semibold'],[700,'Bold']];
+function weightCtl(value, pick){
+  return ddCtl(String(value||400), WEIGHTS.map(([w,l])=>({v:String(w), label:`${l} · ${w}`, style:`font-weight:${w}`})),
+    v=>pick(+v));
+}
+
+function ctlFor(type, value, elId, prop){
+  const mk=elId+'|'+prop;
+  const live=`liveProp('${elId}','${prop}',this.value${type==='radius'||type==='scale'?',1':''});syncPair(this,this.value)`;
+  if(type==='color')  return colorCtl(value, live, mk, `el|${elId}|${prop}`);
+  if(type==='align')  return alignCtl(value, elId, prop);
+  if(type==='bullet') return bulletCtl(value, elId, prop);
+  if(type==='listlong') return listFieldCtl(value, live, mk);
+  if(type==='radius') return sliderCtl(value, 0, 32, 1, live, mk);
+  if(type==='scale')  return sliderCtl(value, .5, 2, .05, live, mk);
+  if(type==='upload') return uploadCtl(value, `el|${elId}|${prop}`);
+  if(type==='font')   return fontCtl(value, v=>setProp(elId,prop,v));
+  if(type==='weight') return weightCtl(value, v=>setProp(elId,prop,v));
+  if(type==='url')    return `<input type="text" inputmode="url" placeholder="https://" value="${esc(value||'')}" onfocus="markOnce('${mk}')" oninput="${live}" onchange="commit()">`;
+  if(type==='toggle') return toggleCtl(value, `setProp('${elId}','${prop}',${!value})`);
+  if(type==='long')   return `<textarea onfocus="markOnce('${mk}')" oninput="${live};autosize(this)" onchange="commit()">${esc(value)}</textarea>`;
+  return `<input type="text" value="${esc(value||'')}" onfocus="markOnce('${mk}')" oninput="${live}" onchange="commit()">`;
+}
+/* colours an uploaded image overrides: the key prop decides */
+const DIM_WHEN = {
+  stepicon:{bg:'custom', fg:'custom'},
+  icon:    {color:'custom'},
+  texticon:{iconColor:'iconCustom'},
+  navbar:  {helpColor:'helpCustom', closeColor:'closeCustom'},
+};
+function propRow(elId, prop, label, type, dim){
+  const r = resolve(state.screen, state.variant, elId, prop);
+  const srcLbl = r.source==='custom' ? 'Custom' : (r.source==='global' ? 'Global' : 'Default');
+  const cls = r.source==='custom' ? 'src custom' : 'src';
+  const resetBtn = r.source==='custom' ? `<button class="reset" title="Reset" onclick="resetProp('${elId}','${prop}')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></button>` : '';
+  return `<div class="row${dim?' dim':''}"><div class="lbl"><span>${label}</span><span class="${cls}">${srcLbl}</span>${resetBtn}</div>
+    ${ctlFor(type, r.value, elId, prop)}</div>`;
+}
+
+const PROP_UI = {
+  text:    [['text','Content','long'],['align','Alignment','align'],['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
+  fixedlist:[['text','Content','listlong'],['align','Block alignment','align'],['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
+  list:    [['text','Content','listlong'],['bullet','List style','bullet'],['align','Block alignment','align'],['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
+  texticon:[['text','Content','long'],['align','Alignment','align'],['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight'],
+            ['iconShow','Show icon','toggle'],['iconColor','Icon color','color'],['iconCustom','Custom icon','upload']],
+  links:  [['aLabel','First link','text'],['aUrl','First link URL','url'],
+           ['bLabel','Second link','text'],['bUrl','Second link URL','url'],
+           ['align','Alignment','align'],['underline','Underline','toggle'],
+           ['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
+  button: [['label','Label','text'],['weight','Font weight','weight'],['bg','Fill','color'],['fg','Text color','color'],['radius','Corner radius','radius']],
+  card:   [['bg','Fill','color'],['border','Border','color'],['radius','Corner radius','radius']],
+  logo:   [['align','Alignment','align'],['scale','Logo scale','scale'],['src','Custom logo','upload']],
+  icon:   [['color','Icon color','color'],['custom','Custom icon','upload']],
+  navbar:  [['logoShow','Show logo','toggle'],['logoSrc','Logo image','upload'],['logoScale','Logo scale','scale'],
+            ['helpShow','Show help icon','toggle'],['helpColor','Help icon color','color'],['helpCustom','Custom help icon','upload'],
+            ['closeColor','Close icon color','color'],['closeCustom','Custom close icon','upload']],
+  stepicon:[['bg','Fill','color'],['fg','Number color','color'],['custom','Custom icon','upload']],
+  guide:   [['color','Guide color','color'],['successColor','Capture colour','color'],['width','Line weight','radius']],
+  status:  [['text','Initial message','text'],['bg','Message fill','color'],['color','Message text','color'],
+            ['errorBg','Error fill','color'],['errorColor','Error text','color'],
+            ['successBg','Success fill','color'],['successColor','Success text','color']],
+  search:  [['placeholder','Placeholder','text'],['bg','Field fill','color'],['color','Text color','color'],['radius','Corner radius','radius']],
+  countrylist:[['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
+  image:  [['custom','Illustration','upload'],['scale','Image scale','scale']],
+  consentbox:[['text','Consent wording','long'],['color','Text color','color'],['size','Size','size'],
+           ['font','Font','font'],['weight','Font weight','weight'],['boxColor','Checkbox outline','color'],
+           ['bg','Fill','color'],['border','Border','color'],['radius','Corner radius','radius']],
+  step:   [['title','Step title','text'],['titleWeight','Title weight','weight'],
+           ['desc','Step description','text'],['descWeight','Description weight','weight']],
+};
+
+/* The merchant name is one value shared by every line that mentions it, so it
+   can be set from whichever of those lines the client happens to be editing —
+   the wording of each line is still theirs to change. */
+function merchantRow(where){
+  const t=TOKENS.merchant, v=t.value||'';
+  const reset = v ? `<button class="reset" title="Clear" onclick="setToken('merchant','')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></button>` : '';
+  return `<div class="row"><div class="lbl"><span>${t.label}</span>
+      <span class="src${v?' custom':''}">${v?'Set':'Not set'}</span>${reset}</div>
+    <input type="text" value="${attrEsc(v)}" placeholder="${t.placeholder}"
+      onfocus="markOnce('tok|merchant')" oninput="liveToken('merchant',this.value)" onchange="commit()">
+    <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>${
+      where==='global' ? t.note : 'Shared with every other line that uses {Merchant} \u2014 the title, the purpose line and the consent checkbox.'}</div></div>`;
+}
+
+/* background gets a conditional panel: the style choice decides the rest */
+function bgRows(){
+  const st = resolve(state.screen,state.variant,'__bg','style');
+  const picker = `<div class="row"><div class="lbl"><span>Background style</span>
+      <span class="${st.source==='custom'?'src custom':'src'}">${st.source==='custom'?'Custom':(st.source==='global'?'Global':'Default')}</span>
+      ${st.source==='custom'?`<button class="reset" onclick="resetProp('__bg','style')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></button>`:''}</div>
+    <div class="bgstyles">${BG_STYLES.map(b=>`<button class="${b===st.value?'on':''}" onclick="setProp('__bg','style','${b}')">${b}</button>`).join('')}</div></div>`;
+  let rest='';
+  if(st.value==='Solid')    rest = propRow('__bg','color','Background color','color');
+  if(st.value==='Gradient') rest = propRow('__bg','color','Gradient start','color') + propRow('__bg','color2','Gradient end','color');
+  if(st.value==='Image')    rest = propRow('__bg','image','Image','upload') + propRow('__bg','color','Fallback color','color');
+  if(st.value==='Logo blur')rest = propRow('__bg','color','Base color','color') +
+    `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
+     Builds a blurred bokeh wash from the company logo for this theme mode.</div>`;
+  return picker + rest;
+}
+
+function modeChip(){
+  if(TOKENS.theme.value!=='Dynamic') return '';
+  const m=activeMode();
+  const icon = m==='dark' ? '<path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/>'
+                          : '<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke-linecap="round"/>';
+  return `<span class="sp"></span><button class="modechip" onclick="setMode('${m==='dark'?'light':'dark'}')" title="Switch the values you're editing">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">${icon}</svg>${m}</button>`;
+}
+
+function autosize(ta){
+  ta.style.height='auto';
+  ta.style.height=Math.min(300, Math.max(112, ta.scrollHeight+2))+'px';
+}
+/* Toggles and pickers rebuild the whole panel, which would otherwise scroll it
+   back to the top mid-edit. Scroll is kept while the SAME panel is repainted,
+   and reset when a different element (or screen) takes it over. */
+let lastPanelKey='';
+function paintInspector(html){
+  const insp=document.getElementById('insp');
+  const key=[state.panel, state.screen, state.variant, state.sel].join('|');
+  const keep = key===lastPanelKey ? insp.scrollTop : 0;
+  lastPanelKey=key;
+  insp.innerHTML=html;
+  insp.scrollTop=keep;
+  insp.querySelectorAll('textarea').forEach(ta=>{ autosize(ta); if(ta.dataset.gutter) syncGutter(ta); });
+}
+/* every repaint rebuilds its dropdowns, so the old handlers go with it */
+function renderInspector(){
+  DD_PICK={};
+  const insp=document.getElementById('insp');
+  if(state.panel==='brand' && !state.sel){
+    const groups={};
+    Object.entries(TOKENS).forEach(([k,t])=>{(groups[t.group]=groups[t.group]||[]).push([k,t])});
+    let html=`<div class="hd"><div class="k">Brand</div><h3>Global settings</h3>
+      <p>Every screen inherits these. ${TOKENS.theme.value==='Dynamic'?'You’re editing the <b>'+activeMode()+'</b> values — flip the chip on a section or the switch above the preview.':'Change one here and it updates everywhere it hasn’t been overridden.'}</p></div>`;
+    GROUP_ORDER.forEach(g=>{
+      const list=groups[g]; if(!list) return;
+      const anyModal=list.some(([,t])=>t.modal);
+      const badge = anyModal ? modeChip() : `<span class="sp"></span><span class="shared">shared across modes</span>`;
+      html+=`<div class="sec"><h5>${g}${badge}</h5>`;
+      list.forEach(([k,t])=>{
+        if(t.type==='bgstyle'){
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
+            <div class="bgstyles">${BG_STYLES.map(b=>`<button class="${b===tok(k)?'on':''}" onclick="setToken('${k}','${b}')">${b}</button>`).join('')}</div></div>`;
+        } else if(t.type==='color'){
+          if(k==='pageBg2' && tok('bgStyle')!=='Gradient') return;
+          if(k==='pageBg'  && tok('bgStyle')==='Image')    return;
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
+            ${colorCtl(tok(k), `liveToken('${k}',this.value);syncPair(this,this.value)`, 'tok|'+k, 'tok|'+k)}</div>`;
+        } else if(t.type==='upload'){
+          if(k==='pageImg' && tok('bgStyle')!=='Image') return;
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>${uploadCtl(tok(k),`tok|${k}`)}</div>`;
+        } else if(t.type==='radius'){
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
+            ${sliderCtl(t.value,0,32,1,`liveToken('${k}',this.value,1);syncPair(this,this.value)`,'tok|'+k)}</div>`;
+        } else if(t.type==='font'){
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
+            ${fontCtl(t.value, v=>setToken(k,v))}</div>`;
+        } else if(t.type==='toggle'){
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
+            ${toggleCtl(tok(k), `setToken('${k}',${!tok(k)})`)}
+            ${t.note?`<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>${t.note}</div>`:''}</div>`;
+        } else if(t.type==='select'){
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
+            ${ddCtl(t.value, t.options.map(o=>({v:o})), v=>setToken(k,v))}</div>`;
+        } else if(t.type==='text'){
+          html+=merchantRow('global');
+        } else if(t.type==='logo'){
+          html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>${uploadCtl(tok(k),`tok|${k}`)}</div>`;
+        }
+      });
+      html+='</div>';
+    });
+    paintInspector(html); return;
+  }
+
+  const scr=curScreen(), el=scr.els[state.sel];
+  if(!el){ paintInspector(`<div class="hd"><div class="k">${scr.name}</div><h3>Nothing selected</h3></div>
+    <div class="empty"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 3l7.5 18 2.6-7.9L21 10.5z"/></svg>
+    <div>Click an element in the screen to style just that element.<br><br>Deselect to change something everywhere at once.</div></div>`); return; }
+
+  /* anything that declares a `show` prop gets a Visible toggle, first */
+  const vis = ('show' in el.props) ? propRow(state.sel,'show','Visible','toggle') : '';
+  const mer = hasMerchant(val(state.sel,'text')) ? merchantRow('element') : '';
+  let rows;
+  if(el.type==='bg') rows = bgRows();
+  else {
+    const map = DIM_WHEN[el.type]||{};
+    const list = PROP_UI[el.type]||[];
+    const html = list.map(([p,l,t])=>{
+      const by = map[p];
+      return {dim: !!(by && val(state.sel, by)), html: propRow(state.sel,p,l,t, !!(by && val(state.sel, by)))};
+    });
+    const last = html.map(r=>r.dim).lastIndexOf(true);
+    if(last>-1) html[last].html += `<div class="note" style="margin:-6px 0 12px">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
+      Not used while a custom image is set — remove it to colour the built-in icon.</div>`;
+    rows = vis + mer + html.map(r=>r.html).join('');
+  }
+  const nOvr = Object.keys(overrides).filter(k=>k.startsWith(state.screen+'|'+state.variant+'|'+state.sel+'|')).length;
+  let applyAll='';
+  if(scr.variants && nOvr){
+    applyAll=`<div class="sec"><button class="applyall" onclick="applyToAll()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
+      Apply to all ${scr.variants.length} ${scr.name.toLowerCase()} screens</button></div>`;
+  }
+  const modeNote = TOKENS.theme.value==='Dynamic'
+    ? `<p>Editing the <b>${activeMode()}</b> values. Colours here are stored per mode.</p>` : '';
+  paintInspector(`<div class="hd"><div class="k">${scr.name}${scr.variants?' · '+scr.variants[state.variant]:''}</div>
+      <h3>${el.label}</h3><p>Values marked <b>Global</b> follow your brand settings.</p>${modeNote}</div>
+    <div class="sec">${rows||'<div class="empty">No style options for this element.</div>'}</div>${applyAll}`);
+}
+
+/* ============================================================================
+   6. ACTIONS
+   ============================================================================ */
+function select(elId){
+  if(PICK.open) closePicker();          /* otherwise it would keep editing the old element */
+  state.sel=elId; state.panel=elId?'element':'brand'; renderScreen(); renderInspector(); }
+function setProp(elId,prop,v){
+  mark();
+  const spec=curScreen().els[elId].props[prop];
+  if(spec && typeof spec.value==='number') v=parseFloat(v)||0;
+  overrides[key(state.screen,state.variant,elId,prop)]=v; touch(); }
+function resetProp(elId,prop){ mark(); delete overrides[key(state.screen,state.variant,elId,prop)]; touch(); }
+function setToken(k,v){ mark();
+  if(TOKENS[k].modal) TOKENS[k].values[activeMode()] = v;
+  else TOKENS[k].value = (TOKENS[k].type==='size') ? parseFloat(v) : v;
+  touch(); }
+function setMode(m){ mark(); mode=m; touch(); }
+function applyToAll(){
+  mark();
+  const scr=curScreen(), pre=state.screen+'|'+state.variant+'|';
+  Object.keys(overrides).filter(k=>k.startsWith(pre)).forEach(k=>{
+    const parts=k.split('|'), el=parts[2], prop=parts[3], suffix=parts[4]?'|'+parts[4]:'';
+    scr.variants.forEach((_,i)=>{ if(i!==state.variant) overrides[state.screen+'|'+i+'|'+el+'|'+prop+suffix]=overrides[k]; });
+  });
+  touch();
+}
+function touch(){ renderModeSwitch(); renderScreen(); renderInspector(); renderRail(); updateChrome(); }
+function updateChrome(){
+  document.getElementById('saveBtn').disabled = Object.keys(overrides).length===0 && !past.length;
+  document.getElementById('undoBtn').disabled = !past.length;
+  document.getElementById('redoBtn').disabled = !future.length;
+}
+
+/* ---------- rail ---------- */
+function entryOverrides(f){ return Object.keys(overrides).filter(k=>k.startsWith(f.id+'|'+f.v+'|')).length }
+function renderRail(){
+  const groups={};
+  FLAT.forEach((f,i)=>{(groups[f.group]=groups[f.group]||[]).push([f,i])});
+  document.getElementById('railGroups').innerHTML=Object.entries(groups).map(([g,list])=>{
+    const open = list.some(([f])=>f.id===state.screen);
+    const items=list.map(([f,i])=>{
+      const on = f.id===state.screen && f.v===state.variant;
+      const off = f.id==='consent' && !tok('requireConsent');
+      return `<button class="screenbtn ${on?'on':''}${off?' off':''}" onclick="goTo(${i})">
+        <span class="nm">${f.label}</span>${off?'<span class="skip">Off</span>':''}${entryOverrides(f)&&!off?'<span class="dot"></span>':''}</button>`;
+    }).join('');
+    return `<div class="grp ${open?'open':''}"><button onclick="this.parentElement.classList.toggle('open')">
+      <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>${g}</button>
+      <div class="items">${items}</div></div>`;
+  }).join('');
+}
+function goTo(i){
+  const f=FLAT[(i+FLAT.length)%FLAT.length];
+  state.screen=f.id; state.variant=f.v; state.sel=null; state.panel='brand';
+  document.getElementById('screenName').textContent = f.screen===f.label ? f.screen : f.screen+' · '+f.label;
+  renderStates(); renderRail(); renderScreen(); renderInspector();
+}
+function goScreen(id){ goTo(FLAT.findIndex(f=>f.id===id)); }
+let scanState='default';
+function setScanState(s){ scanState=s; renderStates(); renderScreen(); renderInspector(); }
+function renderStates(){
+  const seg=document.getElementById('stateSeg'), cap=document.getElementById('stateCap');
+  const setCap=on=>{ cap.style.display = on ? '' : 'none'; };
+  if(state.screen==='scan'){
+    seg.style.display=''; setCap(true);
+    seg.innerHTML=[['default','Default'],['error','Error'],['success','Success']].map(([k,label])=>
+      `<button class="${scanState===k?'on':''}" onclick="setScanState('${k}')">${label}</button>`).join('');
+    return;
+  }
+  const states = state.screen==='consent' ? ['Unchecked','Checked'] : null;
+  seg.innerHTML = states ? states.map((v,i)=>`<button class="${i===0?'on':''}" onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${v}</button>`).join('') : '';
+  seg.style.display = states ? '' : 'none'; setCap(!!states);
+}
+/* the canvas theme switch only exists when the theme is Dynamic —
+   otherwise there is only one set of values and a switch would lie */
+function renderModeSwitch(){
+  const seg=document.getElementById('modeSeg');
+  if(TOKENS.theme.value!=='Dynamic'){ seg.style.display='none'; seg.innerHTML=''; return; }
+  seg.style.display='';
+  seg.innerHTML=['light','dark'].map(m=>`<button class="${m===mode?'on':''}" onclick="setMode('${m}')">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9">${m==='dark'
+      ?'<path d="M20 14.5A8.5 8.5 0 019.5 4a8.5 8.5 0 1010.5 10.5z"/>'
+      :'<circle cx="12" cy="12" r="4"/><path d="M12 3v2M12 19v2M3 12h2M19 12h2" stroke-linecap="round"/>'}</svg>${m==='dark'?'Dark':'Light'}</button>`).join('');
+}
+
+document.getElementById('undoBtn').onclick=undo;
+document.getElementById('redoBtn').onclick=redo;
+document.getElementById('discardBtn').onclick=()=>{ mark(); overrides={}; touch(); };
+addEventListener('resize',()=>fitDevice());
+addEventListener('keydown',e=>{
+  if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='z'){ e.preventDefault(); e.shiftKey?redo():undo(); }
+});
+
+/* boot */
+renderRail(); renderStates(); renderModeSwitch(); renderScreen(); renderInspector(); updateChrome();
+</script>
+</body>
+</html>

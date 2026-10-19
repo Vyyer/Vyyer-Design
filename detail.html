@@ -7,13 +7,16 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<!-- the stored dashboard theme is applied before paint, so the page never flashes the other one -->
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'light'}catch(e){}</script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #f0efeb;
+  --surface-2: #edf0f5;
   --border: rgba(0,0,0,0.08);
   --border-md: rgba(0,0,0,0.14);
   --text-primary: #111110;
@@ -22,12 +25,9 @@
   --valid: #3a7d1e;
   --invalid: #d63f3f;
   --expired: #c47a1a;
-  --caution: #b0850c;
+  --warn: #b0850c;
   --underage: #2e6fb5;
   --incomplete: #7a6c55;
-  --nav-bg: #111110;
-  --nav-text: #e8e8e6;
-  --nav-muted: #6f6e6b;
   --accent: #C8FF00;
   --blue: #007aff;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06);
@@ -42,19 +42,6 @@ html, body { font-family: var(--font); background: var(--bg); color: var(--text-
 body { min-height: 100vh; }
 
 /* NAV */
-nav { background: var(--nav-bg); height: 52px; display: flex; align-items: center; padding: 0 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; margin-right: 28px; }
-.nav-logo-mark { width: 28px; height: 28px; flex-shrink: 0; display: block; }
-.nav-logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
-.nav-links { display: flex; align-items: center; gap: 2px; flex: 1; }
-.nav-links a { font-size: 13px; font-weight: 500; color: var(--nav-muted); text-decoration: none; padding: 6px 12px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
-.nav-links a:hover { color: var(--nav-text); background: rgba(255,255,255,0.06); }
-.nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
-.nav-right { display: flex; align-items: center; gap: 12px; }
-.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #3a6800; color: var(--accent); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-.nav-user-name { font-size: 12px; font-weight: 500; color: var(--nav-text); }
-.nav-user-sub { font-size: 11px; color: var(--nav-muted); }
-.nav-mobile-menu { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--nav-muted); }
 
 /* LAYOUT */
 main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
@@ -74,7 +61,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
 .vp-valid      { background: #e6f5db; color: var(--valid); }
 .vp-invalid    { background: #fde8e8; color: var(--invalid); }
 .vp-expired    { background: #f6e6cf; color: var(--expired); }
-.vp-caution    { background: #fbf1cf; color: var(--caution); }
 .vp-underage   { background: #e3eefa; color: var(--underage); }
 .vp-incomplete { background: #f1ede6; color: var(--incomplete); }
 
@@ -84,13 +70,14 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
 .meta-row:first-child { padding-top: 0; }
 .meta-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); margin-bottom: 3px; }
 .meta-val { font-size: 12px; color: var(--text-primary); word-break: break-all; display: flex; align-items: center; gap: 6px; }
-.meta-val-mono { font-family: 'SF Mono', 'Monaco', monospace; font-size: 11px; color: var(--text-secondary); }
+.meta-val-mono { font-family: 'SF Mono', 'Monaco', monospace; font-size: 11px; color: var(--text-primary); }
 .copy-btn { background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 2px; border-radius: 4px; display: flex; align-items: center; transition: color .12s; flex-shrink: 0; }
 .copy-btn:hover { color: var(--text-primary); }
 .created-note { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: flex-start; gap: 6px; margin-top: 12px; line-height: 1.4; }
 
 /* MAIN CONTENT */
 .content { display: flex; flex-direction: column; gap: 16px; }
+@media (max-width: 900px) { .attempts-bar { position: static; } }
 .section-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
 .section-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
 .section-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
@@ -111,7 +98,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
 .cd-skip { background: var(--surface-2); color: var(--text-tertiary); }
 .check-text-pass { color: var(--valid); }
 .check-text-fail { color: var(--invalid); }
-.check-text-warn { color: var(--caution); }
+.check-text-warn { color: var(--warn); }
 .check-text-skip { color: var(--text-tertiary); }
 
 .data-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
@@ -124,78 +111,136 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
 .img-placeholder { width: 120px; height: 80px; border-radius: var(--radius-md); border: 1px dashed var(--border-md); background: var(--surface-2); display: flex; align-items: center; justify-content: center; }
 
 /* WORKFLOW TIMELINE */
+/* Not a card — a sticky strip in the page colour, so the chips read as a tab
+   header over whichever attempt's sections are scrolling underneath. The
+   negative margins cancel the column gap, so the strip's own padding is the
+   only space around it and nothing shows through while scrolling. */
+.attempts-bar { position: sticky; top: var(--sh-h); z-index: 20; background: var(--bg);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 0 16px; margin: -12px 0 -16px; }
+.attempts-bar[hidden] { display: none; }
+.attempts-count { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; margin-left: auto; }
+.attempts-count b { color: var(--text-primary); font-weight: 600; }
+.attempts-row { display: flex; gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
+.attempts-row::-webkit-scrollbar { display: none; }
+.att-chip { display: flex; align-items: center; gap: 8px; flex: 0 0 auto; cursor: pointer;
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  padding: 8px 12px; font-family: var(--font); text-align: left; transition: border-color .15s, background .15s; }
+.att-chip:hover { background: var(--surface-2); }
+.att-chip.on { border-color: var(--text-primary); background: var(--surface-2); }
+.att-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.att-body { display: flex; flex-direction: column; gap: 1px; }
+.att-n { font-size: 12.5px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+.att-t { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+.att-tag { font-size: 9.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase;
+  color: var(--text-secondary); background: var(--surface-2); border-radius: 20px; padding: 2px 6px; }
+.att-chip.on .att-tag { background: var(--surface); }
+.tl-next { display: inline-flex; align-items: center; gap: 5px; margin-top: 6px; padding: 0;
+  border: 0; background: none; cursor: pointer; font-family: var(--font); font-size: 11.5px;
+  font-weight: 600; color: var(--blue); }
+.tl-next:hover { text-decoration: underline; }
+.tl-next svg { width: 11px; height: 11px; }
 .timeline-section { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; box-shadow: var(--shadow-sm); }
 .timeline-head { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .timeline-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
 .timeline-duration { font-size: 11px; color: var(--text-tertiary); display: flex; align-items: center; gap: 5px; white-space: nowrap; }
-.timeline-body { padding: 8px 0; }
+.timeline-body { padding: 8px 0; position: relative; }
+/* One dashed rail behind the whole journey — the per-event stems read as
+   separate lollipops rather than one continuous sequence. Its ends are set
+   from the first and last dot in JS so it starts and stops on them. */
+.timeline-body::before {
+  content: ''; position: absolute; left: 35px; top: var(--tl-top, 19px); bottom: var(--tl-bottom, 19px);
+  border-left: 2px dashed var(--border); pointer-events: none;
+}
 .tl-event { display: flex; align-items: flex-start; gap: 0; padding: 0 20px; position: relative; }
 .tl-left { display: flex; flex-direction: column; align-items: center; width: 32px; flex-shrink: 0; padding-top: 14px; }
 .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; z-index: 1; }
-.tl-line { width: 2px; flex: 1; background: var(--border); min-height: 16px; }
-.tl-event:last-child .tl-line { display: none; }
-.tl-dot-success   { background: var(--valid); box-shadow: 0 0 0 3px #e6f5db; }
-.tl-dot-fail      { background: var(--invalid); box-shadow: 0 0 0 3px #fde8e8; }
-.tl-dot-warn      { background: var(--caution); box-shadow: 0 0 0 3px #fbf1cf; }
-.tl-dot-info      { background: var(--blue); box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
-.tl-dot-neutral   { background: var(--text-tertiary); box-shadow: 0 0 0 3px var(--surface-2); }
-.tl-dot-abandoned { background: var(--invalid); box-shadow: 0 0 0 3px #fde8e8; }
-.tl-right { flex: 1; padding: 10px 0 10px 12px; border-bottom: 1px solid var(--border); }
+.tl-dot-success   { background: var(--valid); box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px #e6f5db; }
+.tl-dot-fail      { background: var(--invalid); box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px #fde8e8; }
+.tl-dot-warn      { background: var(--warn); box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px #fbf1cf; }
+.tl-dot-info      { background: var(--blue); box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px rgba(0,122,255,0.12); }
+.tl-dot-neutral   { background: var(--text-tertiary); box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px var(--surface-2); }
+.tl-dot-abandoned { background: var(--invalid); box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px #fde8e8; }
+.tl-right { flex: 1; min-width: 0; margin-left: 12px; padding: 10px 0; border-bottom: 1px solid var(--border); }
 .tl-event:last-child .tl-right { border-bottom: none; }
-.tl-row { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
+.tl-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.tl-main { flex: 1; min-width: 0; }
 .tl-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.tl-sub { font-size: 11px; color: var(--text-secondary); margin-top: 2px; }
+/* timestamp and the time that step took, stacked on the right — one column for
+   time, one for outcome, and a step's duration no longer costs its own line */
+.tl-meta { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .tl-time { font-size: 11px; color: var(--text-tertiary); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.tl-sub { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
-.tl-duration { font-size: 11px; color: var(--text-tertiary); display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; }
-.tl-duration-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-tertiary); }
-.tl-flag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-top: 4px; }
+
+.tl-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+.tl-flag { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; }
 .tf-slow    { background: #fbf1cf; color: #9a7400; }
 .tf-abandon { background: #fde8e8; color: #c0392b; }
 .tf-success { background: #e6f5db; color: #3a7d1e; }
 
-.step-timing { margin-top: 20px; padding: 16px 20px; background: var(--surface-2); border-top: 1px solid var(--border); }
-.step-timing-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); margin-bottom: 12px; }
+.step-timing { margin-top: 20px; padding: 16px 20px; background: var(--surface); border-top: 1px solid var(--border); }
+.step-timing-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.step-timing-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-tertiary); }
+/* Most workflows are pre-created weeks ahead, so the wait before the customer
+   starts says nothing about how long verifying took. This total counts only
+   the capture steps and the processing that follows them. */
+.step-timing-total { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-tertiary); white-space: nowrap; }
+.step-timing-total span { font-weight: 600; color: var(--text-primary); }
 .timing-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
 .timing-row:last-child { margin-bottom: 0; }
 .timing-step { font-size: 12px; color: var(--text-secondary); width: 150px; flex-shrink: 0; }
 .timing-bar-wrap { flex: 1; height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .timing-bar { height: 5px; border-radius: 3px; background: var(--blue); }
 .timing-bar.slow { background: #e8a020; }
-.timing-val { font-size: 12px; font-weight: 600; color: var(--text-primary); min-width: 44px; text-align: right; }
+.timing-val { font-size: 12px; font-weight: 600; color: var(--text-primary); min-width: 48px; text-align: right;
+  font-variant-numeric: tabular-nums; }
 
 @media (max-width: 900px) { .detail-layout { grid-template-columns: 1fr; } .sidebar { position: static; } .check-grid { grid-template-columns: repeat(2,1fr); } .data-grid { grid-template-columns: repeat(2,1fr); } }
-@media (max-width: 680px) { .nav-links, .nav-right .nav-user { display: none; } .nav-mobile-menu { display: block; } }
 @media (max-width: 600px) { .check-grid, .data-grid { grid-template-columns: 1fr 1fr; } main { padding: 16px 12px 48px; } .timing-step { width: 110px; } }
+
+/* ══ DARK MODE ═════════════════════════════════════════════════════════════
+   Matches history.html and dashboard.html — the theme is set by the nav
+   switcher and stored per user. Status pills keep their hue and swap the
+   light tint for a low-alpha fill so they stay readable on near black. */
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1c1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-md: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --valid: #8CCB5C;
+  --invalid: #F0756A;
+  --expired: #E0A24E;
+  --warn: #E7C457;
+  --underage: #79ACE4;
+  --incomplete: #C3B291;
+  --blue: #5AA9FF;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.55);
+}
+[data-theme="dark"] .vp-valid      { background: rgba(122,201,67,0.16); }
+[data-theme="dark"] .vp-invalid    { background: rgba(228,78,78,0.17); }
+[data-theme="dark"] .vp-expired    { background: rgba(214,138,44,0.16); }
+[data-theme="dark"] .vp-underage   { background: rgba(70,135,214,0.18); }
+[data-theme="dark"] .vp-incomplete { background: rgba(176,158,126,0.16); }
+[data-theme="dark"] .sb-pass, [data-theme="dark"] .cd-pass, [data-theme="dark"] .tf-success { background: rgba(122,201,67,0.16); color: #AEE07C; }
+[data-theme="dark"] .sb-fail, [data-theme="dark"] .cd-fail, [data-theme="dark"] .tf-abandon { background: rgba(228,78,78,0.17); color: #F09191; }
+[data-theme="dark"] .sb-warn, [data-theme="dark"] .cd-warn, [data-theme="dark"] .tf-slow { background: rgba(228,176,36,0.16); color: #EBC55F; }
+[data-theme="dark"] .expired-tag { background: rgba(228,78,78,0.17); }
+[data-theme="dark"] .tl-dot-success   { box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px rgba(122,201,67,0.18); }
+[data-theme="dark"] .tl-dot-fail,
+[data-theme="dark"] .tl-dot-abandoned { box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px rgba(228,78,78,0.18); }
+[data-theme="dark"] .tl-dot-warn      { box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px rgba(228,176,36,0.18); }
+[data-theme="dark"] .tl-dot-info      { box-shadow: 0 0 0 2px var(--surface), 0 0 0 5px rgba(90,169,255,0.2); }
+[data-theme="dark"] .timing-bar.slow  { background: #E8A020; }
 </style>
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="#">
-    <svg class="nav-logo-mark" viewBox="0 0 138 138" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Vyyer">
-      <circle cx="69" cy="69" r="69" fill="#000"></circle>
-      <path fill="#A0D959" transform="translate(69, 75) rotate(90) translate(-69, -75)" d="M29,125.844843 C29,125.988984 29.0993882,126.042108 29.221238,125.96398 L42.8635356,117.216859 C42.9857221,117.138516 43.0817329,116.956668 43.0780385,116.812901 L42.5846021,97.6106244 C42.5808823,97.4658673 42.6828508,97.4006824 42.813659,97.4656777 L59.8424361,105.926824 C59.9726607,105.991529 60.1771625,105.981341 60.3002155,105.903427 L108.81628,75.1843301 C109.061495,75.029067 109.060982,74.7768014 108.816289,74.6216104 L29,24 L29,44.1001278 C29,44.2443585 29.0994846,44.4250153 29.2204829,44.5025328 L76.4529161,74.761949 C76.5746856,74.8399604 76.5738029,74.9672807 76.4526502,75.0452293 L58.7903256,86.4090233 C58.6684094,86.4874633 58.4711441,86.487857 58.3485647,86.40916 L29.2210118,67.7090431 C29.0989503,67.6306786 29,67.6849074 29,67.8281421 L29,125.844843 Z"></path>
-    </svg>
-    <span class="nav-logo-text">vyyer</span>
-  </a>
-  <div class="nav-links">
-    <a href="dashboard.html">Dashboard</a>
-    <a href="history.html" class="active">History</a>
-    <a href="#">Workflows</a>
-    <a href="#">API Keys</a>
-    <a href="#">Settings</a>
-  </div>
-  <div class="nav-right">
-    <div class="nav-user" style="text-align:right">
-      <div class="nav-user-name">Produser@Vyyer.com</div>
-      <div class="nav-user-sub">Default profile</div>
-    </div>
-    <div class="nav-avatar">PR</div>
-  </div>
-  <button class="nav-mobile-menu" aria-label="Menu">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect y="3" width="20" height="2" rx="1"/><rect y="9" width="20" height="2" rx="1"/><rect y="15" width="20" height="2" rx="1"/></svg>
-  </button>
-</nav>
+<header class="sh-nav" data-tab="history"></header>
 
 <main>
   <a href="history.html" class="back-link">
@@ -211,6 +256,12 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
 
     <!-- MAIN CONTENT -->
     <div class="content">
+      <!-- ATTEMPTS (only when the customer needed more than one) -->
+      <div class="attempts-bar" id="attemptsCard" hidden>
+        <div class="attempts-row" id="attemptsRow"></div>
+        <div class="attempts-count" id="attemptsCount"></div>
+      </div>
+
       <!-- IDV CHECKS -->
       <div class="section-card">
         <div class="section-head">
@@ -254,18 +305,17 @@ main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 64px; }
             <div class="timeline-title">Verification journey</div>
             <div style="font-size:11px;color:var(--text-tertiary);margin-top:2px">Step-by-step activity with timestamps</div>
           </div>
-          <div class="timeline-duration">
-            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="6" r="5"/><path d="M6 3.5V6l1.5 1.5"/></svg>
-            <span id="totalTime">Total time: —</span>
-          </div>
         </div>
         <div class="timeline-body" id="timelineBody"></div>
         <div class="step-timing">
-          <div class="step-timing-title">Time spent per step</div>
-          <div class="timing-row"><div class="timing-step">Start screen</div><div class="timing-bar-wrap"><div class="timing-bar" style="width:6%"></div></div><div class="timing-val">16s</div></div>
-          <div class="timing-row"><div class="timing-step">Scan face</div><div class="timing-bar-wrap"><div class="timing-bar" style="width:22%"></div></div><div class="timing-val">36s</div></div>
-          <div class="timing-row"><div class="timing-step">Scan ID front</div><div class="timing-bar-wrap"><div class="timing-bar slow" style="width:100%"></div></div><div class="timing-val">58s</div></div>
-          <div class="timing-row"><div class="timing-step">Scan ID back</div><div class="timing-bar-wrap"><div class="timing-bar" style="width:34%"></div></div><div class="timing-val">56s</div></div>
+          <div class="step-timing-head">
+            <div class="step-timing-title">Time spent per step</div>
+            <div class="step-timing-total" id="totalTime">
+              <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="6" cy="6" r="5"/><path d="M6 3.5V6l1.5 1.5"/></svg>
+              <span></span>
+            </div>
+          </div>
+          <div id="timingRows"></div>
         </div>
       </div>
     </div><!-- /content -->
@@ -287,19 +337,16 @@ const COPY = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke
 const ARCH = {
   Valid:      { j:'valid',      pill:{cls:'vp-valid',ic:'check',label:'Valid'},                 badge:{cls:'sb-pass',text:'All passed'},
                 checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','pass','Verified'],['ID Front Back Match','pass','Matched'],['Face Match','pass','Matched'],['Barcode Detective','pass','Passed']] },
-  Invalid:    { j:'fail',       pill:{cls:'vp-invalid',ic:'x',label:'Invalid — ID mismatch'},   badge:{cls:'sb-fail',text:'2 failed'},
+  Invalid:    { j:'fail',       pill:{cls:'vp-invalid',ic:'x',label:'Invalid'},                 badge:{cls:'sb-fail',text:'2 failed'}, stepFail:'ID mismatch',
                 checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','fail','Failed'],['ID Front Back Match','fail','Mismatch'],['Face Match','pass','Matched'],['Barcode Detective','pass','Passed']],
                 failStep:'Scan ID back', failMsg:'ID number could not be verified against issuing records', verdictColor:'--invalid' },
-  Expired:    { j:'fail',       pill:{cls:'vp-expired',ic:'x',label:'Invalid — Expired ID'},    badge:{cls:'sb-fail',text:'1 failed'},
+  Expired:    { j:'fail',       pill:{cls:'vp-expired',ic:'x',label:'Expired'},                 badge:{cls:'sb-fail',text:'1 failed'}, stepFail:'Expired ID',
                 checks:[['Scan Front','pass','Passed'],['Scan Back','fail','Expired ID'],['ID Number Verification','skip','Skipped'],['ID Front Back Match','pass','Matched'],['Face Match','pass','Matched'],['Barcode Detective','skip','Skipped']],
                 failStep:'Scan ID back', failMsg:'Expiry date detected as past — the ID has expired', verdictColor:'--expired', expired:true },
   Underage:   { j:'underage',   pill:{cls:'vp-underage',ic:'warn',label:'Underage'},            badge:{cls:'sb-warn',text:'Underage'},
                 checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','pass','Verified'],['ID Front Back Match','pass','Matched'],['Face Match','pass','Matched'],['Barcode Detective','pass','Passed']],
                 failMsg:'Date of birth indicates the holder is under 21', verdictColor:'--underage', underage:true },
-  Caution:    { j:'caution',    pill:{cls:'vp-caution',ic:'warn',label:'Caution — review advised'}, badge:{cls:'sb-warn',text:'1 flagged'},
-                checks:[['Scan Front','pass','Passed'],['Scan Back','pass','Passed'],['ID Number Verification','pass','Verified'],['ID Front Back Match','pass','Matched'],['Face Match','warn','Low confidence'],['Barcode Detective','pass','Passed']],
-                failMsg:'Face match confidence fell below the auto-approve threshold', verdictColor:'--caution' },
-  Incomplete: { j:'incomplete', pill:{cls:'vp-incomplete',ic:'dash',label:'Incomplete — abandoned'}, badge:{cls:'sb-skip',text:'Abandoned'},
+  Incomplete: { j:'incomplete', pill:{cls:'vp-incomplete',ic:'dash',label:'Incomplete'},        badge:{cls:'sb-skip',text:'Abandoned'},
                 checks:[['Scan Front','pass','Passed'],['Scan Back','skip','Not reached'],['ID Number Verification','skip','Not reached'],['ID Front Back Match','skip','Not reached'],['Face Match','pass','Passed'],['Barcode Detective','skip','Not reached']],
                 abandonStep:'Scan ID front' }
 };
@@ -323,12 +370,42 @@ function avatarColors(n){ let h=0; for(const c of n) h=(h*31+c.charCodeAt(0))%36
 function domainFor(r){ return r.platformLabel==='Web SDK' ? 'checkout.merchant.com' : 'id.vyyer'; }
 
 const REC = loadRecord();
-const A = ARCH[REC.result] || ARCH.Valid;
+
+/* ─── ATTEMPTS ───────────────────────────────────────────────────────────────
+   A customer may retry up to the merchant's limit. The record's result is the
+   verdict of the LAST attempt, so that one is listed first; the earlier ones
+   are the failures that sent them round again. Most records have a single
+   attempt and show no switcher at all. */
+const MAX_ATTEMPTS = REC.maxAttempts || 5;
+const RETRY_RESULTS = ['Incomplete','Invalid'];
+function seeded(str){ let h=2166136261>>>0;
+  for(const c of String(str)) h=Math.imul(h ^ c.charCodeAt(0), 16777619)>>>0;
+  return ()=>{ h=(Math.imul(h,1103515245)+12345)>>>0; return h/4294967296; }; }
+const ATTEMPTS = (function(){
+  const n = Math.max(1, Math.min(MAX_ATTEMPTS, REC.attempts || 1));
+  const rnd = seeded(REC.id + '|' + n);
+  const out = []; let t = REC.ts.getTime(), prev = REC.result;
+  for(let k = n; k >= 1; k--){
+    const latest = k === n;
+    /* earlier tries don't repeat back to back — a run of identical verdicts
+       reads as a bug rather than as a customer struggling */
+    let result = REC.result;
+    if(!latest){
+      do { result = RETRY_RESULTS[Math.floor(rnd()*RETRY_RESULTS.length)]; } while(result === prev);
+      prev = result;
+    }
+    out.push({ n:k, latest, result, arch: ARCH[result] || ARCH.Valid, ts: new Date(t), seed: rnd() });
+    t -= (3 + Math.floor(rnd()*12)) * 60000;      /* a few minutes between tries */
+  }
+  return out;                                     /* already most-recent-first */
+})();
+let ATT = ATTEMPTS[0];
+let A = ATT.arch;
 
 /* ─── SIDEBAR ─── */
-(function renderSidebar(){
+function renderSidebar(){
   const c = avatarColors(REC.name);
-  const created = new Date(REC.ts.getTime() - 262000);
+  const created = new Date(ATT.ts.getTime() - 262000);
   const sessionUid = REC.id.toLowerCase().replace('vyr-','ef0c07fe-8153-4847-') + '…b97';
   const html = `
     <div class="subject-head">
@@ -343,17 +420,18 @@ const A = ARCH[REC.result] || ARCH.Valid;
       <div class="meta-row"><div class="meta-label">Domain</div><div class="meta-val">${domainFor(REC)}</div></div>
       <div class="meta-row"><div class="meta-label">Platform</div><div class="meta-val">${REC.platformLabel} · ${REC.version||''}</div></div>
       <div class="meta-row"><div class="meta-label">Profile</div><div class="meta-val">${REC.profile}</div></div>
-      <div class="meta-row"><div class="meta-label">Scanned</div><div class="meta-val">${fmtScanned(REC.ts)}</div></div>
+      <div class="meta-row"><div class="meta-label">Scanned</div><div class="meta-val">${fmtScanned(ATT.ts)}</div></div>
     </div>
     <div class="created-note">
       <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.3" style="flex-shrink:0;margin-top:1px"><circle cx="6.5" cy="6.5" r="5.5"/><path d="M6.5 5v3M6.5 9.5v.2"/></svg>
       Workflow pre-created ${fmtScanned(created)}
     </div>`;
   document.getElementById('sidebarCard').innerHTML = html;
-})();
+  document.querySelectorAll('.copy-btn').forEach(wireCopy);
+}
 
 /* ─── IDV CHECKS ─── */
-(function renderChecks(){
+function renderChecks(){
   const badge = document.getElementById('idvBadge');
   badge.className = 'section-badge ' + A.badge.cls; badge.textContent = A.badge.text;
   document.getElementById('checkGrid').innerHTML = A.checks.map(([label,st,txt])=>`
@@ -361,10 +439,10 @@ const A = ARCH[REC.result] || ARCH.Valid;
       <div class="check-item-label">${label}</div>
       <div class="check-item-val"><div class="check-dot cd-${st}">${DOT[st]}</div><span class="check-text-${st}">${txt}</span></div>
     </div>`).join('');
-})();
+}
 
 /* ─── OCR + BARCODE DATA ─── */
-(function renderData(){
+function renderData(){
   const parts = REC.name.split(/\s+/), first = parts[0], last = parts[parts.length-1];
   const dob = A.underage ? '05/14/06' : '07/27/86';
   const expVal = A.expired
@@ -384,71 +462,152 @@ const A = ARCH[REC.result] || ARCH.Valid;
     field('Document number','2398466427'), field('Issue Date','01/07/16'),
     field('Expiry Date', A.expired?`<span style="color:var(--invalid)">07/27/21</span>`:'09/14/30')
   ].join('');
-})();
+}
 
 /* ─── TIMELINE ─── */
-(function renderTimeline(){
-  const end = REC.ts.getTime();
+function renderTimeline(){
+  const end = ATT.ts.getTime();
   const at = s => fmtDT(new Date(end - s*1000));
   const vc = A.verdictColor ? `var(${A.verdictColor})` : 'var(--valid)';
   const ev = [];
   ev.push({ t:at(262), dot:'neutral', label:'Workflow created', sub:'Verification session initialized · '+domainFor(REC) });
-  ev.push({ t:at(170), dot:'info', label:'Link opened', sub:'User opened the verification widget', dur:'1m 32s after creation' });
-  ev.push({ t:at(154), dot:'info', label:'Started verification', sub:'User tapped “Start verification”', dur:'16s on start screen' });
+  ev.push({ t:at(170), dot:'info', label:'Link opened', sub:'User opened the verification widget · 1m 32s after it was created' });
+  const jitter = Math.round(ATT.seed*14) - 7;           /* same attempt, same numbers */
+  ev.push({ t:at(154), dot:'info', label:'Started verification', sub:'User tapped “Start verification” · ' + (16+Math.max(-9,jitter)) + 's on the start screen' });
 
-  if(A.j==='caution'){
-    ev.push({ t:at(118), dot:'warn', label:'Scan face', sub:'Liveness passed · Face match confidence below threshold', dur:'36s on this step', flag:['tf-slow','⚠ Low confidence'] });
-  } else {
-    ev.push({ t:at(118), dot:'success', label:'Scan face', sub:'Liveness check passed · Face captured', dur:'36s on this step', flag:['tf-success','✓ Passed'] });
-  }
+  ev.push({ t:at(118), dot:'success', label:'Scan face', sub:'Liveness check passed · Face captured', secs:36, flag:['tf-success','✓ Passed'] });
 
   if(A.j==='incomplete'){
     ev.push({ t:at(0), dot:'abandoned', label:'Scan ID front', sub:'User exited the widget before capturing their ID', dur:'Last activity', flag:['tf-abandon','✗ Abandoned'] });
-    document.getElementById('totalTime').textContent = 'Abandoned after 2m 24s';
     finish(ev); return;
   }
 
-  ev.push({ t:at(60), dot:'success', label:'Scan ID front', sub:'Front of ID captured · OCR successful', dur:'58s on this step', flag:['tf-slow','⚠ Slow — 58s'] });
+  /* the step still passed — being slow is a timing note, not the outcome */
+  ev.push({ t:at(60), dot:'success', label:'Scan ID front', sub:'Front of ID captured · OCR successful', secs:58, flag:['tf-success','✓ Passed'] });
 
   if(A.j==='fail'){
-    ev.push({ t:at(4), dot:'fail', label:'Scan ID back', sub:'Back of ID captured · '+A.failMsg, dur:'56s on this step', flag:['tf-abandon','✗ '+A.pill.label.replace(/^Invalid — /,'')] });
-    ev.push({ t:at(0), dot:'fail', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">${A.pill.label}</strong>`, dur:'4s to process' });
+    ev.push({ t:at(4), dot:'fail', label:'Scan ID back', sub:'Back of ID captured · '+A.failMsg, secs:56, flag:['tf-abandon','✗ '+(A.stepFail||A.pill.label)] });
+    ev.push({ t:at(0), dot:'fail', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">${A.pill.label}</strong> · ${A.stepFail||A.failMsg}`, secs:4, step:'Processing' });
   } else if(A.j==='underage'){
-    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', dur:'56s on this step', flag:['tf-success','✓ Passed'] });
-    ev.push({ t:at(0), dot:'warn', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Underage</strong> · ${A.failMsg}`, dur:'4s to process' });
-  } else if(A.j==='caution'){
-    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', dur:'56s on this step', flag:['tf-success','✓ Passed'] });
-    ev.push({ t:at(0), dot:'warn', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Caution</strong> · ${A.failMsg}`, dur:'4s to process' });
+    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', secs:56, flag:['tf-success','✓ Passed'] });
+    ev.push({ t:at(0), dot:'warn', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Underage</strong> · ${A.failMsg}`, secs:4, step:'Processing' });
   } else {
-    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', dur:'56s on this step', flag:['tf-success','✓ Passed'] });
-    ev.push({ t:at(0), dot:'success', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Valid</strong> · All checks passed`, dur:'4s to process' });
+    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', secs:56, flag:['tf-success','✓ Passed'] });
+    ev.push({ t:at(0), dot:'success', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Valid</strong> · All checks passed`, secs:4, step:'Processing' });
   }
-  document.getElementById('totalTime').textContent = 'Total time: 4m 22s';
   finish(ev);
 
   function finish(events){
-    document.getElementById('timelineBody').innerHTML = events.map(e=>`
+    /* An earlier attempt ends where the customer went round again. */
+    if(!ATT.latest){
+      events = events.concat([{ t:at(-42), dot:'info', label:'Retry clicked',
+        sub:'Customer started attempt ' + (ATT.n + 1), next:true }]);
+    }
+    /* exactly one step gets the slow chip — the slowest, and only if it is
+       actually slow. The chip carries the time, so nothing repeats it. */
+    const slowest = events.reduce((n,e)=>Math.max(n, e.secs||0), 0);
+    const slowIdx = slowest>=45 ? events.findIndex(e=>e.secs===slowest) : -1;
+    document.getElementById('timelineBody').innerHTML = events.map((e,i)=>{
+      const slow = i===slowIdx;
+      /* Times live in one place now — the section below. The only timing worth
+         calling out inline is a step that dragged, and it sits with the verdict
+         rather than in a second column of small grey numbers. */
+      const slowFlag = slow ? `<span class="tl-flag tf-slow">⚠ Slow — ${e.secs}s</span>` : '';
+      return `
       <div class="tl-event">
-        <div class="tl-left"><div class="tl-dot tl-dot-${e.dot}"></div><div class="tl-line"></div></div>
+        <div class="tl-left"><div class="tl-dot tl-dot-${e.dot}"></div></div>
         <div class="tl-right">
-          <div class="tl-row"><div class="tl-label">${e.label}</div><div class="tl-time">${e.t}</div></div>
-          ${e.sub?`<div class="tl-sub">${e.sub}</div>`:''}
-          ${e.dur?`<div class="tl-duration"><span class="tl-duration-dot"></span>${e.dur}</div>`:''}
-          ${e.flag?`<div><span class="tl-flag ${e.flag[0]}">${e.flag[1]}</span></div>`:''}
+          <div class="tl-row">
+            <div class="tl-main">
+              <div class="tl-label">${e.label}</div>
+              ${e.sub?`<div class="tl-sub">${e.sub}</div>`:''}
+              ${(e.flag||slowFlag)?`<div class="tl-flags">${e.flag?`<span class="tl-flag ${e.flag[0]}">${e.flag[1]}</span>`:''}${slowFlag}</div>`:''}
+              ${e.next?`<button class="tl-next" onclick="goNextAttempt()">Go to attempt ${ATT.n+1}
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M12 5l7 7-7 7"/></svg></button>`:''}
+            </div>
+            <div class="tl-meta"><div class="tl-time">${e.t}</div></div>
+          </div>
         </div>
-      </div>`).join('');
+      </div>`;}).join('');
+    /* the rail runs from the first dot to the last, so measure them */
+    const body=document.getElementById('timelineBody');
+    const dots=[...body.querySelectorAll('.tl-dot')];
+    if(dots.length){
+      const b=body.getBoundingClientRect();
+      const f=dots[0].getBoundingClientRect(), l=dots[dots.length-1].getBoundingClientRect();
+      body.style.setProperty('--tl-top', Math.round(f.top-b.top+f.height/2)+'px');
+      body.style.setProperty('--tl-bottom', Math.round(b.bottom-l.bottom+l.height/2)+'px');
+    }
+    renderTimings(events);
   }
-})();
+}
+
+/* the bars under the journey are the same durations, read off the events */
+const fmtDur = s => s>=60 ? Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s' : s+'s';
+function renderTimings(events){
+  const steps=[];
+  events.forEach(e=>{ if(e.secs!=null) steps.push([e.step || e.label, e.secs]); });
+  /* a full bar is the whole time spent, so each bar is that step's share of it
+     — the old max-relative scaling made the slowest step look like 100% */
+  const total=steps.reduce((n,[,v])=>n+v,0) || 1;
+  const max=steps.reduce((n,[,v])=>Math.max(n,v),1);
+  /* only the one slowest step is flagged — two amber bars reads as a pattern
+     rather than as the step that held things up */
+  const slow = max>=45 ? steps.findIndex(([,v])=>v===max) : -1;
+  document.getElementById('timingRows').innerHTML = steps.map(([label,v],i)=>`
+    <div class="timing-row"><div class="timing-step">${label}</div>
+      <div class="timing-bar-wrap"><div class="timing-bar${i===slow?' slow':''}" style="width:${(v/total*100).toFixed(1)}%"></div></div>
+      <div class="timing-val">${v}s</div></div>`).join('');
+  const tt=document.getElementById('totalTime');
+  tt.style.display = steps.length ? '' : 'none';
+  tt.querySelector('span').textContent = 'Total time to verify: ' + fmtDur(total);
+}
+
+/* ─── ATTEMPT SWITCHER ─── */
+const ATT_DOT = { Valid:'--valid', Invalid:'--invalid', Expired:'--expired',
+                  Underage:'--underage', Incomplete:'--incomplete' };
+function renderAttempts(){
+  const card=document.getElementById('attemptsCard');
+  if(ATTEMPTS.length<2){ card.hidden=true; return; }
+  card.hidden=false;
+  document.getElementById('attemptsCount').innerHTML =
+    `<b>${ATTEMPTS.length}</b> of ${MAX_ATTEMPTS} allowed`;
+  document.getElementById('attemptsRow').innerHTML = ATTEMPTS.map((a,i)=>{
+    const t=ampm(a.ts);
+    return `<button class="att-chip${a===ATT?' on':''}" data-i="${i}">
+      <span class="att-dot" style="background:var(${ATT_DOT[a.result]||'--text-tertiary'})"></span>
+      <span class="att-body"><span class="att-n">Attempt ${a.n}</span>
+        <span class="att-t">${a.result} · ${t.h}:${t.m} ${t.ap}</span></span>
+      ${a.latest?'<span class="att-tag">Latest</span>':''}</button>`;
+  }).join('');
+  document.getElementById('attemptsRow').onclick = e=>{
+    const b=e.target.closest('.att-chip'); if(!b) return;
+    selectAttempt(ATTEMPTS[+b.dataset.i]);
+  };
+}
+/* the list runs most-recent-first, so the next attempt sits one above */
+function goNextAttempt(){
+  const i = ATTEMPTS.indexOf(ATT);
+  if(i > 0) selectAttempt(ATTEMPTS[i-1]);
+}
+function selectAttempt(a){
+  ATT=a; A=a.arch;
+  renderAttempts(); renderSidebar(); renderChecks(); renderData(); renderTimeline();
+}
 
 /* ─── COPY BUTTONS ─── */
-document.querySelectorAll('.copy-btn').forEach(btn => {
+function wireCopy(btn){
   btn.addEventListener('click', () => {
     navigator.clipboard?.writeText(btn.dataset.copy || '').catch(()=>{});
     const orig = btn.innerHTML;
     btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="#3a7d1e" stroke-width="1.6"><path d="M2 7l3 3 6-6"/></svg>';
     setTimeout(() => btn.innerHTML = orig, 1500);
   });
-});
+}
+
+/* ─── BOOT ─── */
+renderAttempts(); renderSidebar(); renderChecks(); renderData(); renderTimeline();
 </script>
+<script src="shell.js"></script>
 </body>
 </html>

@@ -7,6 +7,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<!-- the stored dashboard theme is applied before paint, so the page never flashes the other one -->
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'light'}catch(e){}</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -14,7 +17,7 @@
 :root {
   --bg: #f8fafc;
   --surface: #ffffff;
-  --surface-2: #f0efeb;
+  --surface-2: #edf0f5;
   --border: rgba(0,0,0,0.08);
   --border-md: rgba(0,0,0,0.14);
   --text-primary: #111110;
@@ -26,9 +29,6 @@
   --expired: #c47a1a;
   --underage: #2e6fb5;
   --incomplete: #7a6c55;
-  --nav-bg: #111110;
-  --nav-text: #e8e8e6;
-  --nav-muted: #6f6e6b;
   --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
   --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
   --radius-sm: 8px;
@@ -40,28 +40,13 @@
 html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 body { min-height: 100vh; } /* was height:100% — that capped the body box at one viewport, so the sticky nav fell off once you scrolled past it (most visible on long mobile pages) */
 
-/* ── NAV ── */
-nav { background: var(--nav-bg); height: 52px; display: flex; align-items: center; padding: 0 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid rgba(255,255,255,0.06); }
-.nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; margin-right: 28px; }
-.nav-logo-mark { width: 26px; height: 26px; background: var(--accent); border-radius: 6px; display: flex; align-items: center; justify-content: center; }
-.nav-logo-text { font-size: 15px; font-weight: 600; color: #fff; letter-spacing: -0.02em; }
-.nav-links { display: flex; align-items: center; gap: 2px; flex: 1; }
-.nav-links a { font-size: 13px; font-weight: 500; color: var(--nav-muted); text-decoration: none; padding: 6px 12px; border-radius: var(--radius-sm); transition: color .15s, background .15s; }
-.nav-links a:hover { color: var(--nav-text); background: rgba(255,255,255,0.06); }
-.nav-links a.active { color: #fff; background: rgba(255,255,255,0.1); }
-.nav-right { display: flex; align-items: center; gap: 12px; }
-.nav-avatar { width: 30px; height: 30px; border-radius: 50%; background: #3a6800; color: var(--accent); font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center; }
-.nav-user { text-align: right; }
-.nav-user-name { font-size: 12px; font-weight: 500; color: var(--nav-text); }
-.nav-user-sub { font-size: 11px; color: var(--nav-muted); }
-.nav-mobile-menu { display: none; background: none; border: none; cursor: pointer; padding: 6px; color: var(--nav-muted); }
 
 main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 
 /* ── STICKY TOOLBAR ── */
 .toolbar {
   position: sticky;
-  top: 52px; /* below nav */
+  top: var(--sh-h); /* below nav */
   z-index: 90;
   background: var(--bg);
   border-bottom: 1px solid var(--border);
@@ -101,14 +86,31 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .filter-select { font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm); padding: 5px 28px 5px 10px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; }
 .filter-select:focus { outline: none; border-color: #3a6800; }
 
+/* ── CUSTOM DROPDOWN ── */
+.dd { position: relative; display: inline-flex; }
+.dd-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 128px; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; white-space: nowrap; }
+.dd-trigger:hover { border-color: var(--text-tertiary); }
+.dd.open .dd-trigger { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.dd-label { overflow: hidden; text-overflow: ellipsis; }
+.dd-chev { color: var(--text-tertiary); flex-shrink: 0; transition: transform .15s; }
+.dd.open .dd-chev { transform: rotate(180deg); }
+.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%; background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
+.dd.open .dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.dd-item { display: flex; align-items: center; gap: 9px; width: 100%; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: none; border: none; border-radius: 7px; padding: 7px 9px; cursor: pointer; text-align: left; white-space: nowrap; transition: background .12s; }
+.dd-item:hover { background: var(--surface-2); }
+.dd-item-label { flex: 1; }
+.dd-check { width: 15px; height: 15px; flex-shrink: 0; color: #007aff; display: flex; align-items: center; justify-content: center; }
+.dd-box { width: 16px; height: 16px; flex-shrink: 0; border: 1.5px solid var(--border-md); border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; }
+.dd-box.on { background: #007aff; border-color: #007aff; }
+
 /* ── DATE RANGE PICKER ── */
 .date-field { position: relative; }
 .date-trigger {
   display: flex; align-items: center; gap: 7px;
-  font-family: var(--font); font-size: 12px; font-weight: 500;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
   color: var(--text-primary); background: var(--surface);
   border: 1px solid var(--border-md); border-radius: var(--radius-sm);
-  padding: 5px 10px; cursor: pointer; transition: all .15s; white-space: nowrap;
+  padding: 8px 12px; cursor: pointer; transition: all .15s; white-space: nowrap;
 }
 .date-trigger:hover { background: var(--surface-2); }
 .date-trigger.open { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
@@ -240,14 +242,13 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 ══════════════════════════════════════ */
 
 /* Verdict stat cards under Scans heading (5 across) */
-.scan-verdict-row { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 12px; margin-bottom: 16px; }
+.scan-verdict-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 12px; margin-bottom: 16px; }
 .scan-vcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow-sm); }
 .scan-vcard-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px; }
 .scan-vcard-val { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; margin-bottom: 5px; }
 .scan-vcard-val.sv-total      { color: var(--text-primary); }
 .scan-vcard-val.sv-valid      { color: var(--valid); }
 .scan-vcard-val.sv-invalid    { color: var(--invalid); }
-.scan-vcard-val.sv-caution    { color: #b0850c; }
 .scan-vcard-val.sv-expired    { color: var(--expired); }
 .scan-vcard-val.sv-underage   { color: var(--underage); }
 .scan-vcard-val.sv-incomplete { color: var(--incomplete); }
@@ -284,7 +285,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .metric-badge { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; margin-right: 4px; }
 .badge-valid      { background: #e6f5db; color: #3a7d1e; }
 .badge-invalid    { background: #fde8e8; color: #c0392b; }
-.badge-caution    { background: #fbf1cf; color: #9a7400; }
 .badge-expired    { background: #f6e6cf; color: #a5670f; }
 .badge-underage   { background: #e3eefa; color: #2e6fb5; }
 .badge-incomplete { background: #f5f0e8; color: #7a6c55; }
@@ -329,7 +329,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 footer { text-align: center; font-size: 11px; color: var(--text-tertiary); padding-top: 40px; }
 
 /* ── RESPONSIVE ── */
-@media (max-width: 1120px) { .scan-verdict-row { grid-template-columns: repeat(4,1fr); } }
+@media (max-width: 1120px) { .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(3,1fr); } }
 @media (max-width: 1000px) {
   .verdicts-top-row { grid-template-columns: 1fr; }
   .scan-charts-row  { grid-template-columns: 1fr; }
@@ -341,19 +341,17 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
   .filter-label { display: none; }
   .filter-sep { display: none; }
 }
-@media (max-width: 780px)  { .verdict-pills-row { grid-template-columns: repeat(2,1fr); } .scan-verdict-row { grid-template-columns: repeat(3,1fr); } .incomplete-grid { grid-template-columns: 1fr; } }
+@media (max-width: 780px)  { .verdict-pills-row { grid-template-columns: repeat(2,1fr); } .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(3,1fr); } .incomplete-grid { grid-template-columns: 1fr; } }
 @media (max-width: 680px) {
   .funnel-row { grid-template-columns: 1fr 1fr; }
   .failure-grid { grid-template-columns: 1fr; }
-  .nav-links, .nav-user { display: none; }
-  .nav-mobile-menu { display: block; }
   /* Toolbar: title + Export share the top row, filters wrap below */
   .toolbar { flex-wrap: wrap; gap: 10px; padding: 10px 16px; }
   .toolbar-left { flex: 1 1 auto; order: 1; min-width: 0; }
   .toolbar-right { order: 2; flex: 0 0 auto; }
   .toolbar-center { order: 3; flex: 0 0 100%; width: 100%; justify-content: flex-start; flex-wrap: wrap; gap: 8px; }
 }
-@media (max-width: 520px) { .scan-verdict-row { grid-template-columns: repeat(2,1fr); } }
+@media (max-width: 520px) { .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 420px)  {
   .funnel-row { grid-template-columns: 1fr; }
   .funnel-step { border-right: none; border-bottom: 1px solid var(--border); }
@@ -363,35 +361,75 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
   /* Keep the full-bleed toolbar aligned to the tighter page gutters */
   .toolbar { margin-left: -12px; margin-right: -12px; padding: 10px 12px; }
 }
+
+/* ══ DARK MODE ═════════════════════════════════════════════════════════════
+   The dashboard theme comes from the nav switcher and is stored per user.
+   Overrides live in one layer so the light values above stay the source of
+   truth. The verdict hues are re-cut rather than re-tinted: #3a7d1e on near
+   black is unreadable, so each one lightens to its own dark-background value
+   and the charts read the same set from JS. */
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1c1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-md: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --valid: #8CCB5C;
+  --invalid: #F0756A;
+  --expired: #E0A24E;
+  --underage: #79ACE4;
+  --incomplete: #C3B291;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.55);
+  --focus: #5AA9FF;
+  --grid: rgba(255,255,255,0.07);
+}
+:root { --focus: #007aff; --grid: rgba(0,0,0,0.04); }
+
+[data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
+[data-theme="dark"] .pill-group button.active,
+[data-theme="dark"] .dp-preset.active,
+[data-theme="dark"] .dp-day.endpoint,
+[data-theme="dark"] .dp-apply { background: var(--focus); border-color: var(--focus); color: #07131f; }
+[data-theme="dark"] .dp-apply:hover { background: #7FBCFF; }
+[data-theme="dark"] .dd.open .dd-trigger,
+[data-theme="dark"] .date-trigger.open { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(90,169,255,0.18); }
+[data-theme="dark"] .filter-select:focus { border-color: var(--focus); }
+[data-theme="dark"] .dd-check { color: var(--focus); }
+[data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #07131f; }
+[data-theme="dark"] .dd-box { color: #07131f; }
+[data-theme="dark"] .dp-day.in-range { background: rgba(90,169,255,0.16); }
+[data-theme="dark"] .dp-day.endpoint.today::after { background: #07131f; }
+
+/* funnel */
+[data-theme="dark"] .fb-created { background: rgba(255,255,255,0.3); }
+[data-theme="dark"] .fb-opened  { background: var(--focus); }
+[data-theme="dark"] .fb-started { background: #E8A020; }
+[data-theme="dark"] .funnel-step[data-dropoff]:not([data-dropoff=""]):hover { background: rgba(255,255,255,0.04); }
+[data-theme="dark"] .funnel-tooltip { background: #2A2A30; color: var(--text-primary); }
+[data-theme="dark"] .funnel-tooltip::after { border-top-color: #2A2A30; }
+
+/* verdicts + badges: hue at low alpha, light text — same meaning, readable */
+[data-theme="dark"] .verdict-val.vv-incomplete    { color: var(--incomplete); }
+[data-theme="dark"] .badge-valid      { background: rgba(122,201,67,0.16);  color: #AEE07C; }
+[data-theme="dark"] .badge-invalid    { background: rgba(228,78,78,0.17);   color: #F09191; }
+[data-theme="dark"] .badge-expired    { background: rgba(214,138,44,0.16);  color: #E4A961; }
+[data-theme="dark"] .badge-underage   { background: rgba(70,135,214,0.18);  color: #8FB9E8; }
+[data-theme="dark"] .badge-incomplete { background: rgba(176,158,126,0.16); color: #C9B894; }
+[data-theme="dark"] .badge-other      { background: rgba(255,255,255,0.08); color: var(--text-secondary); }
+[data-theme="dark"] .failure-bar  { background: #E88F4A; }
+[data-theme="dark"] .micro-bar    { background: #E8A020; }
+[data-theme="dark"] .ic-never     { background: rgba(255,255,255,0.08); color: var(--text-tertiary); }
+[data-theme="dark"] .ic-abandon   { background: rgba(214,138,44,0.16); color: #E4A961; }
+[data-theme="dark"] .ic-afterfail { background: rgba(228,78,78,0.17);  color: #F09191; }
 </style>
 </head>
 <body>
 
-<nav>
-  <a class="nav-logo" href="#">
-    <div class="nav-logo-mark">
-      <svg width="14" height="11" viewBox="0 0 14 11" fill="none"><path d="M0 0l7 11L14 0h-3L7 6.5 3 0z" fill="#111"/></svg>
-    </div>
-    <span class="nav-logo-text">vyyer</span>
-  </a>
-  <div class="nav-links">
-    <a href="#" class="active">Dashboard</a>
-    <a href="#">History</a>
-    <a href="#">Workflows</a>
-    <a href="#">API Keys</a>
-    <a href="#">Settings</a>
-  </div>
-  <div class="nav-right">
-    <div class="nav-user">
-      <div class="nav-user-name">Produser@Vyyer.com</div>
-      <div class="nav-user-sub">Default profile</div>
-    </div>
-    <div class="nav-avatar">PR</div>
-  </div>
-  <button class="nav-mobile-menu" aria-label="Menu">
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor"><rect y="3" width="20" height="2" rx="1"/><rect y="9" width="20" height="2" rx="1"/><rect y="15" width="20" height="2" rx="1"/></svg>
-  </button>
-</nav>
+<header class="sh-nav" data-tab="dashboard"></header>
 
 <main>
   <!-- STICKY TOOLBAR: title + filters + export merged -->
@@ -428,21 +466,11 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
       <div class="filter-sep"></div>
       <div class="filter-group">
         <span class="filter-label">Profile</span>
-        <select class="filter-select" id="profileSel" onchange="setProfile(this.value)">
-          <option value="all">All profiles</option>
-          <option value="treehouse">Treehouse Hotels</option>
-          <option value="one">One Hotels</option>
-          <option value="baccarat">Baccarat Hotels</option>
-          <option value="shopify">Shopify</option>
-          <option value="default">Default profile</option>
-        </select>
+        <div class="dd" id="profileDd"></div>
       </div>
     </div>
     <div class="toolbar-right">
-      <button class="btn-export" onclick="exportToExcel()">
-        <svg width="13" height="13" viewBox="0 0 13 13" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6.5 1v7M3.5 5.5l3 3 3-3M1 9.5V11a1 1 0 001 1h9a1 1 0 001-1V9.5"/></svg>
-        Export
-      </button>
+      <div id="exportCtl"></div>
     </div>
   </div>
 
@@ -468,7 +496,7 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
     <span class="section-heading-sub" id="scan-sub">Completed verification scans</span>
   </div>
 
-  <!-- Verdict stat cards: total, valid, invalid, caution, expired, underage, incomplete -->
+  <!-- Verdict stat cards: total, valid, invalid, expired, underage, incomplete -->
   <div class="scan-verdict-row" id="scanVerdictRow"><!-- JS --></div>
 
   <!-- Volume chart + avg time + avg attempts -->
@@ -529,8 +557,8 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
   <!-- Incomplete breakdown (full width) -->
   <div class="card">
     <div class="card-body">
-      <div class="card-title">Incomplete breakdown</div>
-      <div class="card-sub">Breakdown of incomplete outcomes by cause</div>
+      <div class="card-title">Engagement breakdown</div>
+      <div class="card-sub">Where users fall off — never started, abandoned mid-process, or failed verification and didn't retry</div>
       <div class="incomplete-grid" id="incompleteGrid" style="margin-top:16px"><!-- JS --></div>
     </div>
   </div>
@@ -621,17 +649,18 @@ const DATA = {
   }
 };
 
-const VERDICT_COLORS = ['#3a7d1e','#d63f3f','#eab308','#c47a1a','#2e6fb5','#7a6c55'];
-const VERDICT_KEYS   = ['Valid','Invalid','Caution','Expired','Underage','Incomplete'];
-
-// Caution is a new verdict type — seed a placeholder value into every dataset
-Object.values(DATA).forEach(prof => Object.values(prof).forEach(d => {
-  if (d.verdicts && d.verdicts.Caution === undefined) {
-    d.verdicts.Caution = Math.round(d.verdicts.Invalid * 0.3);
-  }
-}));
+/* Chart.js paints to a canvas, so it can't inherit CSS — the verdict hues are
+   kept in both cuts here and re-read whenever the theme changes. */
+const VERDICT_COLORS_LIGHT = ['#3a7d1e','#d63f3f','#c47a1a','#2e6fb5','#7a6c55'];
+const VERDICT_COLORS_DARK  = ['#8CCB5C','#F0756A','#E0A24E','#79ACE4','#C3B291'];
+let VERDICT_COLORS = VERDICT_COLORS_LIGHT;
+const css = v => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const isDark = () => document.documentElement.dataset.theme === 'dark';
+const VERDICT_KEYS   = ['Valid','Invalid','Expired','Underage','Incomplete'];
 
 let period = 'month', profile = 'all';
+const PROFILE_LABELS = { all:'All profiles', treehouse:'Treehouse Hotels', one:'One Hotels', baccarat:'Baccarat Hotels', shopify:'Shopify', default:'Default profile' };
+function profileText(){ return PROFILE_LABELS[profile] || 'All profiles'; }
 let volChart, verdChart;
 
 function getData() {
@@ -855,7 +884,6 @@ const SCAN_BOXES = [
   { key:'total',      label:'Total scans', valCls:'sv-total' },
   { key:'Valid',      badge:'valid',       valCls:'sv-valid' },
   { key:'Invalid',    badge:'invalid',     valCls:'sv-invalid' },
-  { key:'Caution',    badge:'caution',     valCls:'sv-caution' },
   { key:'Expired',    badge:'expired',     valCls:'sv-expired' },
   { key:'Underage',   badge:'underage',    valCls:'sv-underage' },
   { key:'Incomplete', badge:'incomplete',  valCls:'sv-incomplete' }
@@ -864,7 +892,6 @@ const SCAN_TREND = {
   total:      { cls:'up',      txt:'↑ 12%' },
   Valid:      { cls:'up',      txt:'↑ 3%' },
   Invalid:    { cls:'down',    txt:'↑ 2%' },
-  Caution:    { cls:'down',    txt:'↑ 1%' },
   Expired:    { cls:'neutral', txt:'—' },
   Underage:   { cls:'neutral', txt:'—' },
   Incomplete: { cls:'neutral', txt:'—' }
@@ -1008,11 +1035,11 @@ function updateVolumeChart() {
   // Point styling: thinner dots when dense; the partial last point is hollow.
   const baseR = n>25 ? 1.5 : n>14 ? 2.5 : 4;
   const ptRad = data.map((_,i)=> (partial&&i===lastIdx) ? baseR+2 : baseR);
-  const ptBg  = data.map((_,i)=> (partial&&i===lastIdx) ? '#ffffff' : '#007aff');
-  const ptBd  = data.map((_,i)=> (partial&&i===lastIdx) ? '#007aff' : '#005fcc');
+  const line = css('--focus') || '#007aff';
+  const ptBg  = data.map((_,i)=> (partial&&i===lastIdx) ? css('--surface') : line);
+  const ptBd  = data.map((_,i)=> (partial&&i===lastIdx) ? line : (isDark()?'#A8CEFF':'#005fcc'));
 
-  const profSel  = document.getElementById('profileSel');
-  const profText = profSel.options[profSel.selectedIndex].text;
+  const profText = profileText();
   document.getElementById('volume-sub').textContent = `${UNIT_WORD[series.unit]} scan volume — ${profText}`;
 
   const ctx = document.getElementById('volumeChart').getContext('2d');
@@ -1022,13 +1049,13 @@ function updateVolumeChart() {
       const {ctx:c,chartArea,scales}=chart,active=chart._active;
       if(!active||!active.length)return;
       const idx=active[0].index,x=scales.x.getPixelForValue(idx),tw=scales.x.width/chart.data.labels.length;
-      c.save();c.fillStyle='rgba(0,122,255,0.07)';c.beginPath();c.roundRect(x-tw/2,chartArea.top,tw,chartArea.bottom-chartArea.top,4);c.fill();c.restore();
+      c.save();c.fillStyle=isDark()?'rgba(90,169,255,0.10)':'rgba(0,122,255,0.07)';c.beginPath();c.roundRect(x-tw/2,chartArea.top,tw,chartArea.bottom-chartArea.top,4);c.fill();c.restore();
     }
   };
   volChart = new Chart(ctx, {
     type:'line',
     data:{labels,datasets:[{
-      label:'Scans', data, borderColor:'#007aff', backgroundColor:'rgba(0,122,255,0.07)',
+      label:'Scans', data, borderColor:line, backgroundColor:isDark()?'rgba(90,169,255,0.12)':'rgba(0,122,255,0.07)',
       borderWidth:2, pointRadius:ptRad, pointHoverRadius:5, pointBackgroundColor:ptBg, pointBorderColor:ptBd, pointBorderWidth:1.5,
       fill:true, tension:0.4,
       segment:{ borderDash: c => (partial && c.p1DataIndex===lastIdx) ? [5,4] : undefined }
@@ -1039,7 +1066,7 @@ function updateVolumeChart() {
         callbacks:{
           title: items => fulls[items[0].dataIndex] + ((partial && items[0].dataIndex===lastIdx) ? '  ·  in progress' : ''),
           label: c => c.parsed.y.toLocaleString() + ' scans',
-          labelColor: () => ({ borderColor:'transparent', backgroundColor:'#007aff', borderRadius:3 })
+          labelColor: () => ({ borderColor:'transparent', backgroundColor:line, borderRadius:3 })
         },
         displayColors: true,
         usePointStyle: true,
@@ -1048,7 +1075,7 @@ function updateVolumeChart() {
         titleFont:{ size:12, weight:'600', family:'Inter' },
         bodyFont:{ size:12, family:'Inter' }
       }}
-      ,scales:{x:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',autoSkip:true,maxTicksLimit:12,maxRotation:0,minRotation:0,autoSkipPadding:14}},y:{grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:11,family:'Inter'},color:'#9d9c99',callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v}}}}
+      ,scales:{x:{grid:{color:css('--grid')},ticks:{font:{size:11,family:'Inter'},color:css('--text-tertiary'),autoSkip:true,maxTicksLimit:12,maxRotation:0,minRotation:0,autoSkipPadding:14}},y:{grid:{color:css('--grid')},ticks:{font:{size:11,family:'Inter'},color:css('--text-tertiary'),callback:v=>v>=1000?(v/1000).toFixed(1)+'k':v}}}}
   });
 }
 
@@ -1067,12 +1094,12 @@ function updateVerdictChart(d) {
   if (verdChart) verdChart.destroy();
   const vals=VERDICT_KEYS.map(k=>d.verdicts[k]||0),total=vals.reduce((a,b)=>a+b,0);
   document.getElementById('verdictLegend').innerHTML = VERDICT_KEYS.map((k,i)=>
-    `<span class="legend-item"><span class="legend-swatch" style="background:${VERDICT_COLORS[i]}"></span>${k} <strong style="color:#111110;margin-left:2px">${Math.round(vals[i]/total*100)}%</strong></span>`
+    `<span class="legend-item"><span class="legend-swatch" style="background:${VERDICT_COLORS[i]}"></span>${k} <strong style="color:var(--text-primary);margin-left:2px">${Math.round(vals[i]/total*100)}%</strong></span>`
   ).join('');
   const ctx=document.getElementById('verdictChart').getContext('2d');
   verdChart = new Chart(ctx, {
     type:'doughnut',
-    data:{labels:VERDICT_KEYS,datasets:[{data:vals,backgroundColor:VERDICT_COLORS,borderWidth:2,borderColor:'#ffffff',hoverOffset:4}]},
+    data:{labels:VERDICT_KEYS,datasets:[{data:vals,backgroundColor:VERDICT_COLORS,borderWidth:2,borderColor:css('--surface'),hoverOffset:4}]},
     options:{responsive:true,maintainAspectRatio:false,cutout:'68%',
       plugins:{legend:{display:false},tooltip:{
         callbacks:{
@@ -1092,8 +1119,10 @@ function updateVerdictChart(d) {
 
 function updateIncomplete(d) {
   const ic=d.incomplete;
-  const totalIc=ic.never+ic.abandoned+ic.afterFail;
-  const pOf=n=>totalIc>0?Math.round(n/totalIc*100):0;
+  const incTotal=ic.never+ic.abandoned;                       // true incompletes — never got a final verdict
+  const pOfInc=n=>incTotal>0?Math.round(n/incTotal*100):0;
+  const invalids=(d.verdicts.Invalid)||0;                     // failed-result drop-offs are invalids, not incompletes
+  const pOfInv=n=>invalids>0?Math.round(n/invalids*1000)/10:0;
 
   /* Abandon mid-flow step bars */
   const steps=ic.abandonSteps,stepTotal=Object.values(steps).reduce((a,b)=>a+b,0),maxStep=Math.max(...Object.values(steps));
@@ -1119,7 +1148,7 @@ function updateIncomplete(d) {
         Never opened
       </div>
       <div class="ic-val">${ic.never}</div>
-      <div class="ic-sub">${pOf(ic.never)}% of incompletes · Created but not opened</div>
+      <div class="ic-sub">${pOfInc(ic.never)}% of incompletes · Created but not opened</div>
     </div>
 
     <!-- Abandoned mid-flow -->
@@ -1131,7 +1160,7 @@ function updateIncomplete(d) {
         Abandoned mid-flow
       </div>
       <div class="ic-val">${ic.abandoned}</div>
-      <div class="ic-sub">${pOf(ic.abandoned)}% of incompletes · User exited before completing</div>
+      <div class="ic-sub">${pOfInc(ic.abandoned)}% of incompletes · User exited before completing</div>
       <div class="micro-bars">
         <div class="micro-section-label">Abandoned at step</div>
         ${abandonBars}
@@ -1147,7 +1176,7 @@ function updateIncomplete(d) {
         Abandoned after failed result
       </div>
       <div class="ic-val">${ic.afterFail}</div>
-      <div class="ic-sub">${pOf(ic.afterFail)}% of incompletes · Got a result, did not retry</div>
+      <div class="ic-sub">${pOfInv(ic.afterFail)}% of invalids · Got a result, did not retry</div>
       <div class="micro-bars">
         <div class="micro-section-label">Abandoned after N attempts</div>
         ${attBars}
@@ -1158,7 +1187,7 @@ function updateIncomplete(d) {
 
 /* ── SUBTITLES ── */
 function updateSubtitles() {
-  const sel=document.getElementById('profileSel'),profText=sel.options[sel.selectedIndex].text;
+  const profText = profileText();
   document.getElementById('verdict-sub').textContent = `Distribution — ${profText}`;
   document.getElementById('scan-sub').textContent    = `Completed verification scans — ${profText}`;
   document.getElementById('wf-sub').textContent      = `Created, opened, started & completed — ${profText}`;
@@ -1166,6 +1195,7 @@ function updateSubtitles() {
 }
 
 function updateAll() {
+  VERDICT_COLORS = isDark() ? VERDICT_COLORS_DARK : VERDICT_COLORS_LIGHT;
   const d=getData();
   updateSubtitles();
   updateFunnel(d);
@@ -1176,13 +1206,69 @@ function updateAll() {
   updateIncomplete(d);
 }
 
+/* ─── CUSTOM DROPDOWN ─── */
+const DD_CHECK = '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-6.5"/></svg>';
+const DD_CHEV = '<svg class="dd-chev" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>';
+function createDropdown(el, cfg){
+  const allValue = cfg.allValue || 'all';
+  let selected = cfg.multi ? [] : allValue;
+  el.classList.add('dd');
+  el.innerHTML = '<button type="button" class="dd-trigger"><span class="dd-label"></span>'+DD_CHEV+'</button><div class="dd-menu" role="listbox"></div>';
+  const trigger = el.querySelector('.dd-trigger'), labelEl = el.querySelector('.dd-label'), menu = el.querySelector('.dd-menu');
+  function renderMenu(){
+    menu.innerHTML = cfg.options.map(o=>{
+      let mark;
+      if(cfg.multi && o.value!==allValue){
+        const on = selected.includes(o.value);
+        mark = '<span class="dd-box'+(on?' on':'')+'">'+(on?DD_CHECK:'')+'</span>';
+      } else {
+        const sel = cfg.multi ? (o.value===allValue && selected.length===0) : (selected===o.value);
+        mark = '<span class="dd-check">'+(sel?DD_CHECK:'')+'</span>';
+      }
+      return '<button type="button" class="dd-item" data-value="'+o.value+'">'+mark+'<span class="dd-item-label">'+o.label+'</span></button>';
+    }).join('');
+  }
+  function renderLabel(){
+    if(cfg.multi){
+      if(selected.length===0) labelEl.textContent = cfg.allLabel;
+      else if(selected.length===1){ const o=cfg.options.find(x=>x.value===selected[0]); labelEl.textContent = o?o.label:cfg.allLabel; }
+      else labelEl.textContent = selected.length+' '+(cfg.countNoun||'selected');
+    } else { const o=cfg.options.find(x=>x.value===selected); labelEl.textContent = o?o.label:cfg.allLabel; }
+  }
+  trigger.addEventListener('click', function(e){
+    e.stopPropagation();
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+    if(!isOpen) el.classList.add('open');
+  });
+  menu.addEventListener('click', function(e){
+    const item = e.target.closest('.dd-item'); if(!item) return;
+    e.stopPropagation();
+    const v = item.dataset.value;
+    if(cfg.multi){
+      if(v===allValue) selected = [];
+      else { const i=selected.indexOf(v); if(i>=0) selected.splice(i,1); else selected.push(v); }
+      renderMenu(); renderLabel(); cfg.onChange(selected.slice());
+    } else { selected = v; renderMenu(); renderLabel(); el.classList.remove('open'); cfg.onChange(selected); }
+  });
+  renderMenu(); renderLabel();
+  return { reset(){ selected = cfg.multi?[]:allValue; renderMenu(); renderLabel(); } };
+}
+document.addEventListener('click', e=>{ if(!e.target.closest('.dd')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
+
+createDropdown(document.getElementById('profileDd'), {
+  allLabel:'All profiles',
+  options:[{value:'all',label:'All profiles'},{value:'treehouse',label:'Treehouse Hotels'},{value:'one',label:'One Hotels'},{value:'baccarat',label:'Baccarat Hotels'},{value:'shopify',label:'Shopify'},{value:'default',label:'Default profile'}],
+  onChange: v => setProfile(v)
+});
+
 initDatePicker(); // sets the committed range the chart buckets from
 updateAll();
 
 /* ── EXPORT TO EXCEL ── */
-function exportToExcel() {
-  const sel = document.getElementById('profileSel');
-  const profText = sel.options[sel.selectedIndex].text;
+function exportReport(format) {
+  const profText = profileText();
   const pLabel = period.charAt(0).toUpperCase() + period.slice(1);
   const d = getData();
   const v = d.verdicts;
@@ -1192,9 +1278,6 @@ function exportToExcel() {
 
   // Build TSV rows (Excel-compatible)
   const rows = [
-    ['Vyyer Dashboard Export'],
-    [`Period: ${pLabel}`, `Profile: ${profText}`],
-    [],
     // Workflow funnel
     ['WORKFLOWS'],
     ['Step','Count','% of Created'],
@@ -1209,7 +1292,6 @@ function exportToExcel() {
     ['Total scans', total],
     ['Valid',       v.Valid],
     ['Invalid',     v.Invalid],
-    ['Caution',     v.Caution],
     ['Expired',     v.Expired],
     ['Underage',    v.Underage],
     ['Incomplete',  v.Incomplete],
@@ -1232,14 +1314,19 @@ function exportToExcel() {
     ['Abandoned after failed result',ic.afterFail],
   ];
 
-  const tsv = rows.map(r => r.join('\t')).join('\n');
-  const blob = new Blob([tsv], { type: 'text/tab-separated-values' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `vyyer-dashboard-${pLabel.toLowerCase()}-${profText.replace(/\s+/g,'-').toLowerCase()}.xls`;
-  a.click();
-  URL.revokeObjectURL(a.href);
+  VyyerShell.exportTable({
+    format,
+    rows,
+    title: 'Vyyer Dashboard',
+    subtitle: `${pLabel} · ${profText}`,
+    filename: `vyyer-dashboard-${pLabel.toLowerCase()}-${profText.replace(/\s+/g,'-').toLowerCase()}`,
+  });
 }
+addEventListener('load', ()=> VyyerShell.wireExport('exportCtl', exportReport));
+
+/* the nav's theme switcher re-paints the CSS; canvases have to be rebuilt */
+addEventListener('vyyer:theme', ()=>updateAll());
 </script>
+<script src="shell.js"></script>
 </body>
 </html>

@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — History</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<!-- the stored dashboard theme is applied before paint, so the page never flashes the other one -->
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'light'}catch(e){}</script>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #edf0f5;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text-primary: #111110;
+  --text-secondary: #6f6e6b;
+  --text-tertiary: #9d9c99;
+  --accent: #C8FF00;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --shadow-lg: -8px 0 32px rgba(0,0,0,0.12);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; }
+
+
+main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
+
+/* ── TOOLBAR ── */
+.toolbar {
+  position: sticky; top: var(--sh-h); z-index: 90;
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 20px; margin: 0 -20px 0;
+  background: rgba(248,250,252,0.95); backdrop-filter: blur(8px);
+  border-bottom: 1px solid var(--border);
+}
+.toolbar-title { font-size: 18px; font-weight: 600; letter-spacing: -0.02em; white-space: nowrap; }
+.toolbar .record-count { margin-right: 14px; }
+.toolbar-spacer { flex: 1; }
+.record-count { font-size: 12px; color: var(--text-tertiary); white-space: nowrap; }
+.record-count strong { color: var(--text-primary); font-weight: 600; }
+
+/* ── FILTER BAR ── */
+.filterbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px 0 18px; }
+.search { position: relative; flex: 1 1 240px; min-width: 200px; }
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.search input {
+  width: 100%; font-family: var(--font); font-size: 13px; color: var(--text-primary);
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm);
+  padding: 8px 12px 8px 34px; outline: none; transition: border-color .15s, box-shadow .15s;
+}
+.search input::placeholder { color: var(--text-tertiary); }
+.search input:focus { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.filter-select {
+  font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary);
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm);
+  padding: 8px 30px 8px 12px; cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 11px center;
+}
+.filter-select:focus { outline: none; border-color: #007aff; }
+
+/* ── CUSTOM DROPDOWN ── */
+.dd { position: relative; display: inline-flex; }
+.dd-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 128px; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; white-space: nowrap; }
+.dd-trigger:hover { border-color: var(--text-tertiary); }
+.dd.open .dd-trigger { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.dd-label { overflow: hidden; text-overflow: ellipsis; }
+.dd-chev { color: var(--text-tertiary); flex-shrink: 0; transition: transform .15s; }
+.dd.open .dd-chev { transform: rotate(180deg); }
+.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%; background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
+.dd.open .dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.dd-item { display: flex; align-items: center; gap: 9px; width: 100%; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: none; border: none; border-radius: 7px; padding: 7px 9px; cursor: pointer; text-align: left; white-space: nowrap; transition: background .12s; }
+.dd-item:hover { background: var(--surface-2); }
+.dd-item-label { flex: 1; }
+.dd-check { width: 15px; height: 15px; flex-shrink: 0; color: #007aff; display: flex; align-items: center; justify-content: center; }
+.dd-box { width: 16px; height: 16px; flex-shrink: 0; border: 1.5px solid var(--border-md); border-radius: 5px; display: flex; align-items: center; justify-content: center; color: #fff; }
+.dd-box.on { background: #007aff; border-color: #007aff; }
+.btn-clear {
+  font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-secondary);
+  background: none; border: 1px solid transparent; border-radius: var(--radius-sm);
+  padding: 8px 12px; cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.btn-clear:hover { color: var(--text-primary); background: var(--surface-2); }
+.btn-clear:disabled { opacity: 0; pointer-events: none; }
+
+/* ── TABLE (desktop) ── */
+.hist-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.hist-table { width: 100%; border-collapse: collapse; }
+.hist-table thead th {
+  text-align: left; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-tertiary); padding: 13px 18px; border-bottom: 1px solid var(--border);
+  background: #fbfcfd; white-space: nowrap;
+}
+.hist-table thead th.th-right { text-align: right; }
+.hist-row { cursor: pointer; transition: background .12s; }
+.hist-row:not(:last-child) td { border-bottom: 1px solid var(--border); }
+.hist-row:hover { background: #fafcff; }
+.hist-table td { padding: 12px 18px; vertical-align: middle; }
+.col-muted { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
+.col-date { text-align: right; white-space: nowrap; }
+.d-date { display: block; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.d-time { display: block; font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+
+/* Customer cell */
+.cust { display: flex; align-items: center; gap: 11px; }
+.avatar { width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; }
+.cust-txt { min-width: 0; }
+.cust-name { display: block; font-size: 13.5px; font-weight: 500; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cust-email { display: block; font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Result badge */
+.result-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; padding: 3px 10px 3px 8px; border-radius: 100px; white-space: nowrap; }
+.rb-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
+.attempt-chip { display: inline-flex; align-items: center; margin-left: 6px; padding: 2px 6px; border-radius: 20px;
+  font-size: 10.5px; font-weight: 700; background: var(--surface-2); color: var(--text-secondary); vertical-align: middle;
+  font-variant-numeric: tabular-nums; }
+.rb-valid      { background: #e6f5db; color: #3a7d1e; }
+.rb-invalid    { background: #fde8e8; color: #c0392b; }
+.rb-expired    { background: #f6e6cf; color: #a5670f; }
+.rb-underage   { background: #e3eefa; color: #2e6fb5; }
+.rb-incomplete { background: #f1ede6; color: #7a6c55; }
+
+/* Platform */
+.platform { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--text-secondary); white-space: nowrap; }
+.platform svg { color: var(--text-tertiary); flex-shrink: 0; }
+.platform .ver { font-size: 11.5px; color: var(--text-tertiary); }
+
+/* ── CARDS (mobile) ── */
+.hist-cards { display: none; flex-direction: column; gap: 12px; }
+.hist-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); padding: 15px 16px; cursor: pointer; transition: border-color .15s, transform .1s; }
+.hist-card:active { transform: scale(0.995); }
+.hc-top { display: flex; align-items: center; gap: 11px; }
+.hc-id { min-width: 0; flex: 1; }
+.hc-top .result-badge { flex-shrink: 0; }
+.hc-meta { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; margin-top: 14px; padding-top: 13px; border-top: 1px solid var(--border); }
+.hc-cell { min-width: 0; }
+.hc-k { display: block; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary); margin-bottom: 2px; }
+.hc-v { display: block; font-size: 12.5px; color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Empty state */
+.empty { display: none; flex-direction: column; align-items: center; text-align: center; padding: 64px 24px; color: var(--text-tertiary); }
+.empty svg { color: var(--border-md); margin-bottom: 14px; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-sub { font-size: 13px; }
+
+/* ── PAGINATION ── */
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-top: 18px; }
+.per-page { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-secondary); }
+.per-page select { font-family: var(--font); font-size: 12.5px; color: var(--text-primary); background: var(--surface); border: 1px solid var(--border-md); border-radius: 7px; padding: 5px 24px 5px 9px; cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23999'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 8px center; }
+.page-range { font-size: 12.5px; color: var(--text-tertiary); }
+.page-nav { display: flex; align-items: center; gap: 4px; }
+.page-btn { min-width: 32px; height: 32px; padding: 0 8px; font-family: var(--font); font-size: 12.5px; font-weight: 500; color: var(--text-secondary); background: var(--surface); border: 1px solid var(--border-md); border-radius: 7px; cursor: pointer; transition: all .12s; display: inline-flex; align-items: center; justify-content: center; }
+.page-btn:hover:not(:disabled):not(.active) { background: var(--surface-2); color: var(--text-primary); }
+.page-btn.active { background: #111110; color: #fff; border-color: #111110; }
+.page-btn:disabled { opacity: 0.4; cursor: default; }
+.page-btn.ellipsis { border: none; background: none; pointer-events: none; min-width: 20px; }
+
+/* ── DETAIL DRAWER ── */
+.drawer-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); z-index: 200; opacity: 0; visibility: hidden; transition: opacity .2s, visibility .2s; }
+.drawer-overlay.open { opacity: 1; visibility: visible; }
+.drawer { position: fixed; top: 0; right: 0; height: 100%; width: 420px; max-width: 92vw; background: var(--surface); z-index: 201; box-shadow: var(--shadow-lg); transform: translateX(100%); transition: transform .25s cubic-bezier(0.4,0,0.2,1); display: flex; flex-direction: column; }
+.drawer.open { transform: translateX(0); }
+.drawer-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 22px 24px 18px; border-bottom: 1px solid var(--border); }
+.drawer-cust { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.drawer-cust .avatar { width: 44px; height: 44px; font-size: 15px; }
+.drawer-name { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-email { font-size: 12.5px; color: var(--text-tertiary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.drawer-close { background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 6px; border-radius: 7px; transition: all .15s; flex-shrink: 0; }
+.drawer-close:hover { background: var(--surface-2); color: var(--text-primary); }
+.drawer-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+.drawer-result { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 16px; border-radius: var(--radius-md); margin-bottom: 22px; }
+.drawer-result .result-badge { font-size: 13px; padding: 5px 14px 5px 11px; }
+.drawer-result-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
+.dfield { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; padding: 13px 0; border-bottom: 1px solid var(--border); }
+.dfield:last-child { border-bottom: none; }
+.dfield-k { font-size: 12.5px; color: var(--text-tertiary); flex-shrink: 0; }
+.dfield-v { font-size: 13px; font-weight: 500; color: var(--text-primary); text-align: right; }
+.drawer-foot { padding: 16px 24px; border-top: 1px solid var(--border); }
+.btn-view { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-family: var(--font); font-size: 13px; font-weight: 600; color: #111110; background: var(--accent); border: none; border-radius: var(--radius-sm); padding: 11px; cursor: pointer; transition: filter .15s; }
+.btn-view:hover { filter: brightness(0.95); }
+
+footer { text-align: center; font-size: 11px; color: var(--text-tertiary); padding-top: 40px; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 860px) {
+  .hist-panel { display: none; }
+  .hist-cards { display: flex; }
+}
+@media (max-width: 680px) {
+  .toolbar { padding: 12px 16px; margin: 0 -20px; }
+  .filterbar { gap: 8px; }
+  .search { flex: 1 1 100%; }
+  .filter-select, .dd { flex: 1 1 40%; }
+  .dd-trigger { width: 100%; min-width: 0; }
+}
+@media (max-width: 480px) {
+  main { padding: 0 12px 40px; }
+  .toolbar { margin: 0 -12px; padding: 12px; }
+  .hc-meta { grid-template-columns: 1fr 1fr; }
+  .pagination { justify-content: center; }
+  .per-page { display: none; }
+}
+
+/* ══ DARK MODE ═════════════════════════════════════════════════════════════
+   The dashboard theme comes from the nav switcher and is stored per user.
+   Overrides live in one layer so the light values above stay the source of
+   truth and never have to be read in two places. */
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1c1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-md: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.55);
+  --shadow-lg: -8px 0 32px rgba(0,0,0,0.6);
+  --focus: #5AA9FF;
+}
+[data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
+[data-theme="dark"] .search input:focus,
+[data-theme="dark"] .filter-select:focus,
+[data-theme="dark"] .dd.open .dd-trigger { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(90,169,255,0.18); }
+[data-theme="dark"] .dd-check { color: var(--focus); }
+[data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #07131f; }
+[data-theme="dark"] .hist-table thead th { background: #191920; }
+[data-theme="dark"] .hist-row:hover { background: rgba(255,255,255,0.045); }
+/* verdict badges: the light set is a tint of the hue, the dark set is the hue
+   itself at low alpha with a light text — same meaning, readable background */
+[data-theme="dark"] .attempt-chip { background: rgba(255,255,255,0.09); }
+[data-theme="dark"] .rb-valid      { background: rgba(122,201,67,0.16);  color: #AEE07C; }
+[data-theme="dark"] .rb-invalid    { background: rgba(228,78,78,0.17);   color: #F09191; }
+[data-theme="dark"] .rb-expired    { background: rgba(214,138,44,0.16);  color: #E4A961; }
+[data-theme="dark"] .rb-underage   { background: rgba(70,135,214,0.18);  color: #8FB9E8; }
+[data-theme="dark"] .rb-incomplete { background: rgba(176,158,126,0.16); color: #C9B894; }
+[data-theme="dark"] .page-btn.active { background: var(--text-primary); color: #0a0a0b; border-color: var(--text-primary); }
+[data-theme="dark"] .drawer-overlay { background: rgba(0,0,0,0.6); }
+</style>
+</head>
+<body>
+
+<header class="sh-nav" data-tab="history"></header>
+
+<main>
+  <div class="toolbar">
+    <h1 class="toolbar-title">History</h1>
+    <div class="toolbar-spacer"></div>
+    <div class="record-count" id="recordCount"></div>
+    <div id="exportCtl"></div>
+  </div>
+
+  <div class="filterbar">
+    <div class="search">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input id="searchInput" type="text" placeholder="Search by name or email…" autocomplete="off">
+    </div>
+    <div class="dd" id="dateDd"></div>
+    <div class="dd" id="resultDd"></div>
+    <div class="dd" id="profileDd"></div>
+    <button id="clearBtn" class="btn-clear" disabled>Clear filters</button>
+  </div>
+
+  <!-- Desktop table -->
+  <div class="hist-panel">
+    <table class="hist-table">
+      <thead>
+        <tr>
+          <th>Customer</th>
+          <th>Result</th>
+          <th>Workflow</th>
+          <th>Platform</th>
+          <th>Profile</th>
+          <th class="th-right">Created at</th>
+        </tr>
+      </thead>
+      <tbody id="tableBody"></tbody>
+    </table>
+  </div>
+
+  <!-- Mobile cards -->
+  <div class="hist-cards" id="cardsWrap"></div>
+
+  <!-- Empty state -->
+  <div class="empty" id="emptyState">
+    <svg width="46" height="46" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div class="empty-title">No verifications found</div>
+    <div class="empty-sub">Try adjusting your search or filters.</div>
+  </div>
+
+  <div class="pagination" id="pagination">
+    <div class="per-page">Rows per page
+      <select id="perPageSel"><option>10</option><option>25</option><option>50</option></select>
+    </div>
+    <div class="page-range" id="pageRange"></div>
+    <div class="page-nav" id="pageNav"></div>
+  </div>
+</main>
+
+<footer>&copy; 2026 Vyyer · Identity Verification Platform</footer>
+
+<script>
+/* ─── MOCK DATA ─── */
+const NAMES = ['Jonathan Andrade Silva','Maria Gonzalez','James Chen','Aisha Patel','Liam O’Brien','Sofia Rossi','David Kim','Emma Thompson','Noah Williams','Olivia Martinez','Lucas Müller','Chloé Dubois','Ethan Nguyen','Isabella Santos','Mason Clark','Ava Johnson','Benjamin Lee','Mia Hernandez','Daniel Okafor','Zoe Anderson','Grace Park','Omar Haddad'];
+const WORKFLOWS = ['Back ID Verification','Front ID Verification','ID + Selfie Match','Full KYC','Passport Scan','Face Liveness','Barcode Check'];
+const PROFILES = ['Default profile','Treehouse Hotels','One Hotels','Baccarat Hotels','Shopify'];
+const EMAIL_DOMAINS = ['gmail.com','icloud.com','outlook.com','proton.me'];
+const PLATFORMS = [
+  { key:'ios',     label:'iOS' },
+  { key:'android', label:'Android' },
+  { key:'web',     label:'Web SDK' }
+];
+// Weighted result pool (Valid most common)
+const RESULT_POOL = ['Valid','Valid','Valid','Valid','Valid','Valid','Invalid','Invalid','Invalid','Invalid','Expired','Underage','Incomplete'];
+const RESULT_KEY = { Valid:'valid', Invalid:'invalid', Expired:'expired', Underage:'underage', Incomplete:'incomplete' };
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+/* deterministic PRNG so the demo is stable */
+let seed = 987654321;
+function rnd(){ seed = (seed * 1103515245 + 12345) & 0x7fffffff; return seed / 0x7fffffff; }
+function pick(a){ return a[Math.floor(rnd() * a.length)]; }
+
+const NOW = new Date(2026, 6, 30, 8, 5, 0); // "now" anchor
+function emailFor(name){
+  const parts = name.toLowerCase().normalize('NFD').replace(/[^\w\s]/g,'').split(/\s+/);
+  return parts[0] + '.' + parts[parts.length-1] + '@' + pick(EMAIL_DOMAINS);
+}
+function versionFor(key){
+  if(key === 'web') return 'v2.' + (2 + Math.floor(rnd()*3)) + '.' + Math.floor(rnd()*9);
+  const build = 350 + Math.floor(rnd()*20);
+  return 'v1.8.' + (build - 350 + 8) + '/' + build;
+}
+
+const HISTORY = [];
+let t = NOW.getTime();
+for(let i = 0; i < 55; i++){
+  t -= (4 + Math.floor(rnd()*160)) * 60000;      // step back 4min–2.7h
+  if(rnd() < 0.18) t -= Math.floor(rnd()*30) * 3600000; // occasional big gap
+  const name = pick(NAMES);
+  const plat = pick(PLATFORMS);
+  HISTORY.push({
+    id: 'VYR-' + (100000 + Math.floor(rnd()*899999)).toString(36).toUpperCase(),
+    name,
+    email: emailFor(name),
+    result: pick(RESULT_POOL),
+    workflow: pick(WORKFLOWS),
+    platform: plat.key,
+    platformLabel: plat.label,
+    version: versionFor(plat.key),
+    profile: pick(PROFILES),
+    /* Most verifications pass first time. A few needed retries, and only those
+       get an attempt switcher on the detail page. */
+    attempts: (i < 10 && rnd() < 0.38) ? 2 + Math.floor(rnd()*3) : 1,
+    maxAttempts: 5,
+    ts: new Date(t)
+  });
+}
+
+/* ─── HELPERS ─── */
+function initials(name){ const p = name.split(/\s+/); return ((p[0][0]||'') + (p[p.length-1][0]||'')).toUpperCase(); }
+function avatarColors(name){ let h = 0; for(const c of name) h = (h*31 + c.charCodeAt(0)) % 360; return { bg:`hsl(${h} 52% 91%)`, fg:`hsl(${h} 42% 34%)` }; }
+function fmtDate(d){ return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(); }
+function fmtTime(d){ let h = d.getHours(); const ap = h < 12 ? 'AM' : 'PM'; h = h % 12; if(h===0) h = 12; return h + ':' + String(d.getMinutes()).padStart(2,'0') + ' ' + ap; }
+function platIcon(key){
+  if(key === 'web') return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.5 2.5 15 0 18M12 3c-2.5 2.5-2.5 15 0 18"/></svg>';
+  return '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="7" y="3" width="10" height="18" rx="2.4"/><line x1="10.5" y1="18" x2="13.5" y2="18"/></svg>';
+}
+
+/* ─── STATE ─── */
+let state = { search:'', date:'all', result:[], profile:'all', page:1, perPage:10 };
+
+function getFiltered(){
+  let rows = HISTORY;
+  const q = state.search.trim().toLowerCase();
+  if(q) rows = rows.filter(r => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
+  if(state.result.length) rows = rows.filter(r => state.result.includes(r.result));
+  if(state.profile !== 'all') rows = rows.filter(r => r.profile === state.profile);
+  if(state.date !== 'all'){
+    let cutoff;
+    if(state.date === 'today'){ const d = new Date(NOW); d.setHours(0,0,0,0); cutoff = d.getTime(); }
+    else cutoff = NOW.getTime() - parseInt(state.date,10) * 86400000;
+    rows = rows.filter(r => r.ts.getTime() >= cutoff);
+  }
+  return rows;
+}
+
+function resultBadge(result){
+  return `<span class="result-badge rb-${RESULT_KEY[result]}"><span class="rb-dot"></span>${result}</span>`;
+}
+
+function render(){
+  const filtered = getFiltered();
+  const total = filtered.length;
+  const pages = Math.max(1, Math.ceil(total / state.perPage));
+  if(state.page > pages) state.page = pages;
+  const start = (state.page - 1) * state.perPage;
+  const slice = filtered.slice(start, start + state.perPage);
+
+  // Count + clear button
+  document.getElementById('recordCount').innerHTML = `<strong>${total}</strong> verification${total===1?'':'s'}`;
+  const dirty = state.search || state.date!=='all' || state.result.length>0 || state.profile!=='all';
+  document.getElementById('clearBtn').disabled = !dirty;
+
+  // Empty state
+  const isEmpty = total === 0;
+  document.getElementById('emptyState').style.display = isEmpty ? 'flex' : 'none';
+  document.querySelector('.hist-panel').style.display = isEmpty ? 'none' : '';
+  document.getElementById('cardsWrap').style.display = isEmpty ? 'none' : '';
+  document.getElementById('pagination').style.display = isEmpty ? 'none' : '';
+
+  // Table rows
+  document.getElementById('tableBody').innerHTML = slice.map(r => {
+    const c = avatarColors(r.name);
+    return `<tr class="hist-row" data-id="${r.id}">
+      <td>
+        <div class="cust">
+          <span class="avatar" style="background:${c.bg};color:${c.fg}">${initials(r.name)}</span>
+          <div class="cust-txt"><span class="cust-name">${r.name}</span></div>
+        </div>
+      </td>
+      <td>${resultBadge(r.result)}${r.attempts>1?`<span class="attempt-chip" title="${r.attempts} attempts">\u00d7${r.attempts}</span>`:''}</td>
+      <td class="col-muted">${r.workflow}</td>
+      <td><span class="platform">${platIcon(r.platform)}${r.platformLabel} <span class="ver">${r.version}</span></span></td>
+      <td class="col-muted">${r.profile}</td>
+      <td class="col-date"><span class="d-date">${fmtDate(r.ts)}</span><span class="d-time">${fmtTime(r.ts)}</span></td>
+    </tr>`;
+  }).join('');
+
+  // Cards
+  document.getElementById('cardsWrap').innerHTML = slice.map(r => {
+    const c = avatarColors(r.name);
+    return `<div class="hist-card" data-id="${r.id}">
+      <div class="hc-top">
+        <span class="avatar" style="background:${c.bg};color:${c.fg}">${initials(r.name)}</span>
+        <div class="hc-id"><span class="cust-name">${r.name}</span></div>
+        ${resultBadge(r.result)}${r.attempts>1?`<span class="attempt-chip">\u00d7${r.attempts}</span>`:''}
+      </div>
+      <div class="hc-meta">
+        <div class="hc-cell"><span class="hc-k">Workflow</span><span class="hc-v">${r.workflow}</span></div>
+        <div class="hc-cell"><span class="hc-k">Platform</span><span class="hc-v">${r.platformLabel} · ${r.version}</span></div>
+        <div class="hc-cell"><span class="hc-k">Profile</span><span class="hc-v">${r.profile}</span></div>
+        <div class="hc-cell"><span class="hc-k">Created</span><span class="hc-v">${fmtDate(r.ts)}, ${fmtTime(r.ts)}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // Pagination range + nav
+  document.getElementById('pageRange').textContent = total ? `${start+1}–${Math.min(start+state.perPage, total)} of ${total}` : '0 of 0';
+  renderPageNav(pages);
+}
+
+function renderPageNav(pages){
+  const cur = state.page;
+  const btn = (label, page, opts={}) => `<button class="page-btn${opts.active?' active':''}${opts.ellipsis?' ellipsis':''}" ${opts.disabled?'disabled':''} data-page="${page}">${label}</button>`;
+  let nums = [];
+  if(pages <= 7){ for(let i=1;i<=pages;i++) nums.push(i); }
+  else {
+    nums = [1];
+    let s = Math.max(2, cur-1), e = Math.min(pages-1, cur+1);
+    if(s > 2) nums.push('…');
+    for(let i=s;i<=e;i++) nums.push(i);
+    if(e < pages-1) nums.push('…');
+    nums.push(pages);
+  }
+  let html = btn('‹', cur-1, {disabled: cur===1});
+  html += nums.map(n => n==='…' ? btn('…', 0, {ellipsis:true}) : btn(n, n, {active:n===cur})).join('');
+  html += btn('›', cur+1, {disabled: cur===pages});
+  document.getElementById('pageNav').innerHTML = html;
+}
+
+/* ─── EXPORT ─── */
+function exportHistory(format){
+  const rows = getFiltered().map(r => [
+    r.name, r.result, r.attempts>1 ? r.attempts : 1, r.workflow,
+    r.platformLabel + ' ' + r.version, r.profile, fmtDate(r.ts) + ' ' + fmtTime(r.ts),
+  ]);
+  VyyerShell.exportTable({
+    format, rows,
+    headers: ['Customer','Result','Attempts','Workflow','Platform','Profile','Created at'],
+    title: 'Vyyer Verification History',
+    subtitle: rows.length + (rows.length===1?' verification':' verifications'),
+    filename: 'vyyer-history-' + new Date().toISOString().slice(0,10),
+  });
+}
+addEventListener('load', ()=> VyyerShell.wireExport('exportCtl', exportHistory));
+
+/* ─── OPEN FULL DETAIL PAGE ─── */
+function openDetail(id){
+  const r = HISTORY.find(x => x.id === id); if(!r) return;
+  sessionStorage.setItem('vyyerDetailRecord', JSON.stringify(r));
+  window.location.href = 'detail.html';
+}
+
+/* ─── CUSTOM DROPDOWN ─── */
+const DD_CHECK = '<svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 7.5l3 3 6-6.5"/></svg>';
+const DD_CHEV = '<svg class="dd-chev" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 1l4 4 4-4"/></svg>';
+function createDropdown(el, cfg){
+  const allValue = cfg.allValue || 'all';
+  let selected = cfg.multi ? [] : allValue;
+  el.classList.add('dd');
+  el.innerHTML = '<button type="button" class="dd-trigger"><span class="dd-label"></span>'+DD_CHEV+'</button><div class="dd-menu" role="listbox"></div>';
+  const trigger = el.querySelector('.dd-trigger'), labelEl = el.querySelector('.dd-label'), menu = el.querySelector('.dd-menu');
+  function renderMenu(){
+    menu.innerHTML = cfg.options.map(o=>{
+      let mark;
+      if(cfg.multi && o.value!==allValue){
+        const on = selected.includes(o.value);
+        mark = '<span class="dd-box'+(on?' on':'')+'">'+(on?DD_CHECK:'')+'</span>';
+      } else {
+        const sel = cfg.multi ? (o.value===allValue && selected.length===0) : (selected===o.value);
+        mark = '<span class="dd-check">'+(sel?DD_CHECK:'')+'</span>';
+      }
+      return '<button type="button" class="dd-item" data-value="'+o.value+'">'+mark+'<span class="dd-item-label">'+o.label+'</span></button>';
+    }).join('');
+  }
+  function renderLabel(){
+    if(cfg.multi){
+      if(selected.length===0) labelEl.textContent = cfg.allLabel;
+      else if(selected.length===1){ const o=cfg.options.find(x=>x.value===selected[0]); labelEl.textContent = o?o.label:cfg.allLabel; }
+      else labelEl.textContent = selected.length+' '+(cfg.countNoun||'selected');
+    } else { const o=cfg.options.find(x=>x.value===selected); labelEl.textContent = o?o.label:cfg.allLabel; }
+  }
+  trigger.addEventListener('click', function(e){
+    e.stopPropagation();
+    const isOpen = el.classList.contains('open');
+    document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+    if(!isOpen) el.classList.add('open');
+  });
+  menu.addEventListener('click', function(e){
+    const item = e.target.closest('.dd-item'); if(!item) return;
+    e.stopPropagation();
+    const v = item.dataset.value;
+    if(cfg.multi){
+      if(v===allValue) selected = [];
+      else { const i=selected.indexOf(v); if(i>=0) selected.splice(i,1); else selected.push(v); }
+      renderMenu(); renderLabel(); cfg.onChange(selected.slice());
+    } else { selected = v; renderMenu(); renderLabel(); el.classList.remove('open'); cfg.onChange(selected); }
+  });
+  renderMenu(); renderLabel();
+  return { reset(){ selected = cfg.multi?[]:allValue; renderMenu(); renderLabel(); } };
+}
+document.addEventListener('click', e=>{ if(!e.target.closest('.dd')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
+
+/* ─── EVENTS ─── */
+let searchTimer;
+document.getElementById('searchInput').addEventListener('input', e => {
+  clearTimeout(searchTimer);
+  searchTimer = setTimeout(() => { state.search = e.target.value; state.page = 1; render(); }, 160);
+});
+const dateDropdown = createDropdown(document.getElementById('dateDd'), {
+  allLabel:'All dates',
+  options:[{value:'all',label:'All dates'},{value:'today',label:'Today'},{value:'7',label:'Last 7 days'},{value:'30',label:'Last 30 days'}],
+  onChange: v => { state.date = v; state.page = 1; render(); }
+});
+const resultDropdown = createDropdown(document.getElementById('resultDd'), {
+  multi:true, allLabel:'All results', countNoun:'results',
+  options:[{value:'all',label:'All results'},{value:'Valid',label:'Valid'},{value:'Invalid',label:'Invalid'},{value:'Expired',label:'Expired'},{value:'Underage',label:'Underage'},{value:'Incomplete',label:'Incomplete'}],
+  onChange: v => { state.result = v; state.page = 1; render(); }
+});
+const profileDropdown = createDropdown(document.getElementById('profileDd'), {
+  allLabel:'All profiles',
+  options:[{value:'all',label:'All profiles'},{value:'Default profile',label:'Default profile'},{value:'Treehouse Hotels',label:'Treehouse Hotels'},{value:'One Hotels',label:'One Hotels'},{value:'Baccarat Hotels',label:'Baccarat Hotels'},{value:'Shopify',label:'Shopify'}],
+  onChange: v => { state.profile = v; state.page = 1; render(); }
+});
+document.getElementById('perPageSel').addEventListener('change', e => { state.perPage = parseInt(e.target.value,10); state.page = 1; render(); });
+document.getElementById('clearBtn').addEventListener('click', () => {
+  state.search=''; state.date='all'; state.result=[]; state.profile='all'; state.page=1;
+  document.getElementById('searchInput').value='';
+  dateDropdown.reset(); resultDropdown.reset(); profileDropdown.reset();
+  render();
+});
+document.getElementById('pageNav').addEventListener('click', e => {
+  const b = e.target.closest('.page-btn'); if(!b || b.disabled || b.classList.contains('ellipsis')) return;
+  state.page = parseInt(b.dataset.page,10); render();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+document.body.addEventListener('click', e => {
+  const row = e.target.closest('.hist-row, .hist-card');
+  if(row){ openDetail(row.dataset.id); }
+});
+
+render();
+</script>
+<script src="shell.js"></script>
+</body>
+</html>

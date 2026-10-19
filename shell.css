@@ -1,0 +1,183 @@
+/* ============================================================================
+   VYYER DASHBOARD SHELL — shared top navigation
+   Used by dashboard.html, history.html and branding.html. One component, one
+   copy: changing a tab or an icon is a change in here, not in three files.
+
+   Everything is namespaced `sh-` and every colour comes from a `--sh-*` token,
+   so the shell can drop into a page with its own design tokens without
+   colliding with them. Themes key off `data-theme` on <html>:
+   light is the default, `[data-theme="dark"]` overrides it.
+   ============================================================================ */
+
+:root{
+  --sh-h:58px;
+  --sh-font:'Inter',system-ui,-apple-system,sans-serif;
+  --sh-accent:#A0D959; --sh-accent-ink:#16240a;
+
+  --sh-nav-bg:#ffffff; --sh-nav-line:rgba(17,20,24,.10);
+  --sh-panel:#ffffff; --sh-panel-2:#f6f7f9; --sh-sunken:#F7F8F9;
+  --sh-line:rgba(17,20,24,.10); --sh-line-2:rgba(17,20,24,.18);
+  --sh-ink:#14171c; --sh-ink-2:rgba(20,23,28,.66); --sh-ink-3:rgba(20,23,28,.46);
+  --sh-hover:rgba(17,20,24,.05);
+  --sh-tint:rgba(109,165,41,.14); --sh-tint-2:rgba(109,165,41,.2);
+  --sh-accent-text:#4C7A15; --sh-danger:#D4503C;
+  --sh-shadow-pop:0 18px 44px -16px rgba(17,20,24,.26);
+  --sh-shadow-seg:0 1px 2px rgba(17,20,24,.12);
+  --sh-scrim:rgba(24,28,34,.40);
+}
+[data-theme="dark"]{
+  --sh-nav-bg:#000000; --sh-nav-line:rgba(255,255,255,.10);
+  --sh-panel:#121214; --sh-panel-2:#17171a; --sh-sunken:#0e0e10;
+  --sh-line:rgba(255,255,255,.09); --sh-line-2:rgba(255,255,255,.16);
+  --sh-ink:rgba(255,255,255,.95); --sh-ink-2:rgba(255,255,255,.56); --sh-ink-3:rgba(255,255,255,.36);
+  --sh-hover:rgba(255,255,255,.05);
+  --sh-tint:rgba(160,217,89,.12); --sh-tint-2:rgba(160,217,89,.18);
+  --sh-accent-text:#A0D959; --sh-danger:#F26B5B;
+  --sh-shadow-pop:0 18px 44px -14px rgba(0,0,0,.85);
+  --sh-shadow-seg:0 1px 2px rgba(0,0,0,.4);
+  --sh-scrim:rgba(6,8,11,.62);
+}
+
+/* the placeholder reserves the row's height before the script fills it, so
+   nothing below it jumps on load */
+.sh-nav{height:var(--sh-h);display:flex;align-items:center;gap:6px;padding:0 16px;flex:0 0 auto;
+  background:var(--sh-nav-bg);border-bottom:1px solid var(--sh-nav-line);
+  position:sticky;top:0;z-index:100;font-family:var(--sh-font)}
+.sh-nav *,.sh-modal *,.sh-toast{box-sizing:border-box}
+
+.sh-brand{display:flex;align-items:center;gap:9px;text-decoration:none;margin-right:14px;flex:0 0 auto}
+.sh-brand svg{width:26px;height:26px;display:block;flex:0 0 auto}
+.sh-brand span{font:700 16px var(--sh-font);letter-spacing:-.02em;color:var(--sh-ink)}
+
+/* tabs share the row with everything else — they scroll rather than wrap */
+.sh-tabs{display:flex;align-items:center;gap:2px;min-width:0;overflow-x:auto;scrollbar-width:none}
+.sh-tabs::-webkit-scrollbar{display:none}
+.sh-tabs a{display:inline-flex;align-items:center;gap:7px;padding:7px 11px;border-radius:9px;text-decoration:none;
+  color:var(--sh-ink-2);font:500 13px var(--sh-font);white-space:nowrap}
+.sh-tabs a svg{width:15px;height:15px;flex:0 0 auto;opacity:.8}
+.sh-tabs a:hover{color:var(--sh-ink);background:var(--sh-hover)}
+.sh-tabs a:hover svg{opacity:1}
+.sh-tabs a.on{color:var(--sh-ink);background:var(--sh-tint);font-weight:600}
+.sh-tabs a.on svg{color:var(--sh-accent-text);opacity:1}
+.sh-sp{flex:1}
+.sh-docs{font:500 13px var(--sh-font);color:var(--sh-ink-2);text-decoration:none;padding:7px 10px;
+  border-radius:9px;white-space:nowrap;flex:0 0 auto}
+.sh-docs:hover{color:var(--sh-ink);background:var(--sh-hover)}
+
+/* theme switcher — top level, and the DASHBOARD's own theme only */
+.sh-themesw{display:inline-flex;gap:2px;background:var(--sh-panel);border:1px solid var(--sh-line);
+  border-radius:9px;padding:3px;margin:0 6px;flex:0 0 auto}
+.sh-themesw button{border:0;background:transparent;color:var(--sh-ink-3);width:29px;height:24px;
+  border-radius:6px;cursor:pointer;display:grid;place-items:center}
+.sh-themesw button:hover{color:var(--sh-ink)}
+.sh-themesw button.on{background:var(--sh-panel-2);color:var(--sh-ink);box-shadow:var(--sh-shadow-seg)}
+.sh-themesw svg{width:14px;height:14px}
+
+/* account */
+.sh-acct{position:relative;flex:0 0 auto}
+.sh-acctbtn{display:flex;align-items:center;gap:9px;border:1px solid transparent;background:transparent;
+  cursor:pointer;padding:5px 9px 5px 5px;border-radius:99px;font-family:var(--sh-font)}
+.sh-acctbtn:hover{background:var(--sh-hover)}
+.sh-acct.open .sh-acctbtn{background:var(--sh-hover);border-color:var(--sh-line)}
+.sh-av{width:30px;height:30px;border-radius:50%;flex:0 0 auto;display:grid;place-items:center;
+  background:linear-gradient(145deg,#F2A93B,#E07B2C);color:#fff;font:700 11.5px var(--sh-font)}
+.sh-who{text-align:left;line-height:1.25}
+.sh-who b{display:block;font:600 12.5px var(--sh-font);color:var(--sh-ink)}
+.sh-who i{display:block;font:400 11px var(--sh-font);font-style:normal;color:var(--sh-ink-3);
+  max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-acctbtn .sh-chev{width:13px;height:13px;color:var(--sh-ink-3);transition:transform .15s;flex:0 0 auto}
+.sh-acct.open .sh-acctbtn .sh-chev{transform:rotate(180deg)}
+
+.sh-pop{position:absolute;top:calc(100% + 8px);right:0;width:272px;z-index:50;display:none;
+  background:var(--sh-panel);border:1px solid var(--sh-line-2);border-radius:13px;
+  box-shadow:var(--sh-shadow-pop);overflow:hidden;font-family:var(--sh-font)}
+.sh-pop.open{display:block}
+.sh-ph{padding:13px 14px}
+.sh-ph .sh-em{font:500 12.5px var(--sh-font);color:var(--sh-ink);word-break:break-all}
+.sh-lnk{margin-top:5px;border:0;background:transparent;padding:0;cursor:pointer;
+  font:600 12px var(--sh-font);color:var(--sh-accent-text)}
+.sh-lnk:hover{text-decoration:underline}
+.sh-div{height:1px;background:var(--sh-line)}
+.sh-plist{max-height:184px;overflow-y:auto;padding:5px}
+.sh-prow{display:flex;align-items:center;border-radius:8px;color:var(--sh-ink-2)}
+.sh-prow:hover{background:var(--sh-hover);color:var(--sh-ink)}
+.sh-prow.on{color:var(--sh-ink)}
+.sh-prow .sh-pick{flex:1;min-width:0;display:flex;align-items:center;gap:9px;border:0;background:transparent;
+  padding:8px;color:inherit;font:500 12.5px var(--sh-font);cursor:pointer;text-align:left}
+.sh-prow.on .sh-pick{font-weight:600}
+.sh-tick{width:14px;height:14px;flex:0 0 auto;color:var(--sh-accent-text)}
+.sh-gap{width:14px;flex:0 0 auto}
+.sh-nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sh-trash{width:26px;height:26px;margin-right:4px;flex:0 0 auto;border:0;background:transparent;border-radius:6px;
+  color:var(--sh-ink-3);cursor:pointer;display:grid;place-items:center;opacity:0}
+.sh-prow:hover .sh-trash,.sh-trash:focus-visible{opacity:1}
+.sh-trash:hover{color:var(--sh-danger);background:var(--sh-hover)}
+.sh-trash svg{width:13.5px;height:13.5px}
+.sh-act{width:100%;display:flex;align-items:center;gap:9px;padding:11px 14px;border:0;background:transparent;
+  cursor:pointer;font:600 12.5px var(--sh-font);color:var(--sh-accent-text);text-align:left}
+.sh-act:hover{background:var(--sh-hover)}
+.sh-act.quiet{color:var(--sh-ink-2)}
+.sh-act svg{width:14px;height:14px;flex:0 0 auto}
+
+/* buttons used inside the shell only */
+.sh-btn{font:600 12.5px var(--sh-font);border:1px solid var(--sh-line-2);background:transparent;color:var(--sh-ink);
+  padding:8px 13px;border-radius:8px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:7px}
+.sh-btn:hover{border-color:var(--sh-ink-3)}
+.sh-btn.primary{background:var(--sh-accent);color:var(--sh-accent-ink);border-color:var(--sh-accent)}
+.sh-btn.primary:disabled{opacity:.4;cursor:not-allowed}
+.sh-btn.danger{background:var(--sh-danger);border-color:var(--sh-danger);color:#fff}
+
+/* confirmation — sign out and profile deletes ask first, in place */
+.sh-confirm{padding:15px}
+.sh-confirm h4{font:600 13.5px var(--sh-font);color:var(--sh-ink)}
+.sh-confirm p{font:400 12px var(--sh-font);color:var(--sh-ink-3);line-height:1.5;margin-top:5px}
+.sh-confirm .sh-acts{display:flex;gap:8px;margin-top:14px}
+.sh-confirm .sh-acts .sh-btn{flex:1}
+
+/* modal — new profile / rename profile */
+.sh-modal{position:fixed;inset:0;z-index:200;display:none;align-items:center;justify-content:center;padding:20px;
+  background:var(--sh-scrim);backdrop-filter:blur(2px);font-family:var(--sh-font)}
+.sh-modal.open{display:flex}
+.sh-sheet{width:100%;max-width:424px;background:var(--sh-panel);border:1px solid var(--sh-line-2);
+  border-radius:16px;padding:26px 24px 20px;box-shadow:0 30px 80px -26px rgba(0,0,0,.65)}
+.sh-sheet h2{font:700 21px var(--sh-font);text-align:center;color:var(--sh-ink);margin:0}
+.sh-sheet p{font:400 13px var(--sh-font);color:var(--sh-ink-2);text-align:center;line-height:1.55;
+  margin:10px 0 0;text-wrap:balance}
+.sh-f{display:block;margin-top:20px}
+.sh-f span{display:block;font:600 12.5px var(--sh-font);color:var(--sh-ink);margin-bottom:7px}
+.sh-f input{width:100%;background:var(--sh-sunken);border:1px solid var(--sh-line);color:var(--sh-ink);
+  font:400 13.5px var(--sh-font);padding:11px 12px;border-radius:8px}
+.sh-f input:focus{outline:0;border-color:var(--sh-accent)}
+.sh-sheet .sh-acts{display:flex;gap:10px;margin-top:22px}
+.sh-sheet .sh-acts .sh-btn{flex:1;padding:11px 14px;font-size:13px}
+
+.sh-toast{position:fixed;left:50%;bottom:26px;z-index:210;transform:translateX(-50%) translateY(10px);
+  background:var(--sh-panel);border:1px solid var(--sh-line-2);color:var(--sh-ink);
+  font:600 12.5px var(--sh-font);padding:10px 16px;border-radius:99px;box-shadow:var(--sh-shadow-pop);
+  opacity:0;pointer-events:none;transition:opacity .18s,transform .18s}
+.sh-toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* export control — one component, so Dashboard and History offer the same
+   formats in the same place */
+.sh-exp{position:relative;flex:0 0 auto}
+.sh-exp>button{display:flex;align-items:center;gap:6px;font:500 12px var(--sh-font);color:var(--sh-ink-2);
+  background:var(--sh-panel);border:1px solid var(--sh-line-2);border-radius:10px;padding:6px 10px 6px 12px;
+  cursor:pointer;white-space:nowrap}
+.sh-exp>button:hover{background:var(--sh-hover);color:var(--sh-ink)}
+.sh-exp.open>button{border-color:var(--sh-accent-text);color:var(--sh-ink)}
+.sh-exp>button svg{width:13px;height:13px;flex:0 0 auto}
+.sh-exp>button .cv{opacity:.55;transition:transform .15s;width:11px;height:11px}
+.sh-exp.open>button .cv{transform:rotate(180deg)}
+.sh-expmenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:188px;padding:5px;
+  background:var(--sh-panel);border:1px solid var(--sh-line-2);border-radius:11px;box-shadow:var(--sh-shadow-pop)}
+.sh-exp.open .sh-expmenu{display:block}
+.sh-expmenu button{width:100%;display:flex;align-items:center;gap:9px;border:0;background:transparent;
+  color:var(--sh-ink-2);font:500 12.5px var(--sh-font);padding:8px 9px;border-radius:7px;cursor:pointer;text-align:left}
+.sh-expmenu button:hover{background:var(--sh-hover);color:var(--sh-ink)}
+.sh-expmenu button svg{width:15px;height:15px;flex:0 0 auto;color:var(--sh-ink-3)}
+.sh-expmenu button:hover svg{color:var(--sh-accent-text)}
+.sh-expmenu .ext{margin-left:auto;font:500 11px var(--sh-font);color:var(--sh-ink-3)}
+
+/* narrow windows: labels go before anything else collapses */
+@media (max-width:1280px){ .sh-tabs a span{display:none} .sh-tabs a{padding:7px 9px} .sh-docs{display:none} }
+@media (max-width:980px){ .sh-who{display:none} }
