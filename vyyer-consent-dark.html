@@ -149,6 +149,9 @@
 
   .grp{padding:16px 0 11px; border-top:1px solid var(--line)}
   .grp:first-child{border-top:0; padding-top:6px}
+  /* the consent sheet runs tighter than the long-form notice, which keeps the
+     roomier rhythm above */
+  #consentBody .grp{padding:8px 0}
   .grp h3{margin:0 0 8px; font-size:12px; font-weight:800; letter-spacing:.1em; text-transform:uppercase; color:var(--brand)}
   .grp ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:9px}
   .grp li{display:flex; gap:9px; align-items:flex-start; font-size:13px; line-height:1.45}
@@ -195,7 +198,7 @@
   .release{
     display:flex; gap:9px; align-items:flex-start; text-align:left; cursor:pointer;
     background:var(--sunken); border:1px solid var(--line); border-radius:10px;
-    padding:10px 11px; margin:0 0 10px;
+    padding:10px 11px; margin:0 0 16px;
     transition:border-color .15s ease, background .15s ease;
   }
   .release:hover{border-color:var(--line-2)}
@@ -214,9 +217,10 @@
 
   .decline{
     width:100%; margin-top:8px; border:0; background:transparent; color:var(--secondary); cursor:pointer;
-    font:600 13px 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; text-decoration:underline; text-underline-offset:2px; padding:4px;
+    font:600 14px 'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; text-decoration:underline; text-underline-offset:2px; padding:4px;
   }
   .decline:hover{color:var(--ink)}
+  @media (min-width:430px){ .decline{font-size:16px} }
 
   /* long-form notice */
   .notice h4{margin:15px 0 5px; font-size:14px; font-weight:800}
