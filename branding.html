@@ -150,7 +150,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);height:100vh;
   color:var(--ink-2);cursor:pointer;font-size:18px;line-height:1}
 .nav:hover{color:var(--ink);border-color:var(--line-2)}
 
-.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;overflow:auto;padding:22px;position:relative}
+.stage{flex:1;display:flex;align-items:center;justify-content:center;gap:14px;overflow:auto;position:relative;
+  padding:22px 22px calc(22px + var(--hintspace,41px))}
 .hint{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);font-size:11.5px;color:var(--ink-3);
   background:var(--panel);border:1px solid var(--line);padding:6px 12px;border-radius:99px;pointer-events:none}
 
@@ -1272,7 +1273,13 @@ function fitDevice(){
   const f=w.querySelector('.frame'), st=document.getElementById('stage');
   const H=f.offsetHeight, W=f.offsetWidth;
   const cap=DISPLAY_CAP[f.classList.contains('desktop')?'desktop':'mobile'];
-  const fit=Math.min(cap.w/W, cap.h/H, (st.clientHeight-40)/H, (st.clientWidth-130)/W);
+  /* the hint wraps to two lines in a narrow pane, so measure it rather than
+     assume — the device then centres in the space above it */
+  const hint=st.querySelector('.hint');
+  if(hint) st.style.setProperty('--hintspace',(hint.offsetHeight+12)+'px');
+  const cs=getComputedStyle(st);
+  const avail=st.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
+  const fit=Math.min(cap.w/W, cap.h/H, avail/H, (st.clientWidth-130)/W);
   w.style.setProperty('--fit',fit.toFixed(3));
   w.style.height=Math.round(H*fit)+'px'; w.style.width=Math.round(W*fit)+'px';
   paintSelection();                      /* rects change with the scale */

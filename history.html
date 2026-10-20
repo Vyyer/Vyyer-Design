@@ -54,6 +54,9 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 
 /* ── FILTER BAR ── */
 .filterbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px 0 18px; }
+.filter-row { display: contents; }          /* desktop: the filters sit in the bar itself */
+.filter-toggle { display: none; }
+.dp-custom { display: none; }
 .search { position: relative; flex: 1 1 240px; min-width: 200px; }
 .search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
 .search input {
@@ -72,6 +75,96 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 }
 .filter-select:focus { outline: none; border-color: #007aff; }
 
+/* ── DATE RANGE PICKER ── */
+.date-field { position: relative; }
+.date-trigger {
+  display: flex; align-items: center; gap: 7px;
+  font-family: var(--font); font-size: 13px; font-weight: 500;
+  color: var(--text-primary); background: var(--field-float);
+  border: 1px solid var(--field-float-line); border-radius: var(--radius-sm);
+  padding: 8px 12px; cursor: pointer; transition: all .15s; white-space: nowrap;
+}
+.date-trigger:hover { border-color: var(--text-tertiary); }
+.date-trigger.open { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.date-trigger span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.date-trigger .dt-cal { color: var(--text-tertiary); flex-shrink: 0; }
+.date-trigger .dt-chev { color: var(--text-tertiary); margin-left: 2px; transition: transform .15s; }
+.date-trigger.open .dt-chev { transform: rotate(180deg); }
+
+.date-popover {
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 200;
+  background: var(--surface); border: 1px solid var(--border-md);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-md);
+  width: 620px; max-width: calc(100vw - 32px);
+  opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .15s, transform .15s, visibility .15s;
+}
+.date-popover.open { opacity: 1; visibility: visible; transform: translateY(0); }
+.dp-body { display: flex; }
+.dp-presets { display: flex; flex-direction: column; gap: 2px; padding: 14px 12px; border-right: 1px solid var(--border); width: 140px; flex-shrink: 0; }
+.dp-preset { text-align: left; font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-secondary); background: none; border: none; border-radius: var(--radius-sm); padding: 7px 10px; cursor: pointer; transition: all .12s; }
+.dp-preset:hover { background: var(--surface-2); color: var(--text-primary); }
+.dp-preset.active { background: #007aff; color: #fff; font-weight: 600; }
+.dp-main { flex: 1; padding: 14px 16px; min-width: 0; }
+.dp-cals { display: flex; gap: 20px; }
+.dp-cal { flex: 1; min-width: 0; }
+.dp-cal-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; height: 24px; }
+.dp-cal-title { font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.dp-nav { background: none; border: none; cursor: pointer; color: var(--text-secondary); border-radius: 6px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; transition: background .12s; }
+.dp-nav:hover { background: var(--surface-2); color: var(--text-primary); }
+.dp-nav:disabled { opacity: 0; pointer-events: none; }
+.dp-weekdays { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 4px; }
+.dp-weekdays span { text-align: center; font-size: 10px; font-weight: 600; color: var(--text-tertiary); }
+.dp-days { display: grid; grid-template-columns: repeat(7,1fr); gap: 0; }
+.dp-day { position: relative; aspect-ratio: 1; border: none; background: none; font-family: var(--font); font-size: 12px; color: var(--text-primary); cursor: pointer; border-radius: 7px; display: flex; align-items: center; justify-content: center; transition: background .1s; }
+.dp-day.blank { visibility: hidden; cursor: default; }
+.dp-day:hover:not(.disabled):not(.endpoint) { background: var(--surface-2); }
+.dp-day.disabled { color: var(--text-tertiary); opacity: .38; cursor: default; }
+.dp-day.in-range { background: rgba(0,122,255,0.10); border-radius: 0; }
+.dp-day.endpoint { background: #007aff; color: #fff; font-weight: 600; z-index: 1; }
+.dp-day.range-start.not-single { border-radius: 7px 0 0 7px; }
+.dp-day.range-end.not-single { border-radius: 0 7px 7px 0; }
+.dp-day.today::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 3px; height: 3px; border-radius: 50%; background: currentColor; }
+.dp-day.endpoint.today::after { background: #fff; }
+.dp-footer { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--border); }
+.dp-hint { font-size: 12px; font-weight: 500; color: var(--text-primary); }
+.dp-actions { display: flex; gap: 8px; }
+.dp-btn { font-family: var(--font); font-size: 12px; font-weight: 500; border-radius: var(--radius-sm); padding: 6px 14px; cursor: pointer; transition: all .12s; border: 1px solid var(--border-md); }
+.dp-cancel { background: var(--surface); color: var(--text-secondary); }
+.dp-cancel:hover { background: var(--surface-2); color: var(--text-primary); }
+.dp-apply { background: #007aff; color: #fff; border-color: #007aff; font-weight: 600; }
+.dp-apply:hover { background: #006ae0; }
+@media (max-width: 760px) {
+  /* Phone layout for the picker: the periods become a plain menu, with Custom
+     range as the last row — tapping it swaps the menu for the calendar.
+     (The breakpoint matches the one the filters collapse at; when these two
+     disagreed, 681–760px got the desktop preset rail with no calendar.) */
+  .date-popover { width: min(248px, calc(100vw - 32px)); }
+  /* one month, at a size where a day is a comfortable tap target rather
+     than a 100px block — the cells are square, so width sets height */
+  .date-popover.custom { width: min(320px, calc(100vw - 32px)); }
+  .dp-main { padding: 10px 12px 12px; }
+  .dp-body { flex-direction: column; }
+  .dp-presets { flex-direction: column; width: auto; border-right: none; gap: 1px; padding: 5px; }
+  .dp-preset { text-align: left; font-size: 13px; padding: 8px 10px; border: 0; border-radius: 7px; }
+  .dp-custom { display: flex; align-items: center; gap: 9px; width: 100%; border: 0;
+    border-top: 1px solid var(--border); border-radius: 0; background: none; cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--focus, #007aff);
+    padding: 10px 14px; text-align: left; }
+  .dp-custom svg { flex: 0 0 auto; }
+  .dp-custom .sp { flex: 1; }
+  .dp-custom .cv { transition: transform .15s; }
+  .dp-custom:hover { background: var(--surface-2); }
+  .dp-main { display: none; }
+  .dp-footer { display: none; }                       /* nothing to confirm in a plain menu */
+  .date-popover.custom .dp-footer { display: flex; }  /* the calendar still needs Apply */
+  .date-popover.custom .dp-presets { display: none; }
+  .date-popover.custom .dp-main { display: block; }
+  .date-popover.custom .dp-custom { background: var(--surface-2); }
+  .date-popover.custom .dp-custom .cv { transform: rotate(180deg); }
+  .dp-cals .dp-cal:first-child { display: none; }
+}
+
 /* ── CUSTOM DROPDOWN ── */
 .dd { position: relative; display: inline-flex; }
 .dd-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 128px; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: var(--field-float); border: 1px solid var(--field-float-line); border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; white-space: nowrap; }
@@ -80,7 +173,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .dd-label { overflow: hidden; text-overflow: ellipsis; }
 .dd-chev { color: var(--text-tertiary); flex-shrink: 0; transition: transform .15s; }
 .dd.open .dd-chev { transform: rotate(180deg); }
-.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%; background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
+.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%; max-width: calc(100vw - 24px); background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
 .dd.open .dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
 .dd-item { display: flex; align-items: center; gap: 9px; width: 100%; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: none; border: none; border-radius: 7px; padding: 7px 9px; cursor: pointer; text-align: left; white-space: nowrap; transition: background .12s; }
 .dd-item:hover { background: var(--surface-2); }
@@ -94,7 +187,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
   padding: 8px 12px; cursor: pointer; transition: all .15s; white-space: nowrap;
 }
 .btn-clear:hover { color: var(--text-primary); background: var(--surface-2); }
-.btn-clear:disabled { opacity: 0; pointer-events: none; }
+.btn-clear:disabled { display: none; }
 
 /* ── TABLE (desktop) ── */
 .hist-panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
@@ -200,13 +293,36 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
   .hist-panel { display: none; }
   .hist-cards { display: flex; }
 }
+/* Below this the search and the three filters no longer share a line, so the
+   filters fold behind a button and open as their own row underneath. */
+@media (max-width: 760px) {
+  .filterbar { gap: 8px; }
+  .search { flex: 1 1 auto; min-width: 0; }
+  .filter-toggle { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
+    font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary);
+    background: var(--field-float); border: 1px solid var(--field-float-line);
+    border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; }
+  .filter-toggle:hover { border-color: var(--text-tertiary); }
+  .filter-toggle[aria-expanded="true"] { border-color: var(--field-focus); color: var(--field-focus); }
+  .filter-toggle .fcount { min-width: 17px; height: 17px; border-radius: 99px; padding: 0 5px;
+    background: var(--field-focus); color: #fff; font-size: 10.5px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .filter-toggle .fcount[hidden] { display: none; }
+  /* source order puts the filters first; visual order is search, button, row */
+  .search { order: 1; }
+  .filter-toggle { order: 2; }
+  .filter-row { order: 3; display: none; flex: 1 1 100%; gap: 8px; }
+  .btn-clear { order: 4; }
+  .filter-row.show { display: flex; }
+  .dd, .date-field { flex: 1 1 0; min-width: 0; }
+  .dd-trigger, .date-trigger { width: 100%; min-width: 0; padding: 8px 10px; font-size: 12.5px; }
+  .dd-trigger > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .btn-clear { flex: 1 1 100%; }
+}
 @media (max-width: 680px) {
   .toolbar { padding: 12px 16px; margin: 0 -20px; }
-  .filterbar { gap: 8px; }
-  .search { flex: 1 1 100%; }
-  .filter-select, .dd { flex: 1 1 40%; }
-  .dd-trigger { width: 100%; min-width: 0; }
 }
+
 @media (max-width: 480px) {
   main { padding: 0 12px 40px; }
   .toolbar { margin: 0 -12px; padding: 12px; }
@@ -237,7 +353,14 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
 [data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
 [data-theme="dark"] .search input:focus,
 [data-theme="dark"] .filter-select:focus,
+[data-theme="dark"] .date-trigger.open,
 [data-theme="dark"] .dd.open .dd-trigger { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(90,169,255,0.18); }
+[data-theme="dark"] .dp-preset.active,
+[data-theme="dark"] .dp-day.endpoint,
+[data-theme="dark"] .dp-apply { background: var(--focus); border-color: var(--focus); color: #07131f; }
+[data-theme="dark"] .dp-apply:hover { background: #7FBCFF; }
+[data-theme="dark"] .dp-day.in-range { background: rgba(90,169,255,0.16); }
+[data-theme="dark"] .dp-day.endpoint.today::after { background: #07131f; }
 [data-theme="dark"] .dd-check { color: var(--focus); }
 [data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #07131f; }
 [data-theme="dark"] .hist-table thead th { background: #191920; }
@@ -270,9 +393,39 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
       <input id="searchInput" type="text" placeholder="Search by name or email…" autocomplete="off">
     </div>
-    <div class="dd" id="dateDd"></div>
+    <div class="filter-row" id="filterRow">
+    <div class="date-field" id="dateField">
+      <button type="button" class="date-trigger" id="dateTrigger" aria-haspopup="dialog" aria-expanded="false">
+        <svg class="dt-cal" width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><path d="M1.5 5.5h11M4.5 1v2.5M9.5 1v2.5"/></svg>
+        <span id="dateTriggerLabel">All time</span>
+        <svg class="dt-chev" width="10" height="6" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.4"><path d="M1 1l4 4 4-4"/></svg>
+      </button>
+      <div class="date-popover" id="datePopover" role="dialog" aria-label="Select date range">
+        <div class="dp-body">
+          <div class="dp-presets" id="dpPresets"></div>
+          <button type="button" class="dp-custom" id="dpCustom">
+            <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><path d="M1.5 5.5h11M4.5 1v2.5M9.5 1v2.5"/></svg>
+            Custom range<span class="sp"></span>
+            <svg class="cv" width="11" height="7" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l4 4 4-4"/></svg>
+          </button>
+          <div class="dp-main"><div class="dp-cals" id="dpCals"></div></div>
+        </div>
+        <div class="dp-footer">
+          <span class="dp-hint" id="dpHint"></span>
+          <div class="dp-actions">
+            <button type="button" class="dp-btn dp-cancel" id="dpCancel">Cancel</button>
+            <button type="button" class="dp-btn dp-apply" id="dpApply">Apply</button>
+          </div>
+        </div>
+      </div>
+    </div>
     <div class="dd" id="resultDd"></div>
     <div class="dd" id="profileDd"></div>
+    </div>
+    <button id="filterToggle" class="filter-toggle" aria-expanded="false" aria-controls="filterRow">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h17M6.5 12h11M10 18.5h4"/></svg>
+      <span>Filters</span><span class="fcount" id="filterCount" hidden></span>
+    </button>
     <button id="clearBtn" class="btn-clear" disabled>Clear filters</button>
   </div>
 
@@ -382,7 +535,185 @@ function platIcon(key){
 }
 
 /* ─── STATE ─── */
-let state = { search:'', date:'all', result:[], profile:'all', page:1, perPage:10 };
+
+/* ══════════════════════════════════════
+   DATE RANGE PICKER
+   The same component as the dashboard's — same presets, same calendar, same
+   apply/cancel contract. Anchored to NOW so the sample data stays in range.
+══════════════════════════════════════ */
+const TODAY = d0(NOW);
+const WD = ['S','M','T','W','T','F','S'];
+const CHEVL = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M8.5 3.5L5 7l3.5 3.5"/></svg>';
+const CHEVR = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5.5 3.5L9 7l-3.5 3.5"/></svg>';
+
+function d0(d){ const x = new Date(d); x.setHours(0,0,0,0); return x; }
+function sameDay(a,b){ return !!(a&&b) && a.getFullYear()===b.getFullYear() && a.getMonth()===b.getMonth() && a.getDate()===b.getDate(); }
+function startOfMonth(d){ return new Date(d.getFullYear(), d.getMonth(), 1); }
+function addMonths(d,n){ return new Date(d.getFullYear(), d.getMonth()+n, 1); }
+function startOfWeek(d){ const x=d0(d); x.setDate(x.getDate()-x.getDay()); return x; }
+function startOfQuarter(d){ return new Date(d.getFullYear(), Math.floor(d.getMonth()/3)*3, 1); }
+
+const PRESETS = [
+  { key:'day',     label:'Today',        range:()=>[TODAY, TODAY] },
+  { key:'week',    label:'This week',    range:()=>[startOfWeek(TODAY), TODAY] },
+  { key:'month',   label:'This month',   range:()=>[startOfMonth(TODAY), TODAY] },
+  { key:'quarter', label:'This quarter', range:()=>[startOfQuarter(TODAY), TODAY] },
+  { key:'year',    label:'This year',    range:()=>[new Date(TODAY.getFullYear(),0,1), TODAY] },
+  { key:'all',     label:'All time',     range:()=>[new Date(2025,0,1), TODAY] }
+];
+
+let dpStart=null, dpEnd=null, dpActivePreset=null, dpMonths=[];
+
+function presetRange(key){ const p=PRESETS.find(x=>x.key===key); return p ? p.range().map(d0) : null; }
+function matchPreset(s,e){ for(const p of PRESETS){ const [ps,pe]=p.range(); if(sameDay(d0(ps),s)&&sameDay(d0(pe),e)) return p.key; } return null; }
+function fmtMD(d){ return MONTHS[d.getMonth()]+' '+d.getDate(); }
+function fmtMDY(d){ return MONTHS[d.getMonth()]+' '+d.getDate()+', '+d.getFullYear(); }
+function labelForRange(s,e,preset){
+  if(preset==='all') return 'All time';
+  if(sameDay(s,e)) return fmtMDY(s);
+  if(s.getFullYear()===e.getFullYear()) return fmtMD(s)+' – '+fmtMDY(e);
+  return fmtMDY(s)+' – '+fmtMDY(e);
+}
+
+function renderPresets(){
+  document.getElementById('dpPresets').innerHTML = PRESETS.map(p =>
+    `<button type="button" class="dp-preset${p.key===dpActivePreset?' active':''}" data-preset="${p.key}">${p.label}</button>`
+  ).join('');
+}
+
+function renderCals(){
+  const rs = dpStart ? d0(dpStart) : null, re = dpEnd ? d0(dpEnd) : null;
+  document.getElementById('dpCals').innerHTML = dpMonths.map((mDate, idx) => {
+    const y=mDate.getFullYear(), m=mDate.getMonth();
+    const firstDow = new Date(y,m,1).getDay();
+    const dim = new Date(y,m+1,0).getDate();
+    const canNext = !(y>TODAY.getFullYear() || (y===TODAY.getFullYear() && m>=TODAY.getMonth()));
+    let cells='';
+    for(let i=0;i<firstDow;i++) cells += '<button class="dp-day blank" tabindex="-1"></button>';
+    for(let day=1; day<=dim; day++){
+      const cur=new Date(y,m,day), c=d0(cur);
+      const isFuture = c > TODAY;
+      const inR   = rs&&re && c>=rs && c<=re;
+      const isS   = rs && sameDay(cur,rs);
+      const isE   = re && sameDay(cur,re);
+      const single= rs&&re && sameDay(rs,re);
+      let cls='dp-day';
+      if(isFuture) cls+=' disabled';
+      if(isS||isE){
+        cls+=' endpoint';
+        if(!single){ if(isS) cls+=' range-start not-single'; if(isE) cls+=' range-end not-single'; }
+      } else if(inR){ cls+=' in-range'; }
+      if(sameDay(cur,TODAY)) cls+=' today';
+      cells += `<button type="button" class="${cls}" data-date="${y}-${m}-${day}"${isFuture?' disabled':''}>${day}</button>`;
+    }
+    return `<div class="dp-cal">
+      <div class="dp-cal-head">
+        <button type="button" class="dp-nav" data-nav="${idx}:-1" aria-label="Previous month">${CHEVL}</button>
+        <span class="dp-cal-title">${MONTHS[m]} ${y}</span>
+        <button type="button" class="dp-nav" data-nav="${idx}:1" aria-label="Next month"${canNext?'':' disabled'}>${CHEVR}</button>
+      </div>
+      <div class="dp-weekdays">${WD.map(w=>`<span>${w}</span>`).join('')}</div>
+      <div class="dp-days">${cells}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateRangeDisplay(){
+  const hint = document.getElementById('dpHint');
+  if(!dpStart){ hint.textContent = 'Select a date'; return; }
+  const s = d0(dpStart), e = dpEnd ? d0(dpEnd) : s;
+  hint.textContent = labelForRange(s, e, dpActivePreset);
+}
+function syncMonthsTo(anchor){ const end = startOfMonth(anchor || TODAY); dpMonths = [ addMonths(end,-1), end ]; }
+function selectPreset(key){
+  const r = presetRange(key); if(!r) return;
+  dpStart=r[0]; dpEnd=r[1]; dpActivePreset=key;
+  syncMonthsTo(dpEnd); renderPresets(); renderCals(); updateRangeDisplay();
+}
+function dayClick(y,m,day){
+  const cur=new Date(y,m,day); if(d0(cur)>TODAY) return;
+  if(!dpStart || (dpStart && dpEnd)){ dpStart=cur; dpEnd=null; }
+  else if(d0(cur)<d0(dpStart)){ dpEnd=dpStart; dpStart=cur; }
+  else { dpEnd=cur; }
+  dpActivePreset = (dpStart && dpEnd) ? matchPreset(d0(dpStart), d0(dpEnd)) : null;
+  renderPresets(); renderCals(); updateRangeDisplay();
+}
+function navMonth(i,delta){
+  const nd = addMonths(dpMonths[i], delta);
+  if(nd.getFullYear()>TODAY.getFullYear() || (nd.getFullYear()===TODAY.getFullYear() && nd.getMonth()>TODAY.getMonth())) return;
+  dpMonths[i]=nd; renderCals();
+}
+/* An absolutely positioned menu widens the page even while hidden, which is
+   what put a horizontal scrollbar on this screen. Every popover is pulled back
+   inside the viewport here — on load, on resize, and when one opens. */
+function clampPopovers(){
+  const vw = document.documentElement.clientWidth;
+  document.querySelectorAll('.dd-menu, .date-popover').forEach(p => {
+    p.style.left = '0px';
+    const over = p.getBoundingClientRect().right - (vw - 12);
+    if(over > 0) p.style.left = (-over) + 'px';
+  });
+}
+addEventListener('resize', clampPopovers);
+
+function openPicker(){
+  dpStart=state.date.start; dpEnd=state.date.end; dpActivePreset=state.date.preset;
+  syncMonthsTo(dpEnd); renderPresets(); renderCals(); updateRangeDisplay();
+  document.getElementById('dateTrigger').classList.add('open');
+  document.getElementById('dateTrigger').setAttribute('aria-expanded','true');
+  const pop = document.getElementById('datePopover');
+  pop.classList.remove('custom');        /* always opens on the presets */
+  pop.classList.add('open');
+  clampPopovers();
+}
+function closePicker(){
+  document.getElementById('dateTrigger').classList.remove('open');
+  document.getElementById('dateTrigger').setAttribute('aria-expanded','false');
+  document.getElementById('datePopover').classList.remove('open');
+}
+function setDateRange(s, e, preset){
+  state.date = { start:s, end:e, preset:preset };
+  document.getElementById('dateTriggerLabel').textContent = labelForRange(s, e, preset);
+}
+function applyRange(){
+  if(!dpStart) return;
+  const s=d0(dpStart), e=d0(dpEnd||dpStart);
+  setDateRange(s, e, dpActivePreset);
+  state.page = 1; render(); closePicker();
+}
+function resetDateRange(){ const [s,e] = presetRange('all'); setDateRange(s, e, 'all'); }
+
+function initDatePicker(){
+  resetDateRange();
+  const pop = document.getElementById('datePopover');
+  document.getElementById('dateTrigger').addEventListener('click', e => {
+    e.stopPropagation();
+    pop.classList.contains('open') ? closePicker() : openPicker();
+  });
+  pop.addEventListener('click', e => {
+    e.stopPropagation();
+    const preset = e.target.closest('[data-preset]');
+    if(preset){
+      selectPreset(preset.dataset.preset);
+      /* in the compact menu there is no Apply button, so the choice commits now */
+      if(matchMedia('(max-width: 760px)').matches && !pop.classList.contains('custom')) applyRange();
+      return;
+    }
+    const nav = e.target.closest('[data-nav]'); if(nav){ const [i,dl]=nav.dataset.nav.split(':').map(Number); navMonth(i,dl); return; }
+    const day = e.target.closest('[data-date]'); if(day && !day.disabled){ const [y,m,d]=day.dataset.date.split('-').map(Number); dayClick(y,m,d); }
+  });
+  document.getElementById('dpCustom').addEventListener('click', e => {
+    e.stopPropagation();
+    pop.classList.toggle('custom');
+    clampPopovers();
+  });
+  document.getElementById('dpCancel').addEventListener('click', closePicker);
+  document.getElementById('dpApply').addEventListener('click', applyRange);
+  document.addEventListener('click', e => { if(pop.classList.contains('open') && !e.target.closest('#dateField')) closePicker(); });
+  document.addEventListener('keydown', e => { if(e.key==='Escape' && pop.classList.contains('open')) closePicker(); });
+}
+
+let state = { search:'', date:null, result:[], profile:'all', page:1, perPage:10 };
 
 function getFiltered(){
   let rows = HISTORY;
@@ -390,11 +721,10 @@ function getFiltered(){
   if(q) rows = rows.filter(r => r.name.toLowerCase().includes(q) || r.email.toLowerCase().includes(q));
   if(state.result.length) rows = rows.filter(r => state.result.includes(r.result));
   if(state.profile !== 'all') rows = rows.filter(r => r.profile === state.profile);
-  if(state.date !== 'all'){
-    let cutoff;
-    if(state.date === 'today'){ const d = new Date(NOW); d.setHours(0,0,0,0); cutoff = d.getTime(); }
-    else cutoff = NOW.getTime() - parseInt(state.date,10) * 86400000;
-    rows = rows.filter(r => r.ts.getTime() >= cutoff);
+  if(state.date && state.date.preset !== 'all'){
+    const from = state.date.start.getTime();
+    const to   = state.date.end.getTime() + 86400000;   /* the end day, included */
+    rows = rows.filter(r => r.ts.getTime() >= from && r.ts.getTime() < to);
   }
   return rows;
 }
@@ -404,6 +734,7 @@ function resultBadge(result){
 }
 
 function render(){
+  if(document.getElementById('filterCount')) syncFilterCount();
   const filtered = getFiltered();
   const total = filtered.length;
   const pages = Math.max(1, Math.ceil(total / state.perPage));
@@ -413,7 +744,7 @@ function render(){
 
   // Count + clear button
   document.getElementById('recordCount').innerHTML = `<strong>${total}</strong> verification${total===1?'':'s'}`;
-  const dirty = state.search || state.date!=='all' || state.result.length>0 || state.profile!=='all';
+  const dirty = state.search || (state.date && state.date.preset!=='all') || state.result.length>0 || state.profile!=='all';
   document.getElementById('clearBtn').disabled = !dirty;
 
   // Empty state
@@ -563,11 +894,7 @@ document.getElementById('searchInput').addEventListener('input', e => {
   clearTimeout(searchTimer);
   searchTimer = setTimeout(() => { state.search = e.target.value; state.page = 1; render(); }, 160);
 });
-const dateDropdown = createDropdown(document.getElementById('dateDd'), {
-  allLabel:'All dates',
-  options:[{value:'all',label:'All dates'},{value:'today',label:'Today'},{value:'7',label:'Last 7 days'},{value:'30',label:'Last 30 days'}],
-  onChange: v => { state.date = v; state.page = 1; render(); }
-});
+initDatePicker();
 const resultDropdown = createDropdown(document.getElementById('resultDd'), {
   multi:true, allLabel:'All results', countNoun:'results',
   options:[{value:'all',label:'All results'},{value:'Valid',label:'Valid'},{value:'Invalid',label:'Invalid'},{value:'Expired',label:'Expired'},{value:'Underage',label:'Underage'},{value:'Incomplete',label:'Incomplete'}],
@@ -578,11 +905,29 @@ const profileDropdown = createDropdown(document.getElementById('profileDd'), {
   options:[{value:'all',label:'All profiles'},{value:'Default profile',label:'Default profile'},{value:'Treehouse Hotels',label:'Treehouse Hotels'},{value:'One Hotels',label:'One Hotels'},{value:'Baccarat Hotels',label:'Baccarat Hotels'},{value:'Shopify',label:'Shopify'}],
   onChange: v => { state.profile = v; state.page = 1; render(); }
 });
+clampPopovers();   /* every menu now exists */
+const filterRow = document.getElementById('filterRow');
+const filterToggle = document.getElementById('filterToggle');
+filterToggle.addEventListener('click', () => {
+  const open = filterRow.classList.toggle('show');
+  filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  if(open) clampPopovers();
+});
+/* the button carries a count so a collapsed filter is never invisible */
+function syncFilterCount(){
+  const n = (state.date && state.date.preset !== 'all' ? 1 : 0)
+          + (state.result.length ? 1 : 0)
+          + (state.profile !== 'all' ? 1 : 0);
+  const chip = document.getElementById('filterCount');
+  chip.textContent = n; chip.hidden = n === 0;
+}
+
 document.getElementById('perPageSel').addEventListener('change', e => { state.perPage = parseInt(e.target.value,10); state.page = 1; render(); });
 document.getElementById('clearBtn').addEventListener('click', () => {
-  state.search=''; state.date='all'; state.result=[]; state.profile='all'; state.page=1;
+  state.search=''; state.result=[]; state.profile='all'; state.page=1;
+  resetDateRange();
   document.getElementById('searchInput').value='';
-  dateDropdown.reset(); resultDropdown.reset(); profileDropdown.reset();
+  resultDropdown.reset(); profileDropdown.reset();
   render();
 });
 document.getElementById('pageNav').addEventListener('click', e => {
