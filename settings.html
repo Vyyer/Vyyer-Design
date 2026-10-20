@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Settings</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'light'}catch(e){}</script>
+<!--
+  ============================================================================
+  VYYER DASHBOARD — SETTINGS
+
+  The live Settings page has five boxes, two of which don't work yet, and
+  everything that has shipped since has been dropped into "Verdict settings"
+  regardless of what it does. Callback URLs, camera preferences and PII
+  retention are not verdict settings.
+
+  What this redesign does:
+
+  1. GROUPS BY WHAT THE SETTING DOES, not by when it was built. Six groups in
+     two sections — what the product does for your customers, and what it does
+     for your engineers.
+
+  2. VERDICT SETTINGS MEANS VERDICTS AGAIN. Only the criteria that decide an
+     outcome live there: age, expiry, blacklist, retries.
+
+  3. DEPENDENCIES ARE EXPLAINED, as on Workflow. A field that needs another
+     one says so instead of greying out in silence.
+
+  Users and Billing are left out entirely until they do something.
+  Branding has moved to its own tab in the top navigation.
+  ============================================================================
+-->
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #edf0f5;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text-primary: #111110;
+  --text-secondary: #6f6e6b;
+  --text-tertiary: #9d9c99;
+  --accent: #A0D959;
+  --on-accent: #16240a;
+  --ok: #3a7d1e;
+  --info: #007aff;
+  --warn: #c47a1a;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
+
+/* ── page header ── */
+.toolbar {
+  position: sticky; top: var(--sh-h); z-index: 20; background: rgba(248,250,252,0.95);
+  backdrop-filter: blur(8px); display: flex; align-items: center; gap: 14px;
+  padding: 18px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 22px;
+}
+.toolbar h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+.toolbar .sp { flex: 1; }
+
+.btn { font-family: var(--font); font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.btn:hover:not(:disabled) { border-color: var(--text-tertiary); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.primary.saved:disabled { opacity: 1; }
+.btn svg { width: 14px; height: 14px; }
+.spin { animation: spin .8s linear infinite; transform-origin: 50% 50%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.back { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+  background: none; border: 0; font-family: var(--font); cursor: pointer; padding: 18px 0 2px; }
+.back:hover { color: var(--text-primary); }
+.back svg { width: 13px; height: 13px; }
+
+/* ── section + card ── */
+.sec { margin-bottom: 26px; }
+.sec-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.sec-head h2 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
+.sec-head p { font-size: 12.5px; color: var(--text-tertiary); }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+
+/* ── group cards on the home view ── */
+.groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.gcard { display: flex; align-items: flex-start; gap: 14px; text-align: left; width: 100%;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm); padding: 16px 18px; cursor: pointer; font-family: var(--font); }
+.gcard:hover { border-color: var(--border-md); }
+.gcard-ic { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 10px; display: grid; place-items: center;
+  background: var(--chip); color: var(--text-secondary); }
+.gcard-ic svg { width: 19px; height: 19px; }
+.gcard-main { flex: 1; min-width: 0; }
+.gcard-name, .gcard-desc, .gcard-sum { display: block; }
+.gcard-name { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }
+.gcard-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45; }
+.gcard-sum { font-size: 11.5px; color: var(--text-tertiary); margin-top: 10px; line-height: 1.45; }
+.gcard-arrow { color: var(--text-tertiary); flex: 0 0 auto; margin-top: 10px; }
+.gcard-arrow svg { width: 14px; height: 14px; display: block; }
+.gcard:hover .gcard-arrow { color: var(--text-secondary); }
+
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md);
+  background: rgba(0,122,255,.07); border: 1px solid rgba(0,122,255,.18); font-size: 12.5px; color: var(--text-secondary); margin-bottom: 22px; }
+.note svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--info); margin-top: 1px; }
+.note b { color: var(--text-primary); font-weight: 600; }
+.note a { color: var(--info); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.note a:hover { text-decoration: underline; }
+
+/* ── a settings row: label + description on the left, control on the right.
+      Same shape as a check row on Workflow, so the two pages read alike. ── */
+.row { display: flex; align-items: flex-start; gap: 20px; padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.row:last-child { border-bottom: 0; }
+.row-main { flex: 1; min-width: 0; }
+.row-label { font-size: 13.5px; font-weight: 600; }
+.row-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+.row-why { font-size: 11.5px; color: var(--warn); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+.row-why svg { width: 12px; height: 12px; flex: 0 0 auto; }
+.row-ctl { flex: 0 0 auto; width: 260px; display: flex; justify-content: flex-end; }
+.row-ctl.narrow { width: auto; }
+.row.blocked .row-label, .row.blocked .row-desc { opacity: .55; }
+.row-note { padding: 12px 18px; font-size: 12.5px; color: var(--text-secondary); background: var(--surface-2);
+  border-bottom: 1px solid var(--border); display: flex; gap: 9px; align-items: flex-start; }
+.row-note svg { width: 14px; height: 14px; flex: 0 0 auto; color: var(--info); margin-top: 2px; }
+
+/* ── fields: sunken, because they sit inside a card ── */
+.f { width: 100%; font-family: var(--font); font-size: 13.5px; color: var(--text-primary);
+  background: var(--field); border: 1px solid var(--field-line); border-radius: var(--radius-md);
+  padding: 9px 12px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.f::placeholder { color: var(--text-tertiary); }
+.f:focus { border-color: var(--field-focus); box-shadow: 0 0 0 3px rgba(0,122,255,.12); }
+.f:disabled { opacity: .45; cursor: not-allowed; }
+textarea.f { resize: vertical; min-height: 68px; line-height: 1.5; }
+.stack { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+
+/* ── switch ── */
+.sw { -webkit-appearance: none; appearance: none; border: 0; padding: 0; cursor: pointer; background: none; flex: 0 0 auto; }
+.sw .track { width: 38px; height: 22px; border-radius: 99px; background: var(--border-md); position: relative; transition: background .15s; display: block; }
+.sw .track i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.sw.on .track { background: var(--ok); }
+.sw.on .track i { transform: translateX(16px); }
+.sw:disabled { cursor: not-allowed; opacity: .45; }
+
+/* ── custom dropdown — never a native select ── */
+.dd { position: relative; width: 100%; }
+.dd-trigger { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%;
+  font-family: var(--font); font-size: 13.5px; font-weight: 500; color: var(--text-primary);
+  background: var(--field); border: 1px solid var(--field-line); border-radius: var(--radius-md);
+  padding: 9px 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; text-align: left; }
+.dd-trigger span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dd-trigger svg { width: 13px; height: 13px; flex: 0 0 auto; color: var(--text-tertiary); transition: transform .15s; }
+.dd.open .dd-trigger { border-color: var(--field-focus); box-shadow: 0 0 0 3px rgba(0,122,255,.12); }
+.dd.open .dd-trigger svg { transform: rotate(180deg); }
+.dd-trigger:disabled { opacity: .45; cursor: not-allowed; }
+.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 200;
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md); padding: 5px; max-height: 260px; overflow-y: auto;
+  opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
+.dd.open .dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.dd-opt { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0; background: none;
+  font-family: var(--font); font-size: 13px; color: var(--text-primary); padding: 8px 10px; border-radius: 7px; cursor: pointer; }
+.dd-opt:hover { background: var(--surface-2); }
+.dd-opt .tick { width: 14px; height: 14px; flex: 0 0 auto; color: var(--info); opacity: 0; }
+.dd-opt.on .tick { opacity: 1; }
+.dd-opt .box { width: 16px; height: 16px; flex: 0 0 auto; border: 1.5px solid var(--border-md); border-radius: 4px; display: grid; place-items: center; color: #fff; }
+.dd-opt.on .box { background: var(--info); border-color: var(--info); }
+.dd-opt .box svg { width: 10px; height: 10px; opacity: 0; }
+.dd-opt.on .box svg { opacity: 1; }
+.dd-opt .lbl { flex: 1; min-width: 0; }
+.dd-opt .sub { display: block; font-size: 11.5px; color: var(--text-tertiary); font-weight: 400; }
+
+/* ── domain list ── */
+.tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
+  background: var(--chip); border: 1px solid var(--field-line); border-radius: 20px; padding: 4px 6px 4px 11px; }
+.tag button { border: 0; background: none; cursor: pointer; color: var(--text-tertiary); display: grid; place-items: center; width: 18px; height: 18px; border-radius: 50%; }
+.tag button:hover { color: #d63f3f; background: var(--surface); }
+.tag svg { width: 11px; height: 11px; }
+
+.suffix { display: flex; align-items: center; gap: 9px; width: 100%; }
+.suffix .f { flex: 1; }
+.suffix span { font-size: 12.5px; color: var(--text-tertiary); flex: 0 0 auto; }
+
+@media (max-width: 760px) {
+  .groups { grid-template-columns: 1fr; }
+  .row { flex-direction: column; gap: 10px; }
+  .row-ctl { width: 100%; justify-content: flex-start; }
+}
+
+/* ══ DARK MODE ═════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1c1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-md: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --ok: #8CCB5C;
+  --info: #5AA9FF;
+  --warn: #E0A24E;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.55);
+}
+[data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
+[data-theme="dark"] .note { background: rgba(90,169,255,.09); border-color: rgba(90,169,255,.22); }
+[data-theme="dark"] .sw .track i { background: #e9e9ec; }
+[data-theme="dark"] .f:focus, [data-theme="dark"] .dd.open .dd-trigger { box-shadow: 0 0 0 3px rgba(90,169,255,.18); }
+[data-theme="dark"] .dd-opt.on .box { color: #07131f; }
+[data-theme="dark"] .tag button:hover { color: #F0756A; }
+</style>
+</head>
+<body>
+
+<header class="sh-nav" data-tab="settings"></header>
+
+<main>
+  <div id="homeView"></div>
+  <div id="detailView" hidden></div>
+</main>
+
+<script>
+/* ============================================================================
+   1. THE SETTINGS
+      Grouped by what each one does. `needs` names a field this one can't be
+      used without, exactly as on Workflow, so nothing greys out unexplained.
+   ============================================================================ */
+const V = {
+  /* company */
+  companyName:'Vyyer', address1:'', address2:'', city:'', zip:'', website:'',
+  supportEmail:'jason@vyyer.com',   supportEmailShow:true,
+  supportPhone:'(555) 014-2200',    supportPhoneShow:false,
+  supportSite:'https://help.vyyer.com', supportSiteShow:true,
+  /* verdict rules */
+  minAge:21, maxAttempts:'3', acceptExpired:true, expiryGrace:'3m', dmvBlacklist:false,
+  /* widget behaviour */
+  redirectDone:'', redirectCancel:'', docCamera:'', faceCamera:'', hideUnsupported:true,
+  /* api + callbacks */
+  allowWorkflowCreation:true, callbackUrl:'https://unifiedapi.vyyer.id/api/v2/callback',
+  callbackAuth:'query', callbackKey:'', callbackValue:'',
+  callbackEvents:['created','progress','done'],
+  sendBackImage:false, restrictDomains:false, domains:['app.vyyer.com'],
+  /* data + privacy */
+  piiRetention:365, sessionLogging:false,
+};
+
+const ICONS = {
+  company:'<path d="M3.5 20.5h10V5.2a1.7 1.7 0 00-1.7-1.7H5.2a1.7 1.7 0 00-1.7 1.7z"/><path d="M13.5 20.5h7V11a1.7 1.7 0 00-1.7-1.7h-5.3"/><path d="M6.6 7.5h3.8M6.6 11.3h3.8M6.6 15h3.8M16.4 13.2h1.4M16.4 16.6h1.4"/>',
+  rules:'<path d="M12 3l7.5 3v6c0 4.4-3.1 7.6-7.5 9-4.4-1.4-7.5-4.6-7.5-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+  widget:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.4"/><path d="M10.4 5.4h3.2"/><circle cx="12" cy="13" r="3.1"/>',
+  api:'<path d="M9.5 3.5H6A2.5 2.5 0 003.5 6v3.5"/><path d="M14.5 3.5H18A2.5 2.5 0 0120.5 6v3.5"/><path d="M20.5 14.5V18a2.5 2.5 0 01-2.5 2.5h-3.5"/><path d="M3.5 14.5V18A2.5 2.5 0 006 20.5h3.5"/><path d="M8.6 12h6.8M12 8.6v6.8"/>',
+  privacy:'<rect x="4.5" y="10.5" width="15" height="10" rx="2.2"/><path d="M8 10.5V7.2a4 4 0 018 0v3.3"/><path d="M12 14.4v2.4"/>',
+};
+
+const GROUPS = [
+  { id:'company', section:'Product', name:'Company', icon:'company',
+    desc:'Who you are, and how a customer reaches you from the widget',
+    summary:()=>{ const n=[V.supportEmailShow,V.supportPhoneShow,V.supportSiteShow].filter(Boolean).length;
+      return (V.companyName || 'No company name') + ' · ' + n + ' of 3 support contacts shown'; },
+    cards:[
+      { name:'Company details', note:'', fields:[
+        { id:'companyName', label:'Company name', desc:'Used wherever the widget says {Company}', type:'text' },
+        { id:'address1', label:'Street address', type:'text', placeholder:'Street address' },
+        { id:'address2', label:'Address line 2', type:'text', placeholder:'Apartment, suite, floor' },
+        { id:'city',     label:'City and state', type:'text', placeholder:'City, State' },
+        { id:'zip',      label:'ZIP code', type:'text', placeholder:'ZIP code' },
+        { id:'website',  label:'Business website', type:'text', placeholder:'https://website.com' },
+      ]},
+      { name:'Customer support', note:'Shown to the customer when they tap Get Help during verification. Turn one off and it isn’t offered.', fields:[
+        { id:'supportEmail', label:'Support email', type:'text', placeholder:'support@company.com', toggle:'supportEmailShow' },
+        { id:'supportPhone', label:'Support phone', type:'phone', placeholder:'(555) 000-0000', toggle:'supportPhoneShow' },
+        { id:'supportSite',  label:'Support website', type:'text', placeholder:'https://help.company.com', toggle:'supportSiteShow' },
+      ]},
+    ]},
+
+  { id:'rules', section:'Product', name:'Verdict rules', icon:'rules',
+    desc:'The criteria that decide whether a verification passes',
+    summary:()=>(V.minAge + '+ · ' + (V.acceptExpired ? 'expired IDs accepted' : 'expired IDs rejected')
+      + ' · ' + V.maxAttempts + ' attempts'),
+    cards:[
+      { name:'Acceptance criteria', note:'', fields:[
+        { id:'minAge', label:'Minimum age', desc:'Checked against the date of birth on the document', type:'number', suffix:'years' },
+        { id:'acceptExpired', label:'Accept expired IDs', desc:'Off means any expired document is turned away immediately', type:'toggle' },
+        { id:'expiryGrace', label:'Accept expiry up to', desc:'How long past the expiry date a document is still accepted',
+          type:'select', needs:'acceptExpired', options:[
+          {v:'1m', l:'1 month'}, {v:'3m', l:'3 months'}, {v:'6m', l:'6 months'}, {v:'1y', l:'1 year'}, {v:'any', l:'Any age'}] },
+        { id:'dmvBlacklist', label:'DMV blacklist', desc:'Reject documents flagged in the issuing state’s records', type:'toggle' },
+      ]},
+      { name:'Retries', note:'', fields:[
+        { id:'maxAttempts', label:'Attempts allowed', desc:'How many times one customer may retry before the session is closed',
+          type:'select', options:[{v:'1',l:'1'},{v:'2',l:'2'},{v:'3',l:'3'},{v:'4',l:'4'},{v:'5',l:'5'}] },
+      ]},
+    ]},
+
+
+  { id:'widget', section:'Product', name:'Widget behaviour', icon:'widget',
+    desc:'What the widget does during and after a session',
+    summary:()=>((V.redirectDone || V.redirectCancel) ? 'Redirects set' : 'No redirects')
+      + ' · ' + (V.hideUnsupported ? 'unsupported countries hidden' : 'all countries listed'),
+    cards:[
+      { name:'After the session', note:'', fields:[
+        { id:'redirectDone',   label:'Redirect when done',      desc:'Where the customer lands once a verdict is reached', type:'text', placeholder:'https://…' },
+        { id:'redirectCancel', label:'Redirect when cancelled',  desc:'Where they land if they back out part-way', type:'text', placeholder:'https://…' },
+      ]},
+      { name:'Capture', note:'', fields:[
+        { id:'docCamera',  label:'Preferred document camera', desc:'Leave blank to let the device choose', type:'text', placeholder:'Name of camera' },
+        { id:'faceCamera', label:'Preferred face camera',     desc:'Leave blank to let the device choose', type:'text', placeholder:'Name of camera' },
+        { id:'hideUnsupported', label:'Hide unsupported countries',
+          desc:'Show only the countries your workflow accepts on the country picker', type:'toggle' },
+      ]},
+    ]},
+
+  { id:'api', section:'Developer', name:'API & callbacks', icon:'api',
+    desc:'Where results are sent, and who may start a verification',
+    summary:()=>(V.callbackUrl ? 'Callback set · ' + V.callbackEvents.length + ' of 3 events' : 'No callback')
+      + (V.restrictDomains ? ' · ' + V.domains.length + ' domain' + (V.domains.length===1?'':'s') : ''),
+    cards:[
+      { name:'Callbacks', note:'', fields:[
+        { id:'callbackUrl', label:'Callback URL', desc:'Vyyer posts verification events here', type:'text', placeholder:'https://…' },
+        { id:'callbackEvents', label:'Send which events', desc:'Nothing is posted for events you leave off',
+          type:'multiselect', needs:'callbackUrl', options:[
+          {v:'created',  l:'Workflow created'},
+          {v:'progress', l:'Workflow in progress'},
+          {v:'done',     l:'Workflow done'}] },
+        { id:'callbackAuth', label:'Authentication', desc:'How Vyyer identifies itself to your endpoint',
+          type:'select', needs:'callbackUrl', options:[
+          {v:'none',   l:'None',          sub:'No credential is sent'},
+          {v:'query',  l:'Auth in query', sub:'Appended to the callback URL'},
+          {v:'header', l:'Auth in header', sub:'Sent as a request header'}] },
+        { id:'callbackKey',   label:'Auth key',   type:'text', needs:'callbackAuth', placeholder:'x-api-key' },
+        { id:'callbackValue', label:'Auth value', type:'text', needs:'callbackAuth', placeholder:'••••••••' },
+      ]},
+      { name:'Access', note:'', fields:[
+        { id:'allowWorkflowCreation', label:'Allow workflow creation', desc:'Lets your integration start a verification over the API', type:'toggle' },
+        { id:'restrictDomains', label:'Restrict to listed domains', desc:'Off means the widget may be embedded anywhere', type:'toggle' },
+        { id:'domains', label:'Allowed domains', desc:'The widget only loads on these', type:'tags', needs:'restrictDomains', placeholder:'app.company.com' },
+      ]},
+    ]},
+
+  { id:'privacy', section:'Developer', name:'Data & privacy', icon:'privacy',
+    desc:'What Vyyer keeps, for how long, and what leaves the system',
+    summary:()=>fmt(V.piiRetention) + ' day retention · ' + (V.sendBackImage ? 'back image sent' : 'back image withheld'),
+    cards:[
+      { name:'Retention', note:'', fields:[
+        { id:'piiRetention', label:'Keep personal data for', desc:'Images and extracted data are deleted after this many days', type:'number', suffix:'days' },
+      ]},
+      { name:'What leaves Vyyer', note:'', fields:[
+        { id:'sendBackImage', label:'Send ID back image', desc:'Include the barcode side with the results sent to your callback', type:'toggle' },
+        { id:'sessionLogging', label:'Advanced session logging', desc:'Keep a detailed per-step log for troubleshooting. Raises what is stored about each customer.', type:'toggle' },
+      ]},
+    ]},
+];
+const group = id => GROUPS.find(g => g.id === id);
+
+/* ---------------------------------------------------------------------------
+   2. FORMATTING — the house rules: phones as (XXX) XXX-XXXX, numbers with
+   thousands separators, everywhere they're shown or typed.
+   --------------------------------------------------------------------------- */
+const fmt = n => String(n == null ? '' : n).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+function fmtPhone(v){
+  const d = String(v||'').replace(/\D/g, '').slice(0, 10);
+  if(d.length <= 3) return d;
+  if(d.length <= 6) return '(' + d.slice(0,3) + ') ' + d.slice(3);
+  return '(' + d.slice(0,3) + ') ' + d.slice(3,6) + '-' + d.slice(6);
+}
+const fmtNum = v => fmt(String(v||'').replace(/\D/g, ''));
+
+/* ---------------------------------------------------------------------------
+   3. DEPENDENCIES — a field is available when what it needs has a value.
+   --------------------------------------------------------------------------- */
+function fieldOf(id){
+  for(const g of GROUPS) for(const c of g.cards) for(const f of c.fields) if(f.id === id) return f;
+  return null;
+}
+function has(id){
+  /* a field that is itself unavailable can't satisfy anything downstream —
+     with no Callback URL, Auth key is blocked even though Authentication
+     still reads "Auth in query" */
+  const f = fieldOf(id);
+  if(f && f.needs && !has(f.needs)) return false;
+  const v = V[id];
+  if(typeof v === 'boolean') return v;
+  if(Array.isArray(v)) return v.length > 0;
+  if(id === 'callbackAuth') return v !== 'none';
+  return !!String(v == null ? '' : v).trim();
+}
+function blockedBy(f){
+  if(!f.needs) return null;
+  if(has(f.needs)) return null;
+  const parent = fieldOf(f.needs);
+  const label = parent ? parent.label : f.needs;
+  const tail = f.needs === 'callbackAuth' ? 'is set to None'
+             : (parent && parent.type === 'toggle') ? 'is off' : 'is empty';
+  return { label: label, tail: tail };
+}
+
+/* ---------------------------------------------------------------------------
+   4. SAVE — same contract as Workflow and Branding.
+   --------------------------------------------------------------------------- */
+const designState = () => JSON.stringify(V);
+let savedState = designState(), saving = false, savedFlash = false;
+const isDirty = () => designState() !== savedState;
+const SPIN = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3a9 9 0 11-9 9"/></svg>';
+const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+function saveBtnHtml(){
+  const label = saving ? SPIN + 'Saving…' : savedFlash ? TICK + 'Saved' : 'Save changes';
+  return `<button class="btn primary${savedFlash ? ' saved' : ''}" id="saveBtn"
+    ${saving || !isDirty() ? 'disabled' : ''} onclick="doSave()">${label}</button>`;
+}
+async function doSave(){
+  if(saving || !isDirty()) return;
+  saving = true; render();
+  await new Promise(r => setTimeout(r, 900));
+  savedState = designState();
+  saving = false; savedFlash = true; render();
+  setTimeout(() => { savedFlash = false; render(); }, 1600);
+}
+
+/* ---------------------------------------------------------------------------
+   5. VIEWS
+   --------------------------------------------------------------------------- */
+let view = { page:'home', group:null, dd:null };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const icon = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.7}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+const DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+const CHECK = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+const BOX = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+
+function renderHome(){
+  const sections = [...new Set(GROUPS.map(g => g.section))];
+  document.getElementById('homeView').innerHTML = `
+    <div class="toolbar"><h1>Settings</h1><span class="sp"></span></div>
+    <div class="note">${icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>', 1.9)}
+      <div><b>Branding has moved.</b> It now has its own tab in the top navigation, alongside Workflow.
+      <a href="branding.html">Open Branding</a></div></div>
+    ${sections.map(sec => `
+      <div class="sec">
+        <div class="sec-head"><h2>${esc(sec)}</h2>
+          <p>${sec === 'Product' ? 'What your customers experience' : 'How Vyyer talks to your systems'}</p></div>
+        <div class="groups">${GROUPS.filter(g => g.section === sec).map(groupCard).join('')}</div>
+
+      </div>`).join('')}`;
+}
+
+function groupCard(g){
+  return `<button class="gcard" onclick="openGroup('${g.id}')">
+    <span class="gcard-ic">${icon(ICONS[g.icon])}</span>
+    <span class="gcard-main">
+      <span class="gcard-name">${esc(g.name)}</span>
+      <span class="gcard-desc">${esc(g.desc)}</span>
+      <span class="gcard-sum">${esc(g.summary())}</span>
+    </span>
+    <span class="gcard-arrow">${CHEV}</span>
+  </button>`;
+}
+
+function renderDetail(){
+  const g = group(view.group);
+  document.getElementById('detailView').innerHTML = `
+    <button class="back" onclick="closeGroup()">${icon('<path d="M15 6l-6 6 6 6"/>', 2.2)} Back to settings</button>
+    <div class="toolbar"><h1>${esc(g.name)}</h1><span class="sp"></span>${saveBtnHtml()}</div>
+    ${g.cards.map(c => cardHtml(c)).join('')}`;
+}
+
+function cardHtml(c){
+  return `<div class="sec">
+    <div class="sec-head"><h2>${esc(c.name)}</h2></div>
+    <div class="card">
+      ${c.note ? `<div class="row-note">${icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>', 1.9)}<span>${esc(c.note)}</span></div>` : ''}
+      ${c.fields.map(rowHtml).join('')}
+    </div>
+  </div>`;
+}
+
+function rowHtml(f){
+  const why = blockedBy(f);
+  return `<div class="row${why ? ' blocked' : ''}">
+    <div class="row-main">
+      <div class="row-label">${esc(f.label)}</div>
+      ${f.desc ? `<div class="row-desc">${esc(f.desc)}</div>` : ''}
+      ${why ? `<div class="row-why">${icon('<path d="M12 3l9.5 17H2.5z"/><path d="M12 10v4M12 17v.01"/>', 1.8)}<span>Needs <b style="font-weight:600">${esc(why.label)}</b>, which ${esc(why.tail)}</span></div>` : ''}
+    </div>
+    <div class="row-ctl${f.type === 'toggle' ? ' narrow' : ''}">${ctl(f, !!why)}</div>
+  </div>`;
+}
+
+function ctl(f, off){
+  const v = V[f.id], d = off ? 'disabled' : '';
+  if(f.type === 'toggle')
+    return `<button class="sw${v ? ' on' : ''}" ${d} role="switch" aria-checked="${!!v}"
+      onclick="toggle('${f.id}')"><span class="track"><i></i></span></button>`;
+
+  if(f.type === 'select' || f.type === 'multiselect') return dd(f, off);
+
+  if(f.type === 'tags') return `<div class="stack">
+      <div class="tags">${(v||[]).map((t, i) => `<span class="tag">${esc(t)}
+        <button title="Remove" ${d} onclick="dropTag('${f.id}',${i})">${icon('<path d="M5 5l14 14M19 5L5 19"/>', 2.4)}</button></span>`).join('')}</div>
+      <input class="f" type="text" ${d} placeholder="${esc(f.placeholder||'')}"
+        onkeydown="if(event.key==='Enter'){addTag('${f.id}', this.value); this.value='';}">
+    </div>`;
+
+  if(f.type === 'textarea')
+    return `<textarea class="f" ${d} placeholder="${esc(f.placeholder||'')}"
+      oninput="setText('${f.id}', this.value)">${esc(v)}</textarea>`;
+
+  if(f.type === 'number')
+    return `<div class="suffix"><input class="f" type="text" inputmode="numeric" value="${esc(fmt(v))}" ${d}
+      oninput="this.value=fmtNum(this.value); setNum('${f.id}', this.value)">
+      ${f.suffix ? `<span>${esc(f.suffix)}</span>` : ''}</div>`;
+
+  if(f.type === 'phone')
+    return withToggle(f, `<input class="f" type="tel" value="${esc(v)}" ${d} placeholder="${esc(f.placeholder||'')}"
+      oninput="this.value=fmtPhone(this.value); setText('${f.id}', this.value)">`);
+
+  return withToggle(f, `<input class="f" type="text" value="${esc(v)}" ${d} placeholder="${esc(f.placeholder||'')}"
+    oninput="setText('${f.id}', this.value)">`);
+}
+
+/* a support contact is one row: the value, and whether Get Help offers it */
+function withToggle(f, input){
+  if(!f.toggle) return input;
+  const on = V[f.toggle];
+  return `<div class="stack">${input}
+    <label style="display:flex;align-items:center;gap:9px;font-size:12px;color:var(--text-secondary);cursor:pointer">
+      <button class="sw${on ? ' on' : ''}" role="switch" aria-checked="${!!on}" onclick="toggle('${f.toggle}')"><span class="track"><i></i></span></button>
+      Show in Get Help</label>
+  </div>`;
+}
+
+function dd(f, off){
+  const multi = f.type === 'multiselect';
+  const v = V[f.id];
+  const open = view.dd === f.id;
+  let label;
+  if(multi){
+    const picked = f.options.filter(o => v.includes(o.v));
+    label = picked.length === f.options.length ? 'All events'
+          : picked.length ? picked.map(o => o.l).join(', ') : 'None';
+  } else {
+    const cur = f.options.find(o => o.v === v);
+    label = cur ? cur.l : '—';
+  }
+  return `<div class="dd${open ? ' open' : ''}">
+    <button class="dd-trigger" type="button" ${off ? 'disabled' : ''} onclick="toggleDD('${f.id}')">
+      <span>${esc(label)}</span>${DOWN}</button>
+    <div class="dd-menu">${f.options.map(o => `
+      <button class="dd-opt${(multi ? v.includes(o.v) : v === o.v) ? ' on' : ''}" type="button"
+        onclick="pick('${f.id}','${o.v}',${multi})">
+        ${multi ? `<span class="box">${BOX}</span>` : ''}
+        <span class="lbl">${esc(o.l)}${o.sub ? `<span class="sub">${esc(o.sub)}</span>` : ''}</span>
+        ${multi ? '' : CHECK}</button>`).join('')}</div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------------------
+   6. ACTIONS
+   Typing doesn't re-render — that would drop the caret on every keystroke —
+   so a text edit only refreshes the Save button.
+   --------------------------------------------------------------------------- */
+function render(){
+  const onDetail = view.page === 'detail';
+  document.getElementById('homeView').hidden = onDetail;
+  document.getElementById('detailView').hidden = !onDetail;
+  onDetail ? renderDetail() : renderHome();
+}
+function syncSave(){ const b = document.getElementById('saveBtn'); if(b) b.outerHTML = saveBtnHtml(); }
+
+function openGroup(id){ view.group = id; view.page = 'detail'; view.dd = null; render(); scrollTo(0, 0); }
+function closeGroup(){ view.page = 'home'; view.group = null; view.dd = null; render(); scrollTo(0, 0); }
+
+function setText(id, v){ V[id] = v; syncSave(); }
+function setNum(id, v){ V[id] = parseInt(String(v).replace(/\D/g, ''), 10) || 0; syncSave(); }
+function toggle(id){ V[id] = !V[id]; view.dd = null; render(); }
+function toggleDD(id){ view.dd = view.dd === id ? null : id; render(); }
+function pick(id, v, multi){
+  if(multi){
+    const list = V[id];
+    V[id] = list.includes(v) ? list.filter(x => x !== v) : [...list, v];
+  } else {
+    V[id] = v; view.dd = null;
+  }
+  render();
+}
+function addTag(id, v){
+  const t = String(v||'').trim().replace(/^https?:\/\//, '').replace(/\/.*$/, '');
+  if(!t || V[id].includes(t)) return;
+  V[id] = [...V[id], t]; render();
+}
+function dropTag(id, i){ V[id] = V[id].filter((_, n) => n !== i); render(); }
+
+/* click anywhere else and an open menu closes */
+document.addEventListener('click', e => {
+  if(view.dd && !e.target.closest('.dd')) { view.dd = null; render(); }
+}, true);
+
+render();
+</script>
+<script src="shell.js"></script>
+</body>
+</html>

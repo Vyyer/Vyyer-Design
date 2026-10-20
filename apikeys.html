@@ -1,0 +1,635 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — API Keys</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'light'}catch(e){}</script>
+<!--
+  ============================================================================
+  VYYER DASHBOARD — API KEYS
+
+  What the live screens get wrong, and what this changes:
+
+  1. EVERY KEY IS PRINTED IN FULL, on a list anyone can shoulder-surf or
+     screenshot. Keys are masked here, with copy always one click away and an
+     explicit reveal when someone actually needs to read one.
+
+  2. THE TYPE COLUMN SAYS N/A ON EVERY ROW, while the next column is headed
+     "Package Name/Domain" — so the type is real, it just isn't being set.
+     A key is created *as* a web or a mobile key here, and the list says which.
+
+  3. NO WAY TO FIND A KEY. A merchant with thirty keys scrolls. Search by key
+     or domain, filter by type and status.
+
+  4. DEPRECATE IS A BARE RED BUTTON. It breaks a live integration, so it asks
+     first and says exactly what will stop working.
+
+  Status, dates and the table itself reuse History's components.
+  ============================================================================
+-->
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #edf0f5;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text-primary: #111110;
+  --text-secondary: #6f6e6b;
+  --text-tertiary: #9d9c99;
+  --accent: #A0D959;
+  --on-accent: #16240a;
+  --ok: #3a7d1e;
+  --info: #007aff;
+  --warn: #c47a1a;
+  --danger: #d63f3f;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+main { max-width: 1180px; margin: 0 auto; padding: 0 20px 72px; }
+
+/* ── page header ── */
+.toolbar {
+  position: sticky; top: var(--sh-h); z-index: 20; background: rgba(248,250,252,0.95);
+  backdrop-filter: blur(8px); display: flex; align-items: center; gap: 14px;
+  padding: 18px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 20px;
+}
+.toolbar h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+.toolbar .sp { flex: 1; }
+
+.btn { font-family: var(--font); font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.btn:hover:not(:disabled) { border-color: var(--text-tertiary); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.danger { background: transparent; border-color: rgba(214,63,63,.35); color: var(--danger); }
+.btn.danger:hover:not(:disabled) { border-color: var(--danger); background: rgba(214,63,63,.06); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn svg { width: 14px; height: 14px; }
+
+.back { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+  background: none; border: 0; font-family: var(--font); cursor: pointer; padding: 18px 0 2px; }
+.back:hover { color: var(--text-primary); }
+.back svg { width: 13px; height: 13px; }
+
+/* ── filter bar: fields that float on the page background are white ── */
+.filters { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
+.search { position: relative; flex: 1 1 260px; min-width: 200px; }
+.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-tertiary); pointer-events: none; }
+.search input { width: 100%; font-family: var(--font); font-size: 13px; color: var(--text-primary);
+  background: var(--field-float); border: 1px solid var(--field-float-line); border-radius: var(--radius-sm);
+  padding: 8px 12px 8px 34px; outline: none; transition: border-color .15s, box-shadow .15s; }
+.search input::placeholder { color: var(--text-tertiary); }
+.search input:focus { border-color: var(--field-focus); box-shadow: 0 0 0 3px rgba(0,122,255,.12); }
+
+.dd { position: relative; }
+.dd-trigger { display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 130px;
+  font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary);
+  background: var(--field-float); border: 1px solid var(--field-float-line); border-radius: var(--radius-sm);
+  padding: 8px 12px; cursor: pointer; transition: border-color .15s, box-shadow .15s; white-space: nowrap; }
+.dd-trigger svg { width: 13px; height: 13px; color: var(--text-tertiary); transition: transform .15s; }
+.dd.open .dd-trigger { border-color: var(--field-focus); box-shadow: 0 0 0 3px rgba(0,122,255,.12); }
+.dd.open .dd-trigger svg { transform: rotate(180deg); }
+.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%;
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px);
+  transition: opacity .14s, transform .14s, visibility .14s; }
+.dd.open .dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
+.dd-opt { display: flex; align-items: center; gap: 9px; width: 100%; text-align: left; border: 0; background: none;
+  font-family: var(--font); font-size: 13px; color: var(--text-primary); padding: 8px 10px; border-radius: 7px; cursor: pointer; white-space: nowrap; }
+.dd-opt:hover { background: var(--surface-2); }
+.dd-opt .tick { width: 14px; height: 14px; flex: 0 0 auto; color: var(--info); opacity: 0; margin-left: auto; }
+.dd-opt.on .tick { opacity: 1; }
+
+/* ── table — the same component as History ── */
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+.hist-table { width: 100%; border-collapse: collapse; }
+.hist-table thead th {
+  text-align: left; font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+  color: var(--text-tertiary); padding: 13px 18px; border-bottom: 1px solid var(--border);
+  background: #fbfcfd; white-space: nowrap;
+}
+.hist-table thead th.th-right { text-align: right; }
+.hist-row { cursor: pointer; transition: background .12s; }
+.hist-row:not(:last-child) td { border-bottom: 1px solid var(--border); }
+.hist-row:hover { background: #fafcff; }
+.hist-table td { padding: 12px 18px; vertical-align: middle; }
+.col-muted { color: var(--text-secondary); font-size: 13px; white-space: nowrap; }
+.col-date { text-align: right; white-space: nowrap; }
+.d-date { display: block; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.d-time { display: block; font-size: 11px; color: var(--text-tertiary); margin-top: 1px; }
+.chev { color: var(--text-tertiary); display: grid; place-items: center; }
+.chev svg { width: 15px; height: 15px; }
+.hist-row:hover .chev { color: var(--text-secondary); }
+
+/* ── the key itself ── */
+.keycell { display: flex; align-items: center; gap: 8px; }
+.keytext { font-family: var(--mono); font-size: 12.5px; letter-spacing: -0.01em; color: var(--text-primary); white-space: nowrap; }
+.iconbtn { width: 26px; height: 26px; flex: 0 0 auto; display: grid; place-items: center; border: 0; border-radius: 7px;
+  background: none; color: var(--text-tertiary); cursor: pointer; }
+.iconbtn:hover { background: var(--surface-2); color: var(--text-primary); }
+.iconbtn svg { width: 14px; height: 14px; }
+.iconbtn.copied { color: var(--ok); }
+
+/* ── badges ── */
+.result-badge { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; font-weight: 600; padding: 3px 10px 3px 8px; border-radius: 100px; white-space: nowrap; }
+.rb-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; background: currentColor; }
+.rb-active     { background: #e6f5db; color: #3a7d1e; }
+.rb-deprecated { background: var(--surface-2); color: var(--text-secondary); }
+.type-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; color: var(--text-secondary); white-space: nowrap; }
+.type-chip svg { width: 14px; height: 14px; color: var(--text-tertiary); }
+
+/* ── empty state ── */
+.empty { display: flex; flex-direction: column; align-items: center; text-align: center; padding: 64px 24px; color: var(--text-tertiary); }
+.empty svg { width: 34px; height: 34px; color: var(--border-md); margin-bottom: 14px; }
+.empty-title { font-size: 15px; font-weight: 600; color: var(--text-secondary); margin-bottom: 4px; }
+.empty-sub { font-size: 13px; }
+.count { font-size: 12.5px; color: var(--text-tertiary); margin-top: 12px; }
+
+/* ── detail ── */
+.dhead { display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; margin-bottom: 20px; }
+.dhead-key { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.dhead-key .keytext { font-size: 19px; letter-spacing: -0.02em; }
+.dhead .sp { flex: 1; }
+.dcols { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.sec-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.sec-head h2 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
+.sec-head p { font-size: 12.5px; color: var(--text-tertiary); }
+.kv { padding: 14px 18px; border-bottom: 1px solid var(--border); }
+.kv:last-child { border-bottom: 0; }
+.kv dt { font-size: 11.5px; color: var(--text-tertiary); margin-bottom: 3px; }
+.kv dd { font-size: 13.5px; font-weight: 500; color: var(--text-primary); word-break: break-word; }
+
+.snip { background: #16181d; border-radius: var(--radius-md); overflow: hidden; margin: 14px 18px 18px; }
+.snip-top { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid rgba(255,255,255,.08); }
+.snip-top span { font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,.7); letter-spacing: .04em; text-transform: uppercase; }
+.snip-top .iconbtn { color: rgba(255,255,255,.55); margin-left: auto; }
+.snip-top .iconbtn:hover { background: rgba(255,255,255,.1); color: #fff; }
+.snip pre { margin: 0; padding: 14px; overflow-x: auto; font-family: var(--mono); font-size: 12px; line-height: 1.65; color: #d7dce5; }
+.snip .t { color: #7fb5ff; } .snip .s { color: #a8d98a; } .snip .k { color: #c99bf0; } .snip .c { color: #6f7785; }
+.snip.off { opacity: .4; }
+.docs { padding: 0 18px 16px; font-size: 12.5px; }
+.docs a { color: var(--info); text-decoration: none; font-weight: 600; }
+.docs a:hover { text-decoration: underline; }
+.docs span { color: var(--text-tertiary); margin: 0 8px; }
+
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md);
+  background: rgba(0,122,255,.07); border: 1px solid rgba(0,122,255,.18); font-size: 12.5px; color: var(--text-secondary); margin-bottom: 20px; }
+.note svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--info); margin-top: 1px; }
+.note b { color: var(--text-primary); font-weight: 600; }
+.note.warn { background: rgba(196,122,26,.08); border-color: rgba(196,122,26,.22); }
+.note.warn svg { color: var(--warn); }
+
+/* ── modal: the shell's own sheet, so dialogs match across the dashboard ── */
+.pick { display: flex; gap: 10px; margin-top: 18px; }
+.pick button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 7px; cursor: pointer;
+  font-family: var(--sh-font); background: var(--sh-sunken); border: 1px solid var(--sh-line); border-radius: 10px;
+  padding: 14px 10px; color: var(--sh-ink-2); font-size: 12.5px; font-weight: 600; }
+.pick button svg { width: 19px; height: 19px; }
+.pick button:hover { border-color: var(--sh-line-2); }
+.pick button.on { border-color: var(--sh-accent); background: var(--sh-tint); color: var(--sh-ink); }
+.hint { font: 400 11.5px var(--sh-font); color: var(--sh-ink-3); margin-top: 7px; }
+.newkey { display: flex; align-items: center; gap: 8px; background: var(--sh-sunken); border: 1px solid var(--sh-line);
+  border-radius: 10px; padding: 11px 12px; margin-top: 18px; }
+.newkey code { font-family: var(--mono); font-size: 12.5px; color: var(--sh-ink); flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; }
+
+@media (max-width: 900px) { .dcols { grid-template-columns: 1fr; } }
+@media (max-width: 720px) { .hide-sm { display: none; } }
+
+/* ══ DARK MODE ═════════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1c1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-md: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --ok: #8CCB5C;
+  --info: #5AA9FF;
+  --warn: #E0A24E;
+  --danger: #F0756A;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.55);
+}
+[data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
+[data-theme="dark"] .hist-table thead th { background: #191920; }
+[data-theme="dark"] .hist-row:hover { background: rgba(255,255,255,0.045); }
+[data-theme="dark"] .rb-active { background: rgba(122,201,67,.16); color: #8CCB5C; }
+[data-theme="dark"] .note { background: rgba(90,169,255,.09); border-color: rgba(90,169,255,.22); }
+[data-theme="dark"] .note.warn { background: rgba(224,162,78,.1); border-color: rgba(224,162,78,.24); }
+[data-theme="dark"] .btn.danger { border-color: rgba(240,117,106,.35); }
+[data-theme="dark"] .btn.danger:hover:not(:disabled) { border-color: var(--danger); background: rgba(240,117,106,.08); }
+[data-theme="dark"] .search input:focus, [data-theme="dark"] .dd.open .dd-trigger { box-shadow: 0 0 0 3px rgba(90,169,255,.18); }
+</style>
+</head>
+<body>
+
+<header class="sh-nav" data-tab="apikeys"></header>
+
+<main>
+  <div id="listView"></div>
+  <div id="detailView" hidden></div>
+</main>
+
+<div class="sh-modal" id="modal"></div>
+
+<script>
+/* ============================================================================
+   1. THE KEYS
+      `kind` is what the live Type column never fills in: a key belongs to the
+      surface it was issued for, and that decides which snippet it gets.
+   ============================================================================ */
+const KINDS = {
+  web:     { label:'Web',     target:'Domain',       icon:'<circle cx="12" cy="12" r="9"/><path d="M3.2 9.5h17.6M3.2 14.5h17.6"/><path d="M12 3a15 15 0 000 18 15 15 0 000-18z"/>' },
+  ios:     { label:'iOS',     target:'Bundle ID',    icon:'<rect x="6.5" y="2.5" width="11" height="19" rx="2.4"/><path d="M10.4 5.4h3.2M12 18.3v.01"/>' },
+  android: { label:'Android', target:'Package name', icon:'<rect x="5.5" y="7.5" width="13" height="11" rx="2"/><path d="M8.2 7.5L6.6 4.8M15.8 7.5l1.6-2.7M9.5 11.5v.01M14.5 11.5v.01"/>' },
+};
+
+const KEYS = [
+  { id:'af30e53b99cdfe667eff0d5a2e4ece49', kind:'web',     target:'https://www.dacol.com',        created:'2026-07-20T21:00', by:'Default profile', status:'active',     ver:'6.0.0' },
+  { id:'5b71c0a4e28d41f6b9305c7de1a8f043', kind:'ios',     target:'com.dacol.doorman',            created:'2026-06-02T11:24', by:'Default profile', status:'active',     ver:'6.0.0' },
+  { id:'8c8dc3dc99eb3d09c1308103183fba28', kind:'web',     target:'https://www.baccarat-hotels.com', created:'2025-12-08T04:20', by:'Baccarat Hotels', status:'active',  ver:'5.4.2' },
+  { id:'4e10b6d901fca1079f9156d5c604c48a', kind:'web',     target:'https://dashboard.demo.vyyer.id', created:'2025-11-18T09:11', by:'Default profile', status:'active',  ver:'5.4.2' },
+  { id:'c0479759b9d1a37ce78dbbfe10c72aea', kind:'android', target:'id.vyyer.scanner',             created:'2025-11-03T12:13', by:'Treehouse Hotels', status:'active',   ver:'5.4.0' },
+  { id:'10d916d6be468c459507f49a779d3aa3', kind:'web',     target:'https://vt.devyyyy.io',        created:'2025-10-29T06:27', by:'Default profile', status:'deprecated', ver:'5.2.1' },
+  { id:'ae06c4e0f21c92a2efa79480642ade08', kind:'web',     target:'https://test.com',             created:'2025-05-20T14:29', by:'Default profile', status:'deprecated', ver:'4.8.0' },
+  { id:'0316420154ad07d5a9e903fe7a391e28', kind:'web',     target:'https://dashboard.vyyer.id',   created:'2025-05-19T08:47', by:'One Hotels',      status:'active',     ver:'4.8.0' },
+  { id:'7d2a5f8c14be9037ca61d0b48e2f5c91', kind:'ios',     target:'com.onehotels.checkin',        created:'2025-04-02T17:35', by:'One Hotels',      status:'deprecated', ver:'4.6.3' },
+];
+const keyById = id => KEYS.find(k => k.id === id);
+
+/* ---------------------------------------------------------------------------
+   2. HELPERS
+   --------------------------------------------------------------------------- */
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const icon = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.7}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const DOWN = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>';
+const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+const TICK = '<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+const COPY = '<path d="M9 9h10.5a1.5 1.5 0 011.5 1.5V21a1.5 1.5 0 01-1.5 1.5H9A1.5 1.5 0 017.5 21V10.5A1.5 1.5 0 019 9z" transform="translate(-0.5,-3.5)"/><path d="M4.5 15A1.5 1.5 0 013 13.5V3A1.5 1.5 0 014.5 1.5H15" transform="translate(1.5,1.5)"/>';
+const EYE  = '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3"/>';
+const EYE_OFF = '<path d="M10.6 6.1A9.6 9.6 0 0112 6c6 0 9.5 6 9.5 6a17 17 0 01-3.1 3.9M6.4 7.6A17 17 0 002.5 12S6 18 12 18a9.5 9.5 0 004-.85"/><path d="M4 4l16 16"/><path d="M9.9 9.9a3 3 0 004.2 4.2"/>';
+
+/* the key is masked until someone asks to see it */
+const mask = k => k.slice(0, 8) + '••••••••••' + k.slice(-4);
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(iso){
+  const d = new Date(iso);
+  return MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear();
+}
+function fmtTime(iso){
+  const d = new Date(iso), h = d.getHours();
+  return ((h % 12) || 12) + ':' + String(d.getMinutes()).padStart(2, '0') + ' ' + (h < 12 ? 'AM' : 'PM');
+}
+
+async function copy(text, el){
+  try { await navigator.clipboard.writeText(text); }
+  catch(e){
+    const t = document.createElement('textarea');
+    t.value = text; document.body.appendChild(t); t.select();
+    try { document.execCommand('copy'); } finally { t.remove(); }
+  }
+  if(el){ el.classList.add('copied'); el.innerHTML = icon('<path d="M5 12.5l4.5 4.5L19 7"/>', 2.6); setTimeout(() => render(), 1100); }
+  if(window.VyyerShell && VyyerShell.toast) VyyerShell.toast('Copied to clipboard');
+}
+
+/* ---------------------------------------------------------------------------
+   3. VIEW STATE
+   --------------------------------------------------------------------------- */
+let view = { page:'list', key:null, q:'', kind:'all', status:'all', dd:null, shown:{}, modal:null, draft:null };
+
+function visible(){
+  const q = view.q.trim().toLowerCase();
+  return KEYS.filter(k =>
+    (view.kind === 'all' || k.kind === view.kind) &&
+    (view.status === 'all' || k.status === view.status) &&
+    (!q || k.id.toLowerCase().includes(q) || k.target.toLowerCase().includes(q)));
+}
+
+/* ---------------------------------------------------------------------------
+   4. LIST
+   --------------------------------------------------------------------------- */
+function renderList(){
+  const rows = visible();
+  document.getElementById('listView').innerHTML = `
+    <div class="toolbar">
+      <h1>API Keys</h1><span class="sp"></span>
+      <button class="btn primary" onclick="openGenerate()">${icon('<path d="M12 5v14M5 12h14"/>', 2.2)}Generate key</button>
+    </div>
+    <div class="note">${icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>', 1.9)}
+      <div>A key is tied to the domain or app it was issued for, and Vyyer rejects requests from anywhere else.
+      Keys are <b>masked</b> here — reveal one only when you need to read it.</div></div>
+    <div class="filters">
+      <div class="search">${icon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 2)}
+        <input type="text" id="q" placeholder="Search by key or domain…" value="${esc(view.q)}" autocomplete="off"
+          oninput="view.q=this.value; paintRows()"></div>
+      ${ddHtml('kind', [{v:'all',l:'All types'},{v:'web',l:'Web'},{v:'ios',l:'iOS'},{v:'android',l:'Android'}])}
+      ${ddHtml('status', [{v:'all',l:'All statuses'},{v:'active',l:'Active'},{v:'deprecated',l:'Deprecated'}])}
+    </div>
+    <div class="card"><div id="rows">${tableHtml(rows)}</div></div>
+    <div class="count" id="count">${countText(rows)}</div>`;
+}
+
+const countText = rows => rows.length === KEYS.length
+  ? KEYS.length + ' key' + (KEYS.length === 1 ? '' : 's')
+  : rows.length + ' of ' + KEYS.length + ' keys';
+
+function tableHtml(rows){
+  if(!rows.length) return `<div class="empty">${icon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 1.6)}
+    <div class="empty-title">No keys match</div>
+    <div class="empty-sub">Try a different search, or clear the filters.</div></div>`;
+  return `<table class="hist-table">
+    <thead><tr>
+      <th>API key</th><th>Type</th><th class="hide-sm">Domain / package</th>
+      <th class="col-date">Created</th><th>Status</th><th></th>
+    </tr></thead>
+    <tbody>${rows.map(rowHtml).join('')}</tbody></table>`;
+}
+
+function rowHtml(k){
+  const shown = !!view.shown[k.id];
+  return `<tr class="hist-row" onclick="openKey('${k.id}')">
+    <td><div class="keycell">
+      <span class="keytext">${esc(shown ? k.id : mask(k.id))}</span>
+      <button class="iconbtn" title="${shown ? 'Hide' : 'Reveal'}" onclick="event.stopPropagation(); reveal('${k.id}')">${icon(shown ? EYE_OFF : EYE, 1.8)}</button>
+      <button class="iconbtn" title="Copy key" onclick="event.stopPropagation(); copy('${k.id}', this)">${icon(COPY, 1.8)}</button>
+    </div></td>
+    <td><span class="type-chip">${icon(KINDS[k.kind].icon)}${esc(KINDS[k.kind].label)}</span></td>
+    <td class="col-muted hide-sm">${esc(k.target)}</td>
+    <td class="col-date"><span class="d-date">${fmtDate(k.created)}</span><span class="d-time">${fmtTime(k.created)}</span></td>
+    <td>${badge(k.status)}</td>
+    <td><span class="chev">${CHEV}</span></td>
+  </tr>`;
+}
+
+const badge = s => `<span class="result-badge rb-${s}"><span class="rb-dot"></span>${s === 'active' ? 'Active' : 'Deprecated'}</span>`;
+
+function ddHtml(name, options){
+  const v = view[name], open = view.dd === name;
+  const cur = options.find(o => o.v === v);
+  return `<div class="dd${open ? ' open' : ''}">
+    <button class="dd-trigger" type="button" onclick="event.stopPropagation(); view.dd = view.dd==='${name}' ? null : '${name}'; render()">
+      <span>${esc(cur ? cur.l : '—')}</span>${DOWN}</button>
+    <div class="dd-menu">${options.map(o => `<button class="dd-opt${o.v === v ? ' on' : ''}" type="button"
+      onclick="event.stopPropagation(); view.${name}='${o.v}'; view.dd=null; render()">${esc(o.l)}${TICK}</button>`).join('')}</div>
+  </div>`;
+}
+
+/* searching only redraws the rows, so the caret stays put */
+function paintRows(){
+  const rows = visible();
+  document.getElementById('rows').innerHTML = tableHtml(rows);
+  document.getElementById('count').textContent = countText(rows);
+}
+function reveal(id){ view.shown[id] = !view.shown[id]; render(); }
+
+/* ---------------------------------------------------------------------------
+   5. DETAIL
+   --------------------------------------------------------------------------- */
+function renderDetail(){
+  const k = keyById(view.key), shown = !!view.shown[k.id], dead = k.status === 'deprecated';
+  document.getElementById('detailView').innerHTML = `
+    <button class="back" onclick="closeKey()">${icon('<path d="M15 6l-6 6 6 6"/>', 2.2)} Back to API keys</button>
+    <div class="toolbar">
+      <div class="dhead-key">
+        <span class="keytext">${esc(shown ? k.id : mask(k.id))}</span>
+        <button class="iconbtn" title="${shown ? 'Hide' : 'Reveal'}" onclick="reveal('${k.id}')">${icon(shown ? EYE_OFF : EYE, 1.8)}</button>
+        <button class="iconbtn" title="Copy key" onclick="copy('${k.id}', this)">${icon(COPY, 1.8)}</button>
+      </div>
+      <span class="sp"></span>
+      ${dead ? '' : `<button class="btn danger" onclick="askDeprecate()">${icon('<path d="M4 7h16M10 11v6M14 11v6"/><path d="M6 7l1 12.2A1.8 1.8 0 008.8 21h6.4a1.8 1.8 0 001.8-1.8L18 7"/><path d="M9.5 7V4.8A1.3 1.3 0 0110.8 3.5h2.4A1.3 1.3 0 0114.5 4.8V7"/>', 1.8)}Deprecate key</button>`}
+    </div>
+    ${dead ? `<div class="note warn">${icon('<path d="M12 3l9.5 17H2.5z"/><path d="M12 10v4M12 17v.01"/>', 1.8)}
+      <div><b>This key is deprecated.</b> Vyyer rejects every request made with it. Generate a new key and
+      swap it into the snippet below to get this integration working again.</div></div>` : ''}
+    <div class="dcols">
+      <div>
+        <div class="sec-head"><h2>Details</h2></div>
+        <div class="card">
+          <div class="kv"><dt>Status</dt><dd>${badge(k.status)}</dd></div>
+          <div class="kv"><dt>Type</dt><dd><span class="type-chip">${icon(KINDS[k.kind].icon)}${esc(KINDS[k.kind].label)}</span></dd></div>
+          <div class="kv"><dt>${esc(KINDS[k.kind].target)}</dt><dd>${esc(k.target)}</dd></div>
+          <div class="kv"><dt>Created on</dt><dd>${fmtDate(k.created)} at ${fmtTime(k.created)}</dd></div>
+          <div class="kv"><dt>Created by</dt><dd>${esc(k.by)}</dd></div>
+          <div class="kv"><dt>Widget version</dt><dd>${esc(k.ver)}</dd></div>
+        </div>
+      </div>
+      <div>
+        <div class="sec-head"><h2>Install</h2><p>${k.kind === 'web' ? 'Paste this where the widget should appear' : 'Point the SDK at this key'}</p></div>
+        <div class="card">
+          <div class="snip${dead ? ' off' : ''}">
+            <div class="snip-top"><span>${k.kind === 'web' ? 'HTML' : k.kind === 'ios' ? 'Swift' : 'Kotlin'}</span>
+              <button class="iconbtn" title="Copy snippet" onclick="copy(SNIPPETS['${k.id}'], this)">${icon(COPY, 1.8)}</button></div>
+            <pre>${snippet(k)}</pre>
+          </div>
+          <div class="docs"><a href="#">View documentation</a><span>·</span><a href="#">Terms &amp; conditions</a></div>
+        </div>
+      </div>
+    </div>`;
+}
+
+/* the plain-text version each snippet copies, kept alongside the highlighted one */
+const SNIPPETS = {};
+function snippet(k){
+  const c = (cls, s) => `<span class="${cls}">${esc(s)}</span>`;
+  let plain, html;
+  if(k.kind === 'web'){
+    plain = '<div id="vyyer-widget-container"></div>\n'
+      + '<script src="https://vyyer.id/pkg/latest/vyyer-widget.js" defer><\/script>\n'
+      + '<script>\n'
+      + '  document.addEventListener("DOMContentLoaded", function () {\n'
+      + '    const container = document.getElementById("vyyer-widget-container");\n'
+      + '    const widget = document.createElement("vyyer-widget");\n'
+      + '    widget.setAttribute("module-url", "https://vyyer.id/idscan/");\n'
+      + '    widget.setAttribute("api-key", "' + k.id + '");\n'
+      + '    widget.setAttribute("api-url", "https://unifiedapi.vyyer.id");\n'
+      + '    widget.setAttribute("profile-id", "1");\n'
+      + '    container.appendChild(widget);\n'
+      + '  });\n'
+      + '<\/script>';
+    html = c('t','<div') + ' id=' + c('s','"vyyer-widget-container"') + c('t','></div>') + '\n'
+      + c('t','<script') + ' src=' + c('s','"https://vyyer.id/pkg/latest/vyyer-widget.js"') + ' defer' + c('t','><\/script>') + '\n'
+      + c('t','<script>') + '\n'
+      + '  document.' + c('k','addEventListener') + '(' + c('s','"DOMContentLoaded"') + ', ' + c('k','function') + ' () {\n'
+      + '    ' + c('k','const') + ' container = document.' + c('k','getElementById') + '(' + c('s','"vyyer-widget-container"') + ');\n'
+      + '    ' + c('k','const') + ' widget = document.' + c('k','createElement') + '(' + c('s','"vyyer-widget"') + ');\n'
+      + '    widget.' + c('k','setAttribute') + '(' + c('s','"module-url"') + ', ' + c('s','"https://vyyer.id/idscan/"') + ');\n'
+      + '    widget.' + c('k','setAttribute') + '(' + c('s','"api-key"') + ', ' + c('s','"' + k.id + '"') + ');\n'
+      + '    widget.' + c('k','setAttribute') + '(' + c('s','"api-url"') + ', ' + c('s','"https://unifiedapi.vyyer.id"') + ');\n'
+      + '    widget.' + c('k','setAttribute') + '(' + c('s','"profile-id"') + ', ' + c('s','"1"') + ');\n'
+      + '    container.' + c('k','appendChild') + '(widget);\n'
+      + '  });\n'
+      + c('t','<\/script>');
+  } else if(k.kind === 'ios'){
+    plain = 'import VyyerSDK\n\n'
+      + 'Vyyer.configure(\n'
+      + '    apiKey: "' + k.id + '",\n'
+      + '    apiURL: "https://unifiedapi.vyyer.id",\n'
+      + '    profileID: "1"\n'
+      + ')';
+    html = c('k','import') + ' VyyerSDK\n\n'
+      + 'Vyyer.' + c('k','configure') + '(\n'
+      + '    apiKey: ' + c('s','"' + k.id + '"') + ',\n'
+      + '    apiURL: ' + c('s','"https://unifiedapi.vyyer.id"') + ',\n'
+      + '    profileID: ' + c('s','"1"') + '\n'
+      + ')';
+  } else {
+    plain = 'import id.vyyer.sdk.Vyyer\n\n'
+      + 'Vyyer.configure(\n'
+      + '    apiKey = "' + k.id + '",\n'
+      + '    apiUrl = "https://unifiedapi.vyyer.id",\n'
+      + '    profileId = "1"\n'
+      + ')';
+    html = c('k','import') + ' id.vyyer.sdk.Vyyer\n\n'
+      + 'Vyyer.' + c('k','configure') + '(\n'
+      + '    apiKey = ' + c('s','"' + k.id + '"') + ',\n'
+      + '    apiUrl = ' + c('s','"https://unifiedapi.vyyer.id"') + ',\n'
+      + '    profileId = ' + c('s','"1"') + '\n'
+      + ')';
+  }
+  SNIPPETS[k.id] = plain;
+  return html;
+}
+
+/* ---------------------------------------------------------------------------
+   6. GENERATE + DEPRECATE
+   --------------------------------------------------------------------------- */
+function openGenerate(){ view.draft = { kind:'web', target:'', created:null }; view.modal = 'generate'; render(); }
+function closeModal(){ view.modal = null; view.draft = null; render(); }
+
+function renderModal(){
+  const m = document.getElementById('modal');
+  if(!view.modal){ m.className = 'sh-modal'; m.innerHTML = ''; return; }
+  m.className = 'sh-modal open';
+
+  if(view.modal === 'generate'){
+    const d = view.draft, kind = KINDS[d.kind];
+    const ok = valid(d);
+    m.innerHTML = `<div class="sh-sheet">
+      <h2>Generate API key</h2>
+      <p>Keys are issued for one surface. Pick where this one will run.</p>
+      <div class="pick">${Object.keys(KINDS).map(k => `
+        <button class="${d.kind === k ? 'on' : ''}" onclick="view.draft.kind='${k}'; view.draft.target=''; render()">
+          ${icon(KINDS[k].icon)}${esc(KINDS[k].label)}</button>`).join('')}</div>
+      <label class="sh-f"><span>${esc(kind.target)}</span>
+        <input type="text" id="target" value="${esc(d.target)}" autocomplete="off"
+          placeholder="${d.kind === 'web' ? 'https://app.company.com' : 'com.company.app'}"
+          oninput="view.draft.target=this.value; syncCreate()"></label>
+      <div class="hint">${d.kind === 'web'
+        ? 'The widget only loads on this domain. Subdomains need their own key.'
+        : 'Must match the bundle identifier you ship, or the SDK is rejected.'}</div>
+      <div class="sh-acts">
+        <button class="sh-btn" onclick="closeModal()">Cancel</button>
+        <button class="sh-btn primary" id="createBtn" ${ok ? '' : 'disabled'} onclick="createKey()">Create key</button>
+      </div>
+    </div>`;
+    const el = document.getElementById('target'); if(el) el.focus();
+  }
+
+  if(view.modal === 'created'){
+    const k = keyById(view.draft.created);
+    m.innerHTML = `<div class="sh-sheet">
+      <h2>Key created</h2>
+      <p>Your ${esc(KINDS[k.kind].label)} key for <b>${esc(k.target)}</b> is ready to use.</p>
+      <div class="newkey"><code>${esc(k.id)}</code>
+        <button class="iconbtn" title="Copy key" onclick="copy('${k.id}', this)">${icon(COPY, 1.8)}</button></div>
+      <div class="sh-acts">
+        <button class="sh-btn" onclick="closeModal()">Done</button>
+        <button class="sh-btn primary" onclick="const id='${k.id}'; closeModal(); openKey(id)">Get the snippet</button>
+      </div>
+    </div>`;
+  }
+
+  if(view.modal === 'deprecate'){
+    const k = keyById(view.key);
+    m.innerHTML = `<div class="sh-sheet">
+      <h2>Deprecate this key?</h2>
+      <p><b>${esc(k.target)}</b> stops verifying immediately — every request made with this key is rejected
+      until you issue a new one and update the snippet. This can’t be undone.</p>
+      <div class="sh-acts">
+        <button class="sh-btn" onclick="closeModal()">Cancel</button>
+        <button class="sh-btn danger" onclick="deprecate()">Deprecate key</button>
+      </div>
+    </div>`;
+  }
+}
+
+function valid(d){
+  const t = d.target.trim();
+  if(!t) return false;
+  return d.kind === 'web' ? /^(https?:\/\/)?[\w-]+(\.[\w-]+)+$/.test(t.replace(/\/+$/, ''))
+                          : /^[a-z][\w]*(\.[a-z][\w]*)+$/i.test(t);
+}
+/* typing shouldn't redraw the sheet and drop the caret — just the button */
+function syncCreate(){
+  const b = document.getElementById('createBtn');
+  if(b) b.disabled = !valid(view.draft);
+}
+function randomKey(){
+  let s = ''; const hex = '0123456789abcdef';
+  for(let i = 0; i < 32; i++) s += hex[Math.floor(Math.random() * 16)];
+  return s;
+}
+function createKey(){
+  const d = view.draft;
+  if(!valid(d)) return;
+  let target = d.target.trim().replace(/\/+$/, '');
+  if(d.kind === 'web' && !/^https?:\/\//.test(target)) target = 'https://' + target;
+  const k = { id:randomKey(), kind:d.kind, target:target, created:new Date().toISOString().slice(0, 16),
+              by:'Default profile', status:'active', ver:'6.0.0' };
+  KEYS.unshift(k);
+  view.draft.created = k.id;
+  view.modal = 'created';
+  render();
+}
+
+function askDeprecate(){ view.modal = 'deprecate'; render(); }
+function deprecate(){
+  keyById(view.key).status = 'deprecated';
+  view.modal = null; view.draft = null;
+  render();
+  if(window.VyyerShell && VyyerShell.toast) VyyerShell.toast('Key deprecated');
+}
+
+/* ---------------------------------------------------------------------------
+   7. WIRING
+   --------------------------------------------------------------------------- */
+function render(){
+  const onDetail = view.page === 'detail';
+  document.getElementById('listView').hidden = onDetail;
+  document.getElementById('detailView').hidden = !onDetail;
+  const act = document.activeElement, keepId = act && act.id, pos = act && act.selectionStart;
+  onDetail ? renderDetail() : renderList();
+  renderModal();
+  if(keepId && !view.modal){ const el = document.getElementById(keepId);
+    if(el){ el.focus(); try { el.setSelectionRange(pos, pos); } catch(e){} } }
+}
+function openKey(id){ view.key = id; view.page = 'detail'; view.dd = null; render(); scrollTo(0, 0); }
+function closeKey(){ view.page = 'list'; view.key = null; render(); scrollTo(0, 0); }
+
+document.addEventListener('click', e => {
+  if(view.dd && !e.target.closest('.dd')) { view.dd = null; render(); }
+}, true);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && view.modal) closeModal(); });
+
+render();
+</script>
+<script src="shell.js"></script>
+</body>
+</html>
