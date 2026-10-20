@@ -180,6 +180,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);height:100vh;
 .insp{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;overflow-x:hidden}
 .insp .hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
 .insp .hd .k{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
+.hdtop{display:flex;align-items:center;gap:8px}
+.hdtop .sp{flex:1}
 .insp .hd h3{font-size:15px;font-weight:600;margin-top:3px}
 .insp .hd p{font-size:11.5px;color:var(--ink-3);margin-top:3px;line-height:1.45}
 .sec{padding:12px 16px;border-bottom:1px solid var(--line)}
@@ -247,6 +249,7 @@ select{appearance:none;background-image:var(--caret-img);
   color:var(--ink-2);font:600 9.5px var(--font);letter-spacing:.04em;text-transform:uppercase;
   padding:3px 7px;border-radius:99px;cursor:pointer}
 .modechip:hover{border-color:var(--accent);color:var(--accent-text)}
+.modechip.sm{padding:1px 6px;font-size:9px;letter-spacing:.06em;flex:0 0 auto}
 .modechip svg{width:10px;height:10px}
 .sec>h5{display:flex;align-items:center;gap:8px}
 .sec>h5 .sp{flex:1}
@@ -371,9 +374,7 @@ select{appearance:none;background-image:var(--caret-img);
 .sweep{animation:dashOn .34s ease forwards;animation-delay:calc(var(--i) * 0.022s)}
 
 /* logo-blur bokeh layer */
-.bokeh{position:absolute;inset:-25%;display:grid;place-items:center;filter:blur(44px) saturate(1.7);
-  opacity:.85;pointer-events:none;z-index:0}
-.bokeh>*{width:70%;transform:scale(1.5)}
+.bokeh{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;z-index:0}
 .screen>*:not(.bokeh){position:relative;z-index:1}
 
 @media (max-width:1100px){ .app{grid-template-columns:200px 1fr 292px} }
@@ -405,8 +406,6 @@ select{appearance:none;background-image:var(--caret-img);
   <main class="canvas">
     <div class="cbar">
       <span class="nm" id="screenName">Start screen</span>
-      <span class="segcap" id="stateCap">State</span>
-      <span class="seg" id="stateSeg"></span>
       <span class="sp"></span>
       <span class="seg" id="modeSeg"></span>
     </div>
@@ -444,10 +443,10 @@ select{appearance:none;background-image:var(--caret-img);
       change between light and dark, but every colour and logo does.
    ============================================================================ */
 const TOKENS = {
-  merchant:      {label:'Merchant name',    type:'text',    group:'Identity',   value:'',
-                  placeholder:'e.g. Stewart', note:'Fills in {Merchant} wherever it appears. Each line can still be reworded on its own.'},
-  logo:          {label:'Company logo',     type:'logo',    group:'Identity',   modal:true, values:{light:'',dark:''}},
   theme:         {label:'Color theme',      type:'select',  group:'Identity',   value:'Dark', options:['Light','Dark','Dynamic']},
+  company:       {label:'Company name',     type:'text',    group:'Identity',   value:'',
+                  placeholder:'e.g. Stewart', note:'Fills in {Company} wherever it appears.'},
+  logo:          {label:'Company logo',     type:'logo',    group:'Identity',   modal:true, values:{light:'',dark:''}},
 
   bgStyle:       {label:'Background style', type:'bgstyle', group:'Background', modal:true, values:{light:'Solid',dark:'Solid'}},
   pageBg:        {label:'Background color', type:'color',   group:'Background', modal:true, values:{light:'#FFFFFF',dark:'#1E1E1E'}},
@@ -543,14 +542,14 @@ const SCREENS = [
     sheet:  {label:'Popover surface',type:'card',props:{bg:{bind:'pageBg'}, border:{bind:'cardBorder'}, radius:{value:18}}},
     close:  {label:'Close icon',  type:'icon',  props:{color:{bind:'secondaryText'}, custom:{value:''}}},
     logo:   {label:'Logo',        type:'logo',  props:{align:{value:'Center'}, src:{bind:'logo'}, scale:{value:.8}}},
-    title:  {label:'Title',       type:'text',  props:Object.assign(T('{Merchant} is requesting access to',18), {weight:{value:700}})},
+    title:  {label:'Title',       type:'text',  props:Object.assign(T('{Company} is requesting access to',18), {weight:{value:700}})},
     list:   {label:'Collection list',type:'fixedlist',props:Object.assign(L('A live face scan\nBiometric data from your ID photo\nA scan of your ID document\nYour name, DOB, address and ID number'), {align:{value:'Left'}, color:{bind:'primaryText'}})},
-    note:   {label:'Purpose & retention',type:'text',props:{text:{value:'Vyyer LLC, {Merchant}’s data processor, collects this only to verify your identity, and deletes face scans within 3 months.'}, align:{value:'Left'}, color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:400}}},
+    note:   {label:'Purpose & retention',type:'text',props:{text:{value:'Vyyer LLC, {Company}’s data processor, collects this only to verify your identity, and deletes face scans within 3 months.'}, align:{value:'Left'}, color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:400}}},
     learn:  {label:'“Learn more” link',type:'text',props:{text:{value:'Learn more'}, align:{value:'Left'}, color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:600}}},
     release:{label:'Consent checkbox',type:'consentbox',props:{
-              text:{value:'I consent to {Merchant} and Vyyer LLC collecting and storing a scan of my face and ID data.'},
+              text:{value:'I consent to {Company} and Vyyer LLC collecting and storing a scan of my face and ID data.'},
               color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:600},
-              boxColor:{bind:'cardBorder'},
+              boxColor:{bind:'cardBorder'}, checkedFill:{bind:'accent'}, checkedTick:{bind:'pageBg'},
               bg:{bind:'cardBg'}, border:{bind:'cardBorder'}, radius:{value:10}}},
     btn:    {label:'Agree button',type:'button',props:BTN('Agree and continue')},
     decline:{label:'Decline link',type:'text',  props:{text:{value:'I don’t consent'}, align:{value:'Center'}, color:{bind:'secondaryText'}, font:{bind:'fontBody'}, size:{value:13}, weight:{value:600}}},
@@ -564,7 +563,7 @@ const SCREENS = [
  {id:'scan', group:'Scanning', name:'Scanning', variants:['Face','ID front','ID back','Passport'], els:{
     navbar: {label:'Navigation bar',type:'navbar', props:{
               logoShow:{value:true}, logoSrc:{bind:'logo'}, logoScale:{value:.8},
-              helpShow:{value:true}, helpColor:{bind:'secondaryText'}, helpCustom:{value:''},
+              helpShow:{value:true}, helpColor:{bind:'primaryText'}, helpCustom:{value:''},
               closeColor:{bind:'primaryText'}, closeCustom:{value:''}}},
     guide:  {label:'Camera guide',type:'guide', props:{color:{value:'#B1B1B1'}, successColor:{value:'#5FC52E'}, width:{value:3}}},
     status: {label:'Status message',type:'status',props:{
@@ -646,7 +645,8 @@ let state = {screen:'start', variant:0, sel:null, panel:'brand'};
 let overrides = {};
 const isModal = (scrId, elId, prop)=>{
   const spec = SCREENS.find(s=>s.id===scrId).els[elId].props[prop];
-  return !!(spec && spec.bind && TOKENS[spec.bind].modal);
+  if(!spec) return false;
+  return !!(spec.modal || (spec.bind && TOKENS[spec.bind].modal));
 };
 const key = (s,v,e,p)=> s+'|'+v+'|'+e+'|'+p + (isModal(s,e,p) ? '|'+activeMode() : '');
 
@@ -695,14 +695,14 @@ function redo(){ if(!future.length) return; past.push(snapshot()); restore(futur
    4. CANVAS
    ============================================================================ */
 function esc(s){return String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]))}
-/* {Merchant} stays in the copy so the three consent lines keep one shared name
+/* {Company} stays in the copy so the three consent lines keep one shared name
    — set it once, in whichever of them you happen to be editing. */
 const attrEsc = v => esc(v==null?'':v).replace(/"/g,'&quot;');
-const MERCHANT_RE=/\{Merchant\}/g;
-const hasMerchant = v => /\{Merchant\}/.test(String(v==null?'':v));
-function merchantify(s){
-  const m=(TOKENS.merchant.value||'').trim();
-  return String(s==null?'':s).replace(MERCHANT_RE, m || '{Merchant}');
+const COMPANY_RE=/\{Company\}/g;
+const hasCompany = v => /\{Company\}/.test(String(v==null?'':v));
+function companify(s){
+  const m=(TOKENS.company.value||'').trim();
+  return String(s==null?'':s).replace(COMPANY_RE, m || '{Company}');
 }
 
 const BULLETS={None:'', Disc:'\u2022', Circle:'\u25E6', Square:'\u25AA', Triangle:'\u2023', Check:'\u2713', Dash:'\u2013'};
@@ -728,10 +728,10 @@ function textBlock(el, inner, extra, isList){
   return `<div data-el="${el}" style="color:${c};font-family:${fontStack(f)};font-size:${s}px;font-weight:${w};line-height:1.45;
     ${alignBox(el,isList)};${ghostCss(el)}${extra||''}">${inner}</div>`;
 }
-function txt(el, extra){ return textBlock(el, esc(merchantify(val(el,'text'))).replace(/\n/g,'<br>'), extra, false); }
+function txt(el, extra){ return textBlock(el, esc(companify(val(el,'text'))).replace(/\n/g,'<br>'), extra, false); }
 function list(el, extra){
   const g=BULLETS[val(el,'bullet')||'Disc'];
-  const rows=String(merchantify(val(el,'text'))).split('\n').map(l=> g
+  const rows=String(companify(val(el,'text'))).split('\n').map(l=> g
     ? `<div style="display:flex;gap:9px;margin-bottom:6px"><span style="flex:0 0 auto">${g}</span><span>${esc(l)}</span></div>`
     : `<div style="margin-bottom:6px">${esc(l)}</div>`).join('');
   return textBlock(el, rows, extra, true);
@@ -747,7 +747,7 @@ function textIcon(el, extra){
   const just = al==='left'?'flex-start':al==='right'?'flex-end':'center';
   return `<div data-el="${el}" style="display:flex;align-items:center;justify-content:${just};gap:7px;width:100%;
     color:${val(el,'color')};font-family:${fontStack(val(el,'font'))};font-size:${s}px;font-weight:${val(el,'weight')||400};
-    ${ghostCss(el)}${extra||''}">${icon}<span>${esc(merchantify(val(el,'text')))}</span></div>`;
+    ${ghostCss(el)}${extra||''}">${icon}<span>${esc(companify(val(el,'text')))}</span></div>`;
 }
 function button(el){
   const l=val(el,'label'), bg=val(el,'bg'), fg=val(el,'fg'), r=val(el,'radius'), w=val(el,'weight')||700;
@@ -815,8 +815,9 @@ function closeIcon(color, custom){
    Generating the ring instead makes both colours real settings — and the capture
    sweep is a CSS animation with a per-dash delay, same read as the original. */
 function ovalRing(idle, capture, weight, sweeping){
-  /* matches the live face-scan oval: ~266 x 440 inside a 390pt screen */
-  const W=266, H=440, cx=W/2, cy=H/2, rx=126, ry=206, N=46;
+  /* measured off the production screen: the oval is 78% of the screen width
+     with a 0.80 width-to-height ratio — 306 x 383 inside a 390pt screen */
+  const W=320, H=410, cx=W/2, cy=H/2, rx=153, ry=191, N=46;
   let d='';
   for(let i=0;i<N;i++){
     const a=(i/N)*Math.PI*2 - Math.PI/2;
@@ -855,16 +856,94 @@ function backgroundCss(){
   if(st==='Image' && img) return `background:${c} url(${img}) center/cover no-repeat`;
   return `background:${c}`;
 }
+/* ============================================================================
+   LOGO BLUR
+   The dominant colours are sampled out of the client's logo, painted as soft
+   ovals across the screen, then washed with a light or dark overlay so the
+   copy on top stays readable. Same engine as the SmartTab event pages.
+   Oval placement is FIXED, not random: the preview re-renders on every
+   keystroke, and a background that reshuffled each time would be unusable.
+   ============================================================================ */
 function bokehLayer(){
   if(val('__bg','style')!=='Logo blur') return '';
-  const custom = tok('logo');
-  const inner = custom ? `<img src="${custom}" style="width:100%">`
-    : `<svg viewBox="0 0 170 46" style="width:100%"><path d="M6 10 20 36 34 10" fill="none" stroke="${tok('accent')}" stroke-width="6"/>
-       <text x="44" y="33" font-family="Inter" font-size="27" font-weight="700" fill="${tok('accent')}">vyyer</text></svg>`;
-  return `<div class="bokeh">${inner}</div>`;
+  return `<canvas class="bokeh" id="bokehCanvas" width="390" height="844"></canvas>`;
+}
+const BOKEH = {src:null, colors:null};
+/* x, y and radius as fractions — six ovals, spread corner to corner */
+const BLOBS = [[.16,.10,.46],[.84,.06,.40],[.52,.32,.50],[.10,.60,.46],[.90,.56,.42],[.44,.94,.52]];
+
+function hexToRgb(h){ const [r,g,b]=hex2rgb(parseColor(h).hex); return {r,g,b}; }
+/* a logo with no usable colour still gets a wash, built from the accent */
+function bokehFallback(){
+  const a=hexToRgb(tok('accent')), b=hexToRgb(tok('buttonBg'));
+  return [a, b, {r:Math.round((a.r+b.r)/2), g:Math.round((a.g+b.g)/2), b:Math.round((a.b+b.b)/2)}];
+}
+function sampleLogoColors(img){
+  try{
+    const S=48, c=document.createElement('canvas');
+    c.width=S; c.height=S;
+    const cx=c.getContext('2d', {willReadFrequently:true});
+    cx.drawImage(img,0,0,S,S);
+    const d=cx.getImageData(0,0,S,S).data;
+    /* first pass keeps only saturated colour; a monochrome mark falls through
+       to the second, which accepts anything that isn't paper white */
+    const pick = strict => {
+      const bucket={};
+      for(let i=0;i<d.length;i+=4){
+        if(d[i+3]<128) continue;                       /* logos are transparent */
+        const q=v=>Math.min(255, Math.round(v/32)*32);
+        const r=q(d[i]), g=q(d[i+1]), b=q(d[i+2]);
+        const lum=(r+g+b)/3, mx=Math.max(r,g,b), mn=Math.min(r,g,b);
+        if(strict){ if(lum<30||lum>230||mx-mn<25) continue; }
+        else      { if(lum>245) continue; }
+        const k=r+','+g+','+b; bucket[k]=(bucket[k]||0)+1;
+      }
+      return Object.entries(bucket).sort((a,b)=>b[1]-a[1]).slice(0,6)
+        .map(([k])=>{ const p=k.split(',').map(Number); return {r:p[0],g:p[1],b:p[2]}; });
+    };
+    const strict=pick(true);
+    return strict.length ? strict : (pick(false).length ? pick(false) : null);
+  }catch(e){ return null; }                            /* a tainted canvas just falls back */
+}
+function drawBokeh(cv, colors, mode){
+  const ctx=cv.getContext('2d'), w=cv.width, h=cv.height, max=Math.max(w,h);
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle = mode==='dark' ? '#101013' : '#F4F5F8';
+  ctx.fillRect(0,0,w,h);
+  ctx.globalCompositeOperation = mode==='dark' ? 'screen' : 'multiply';
+  const alpha = mode==='dark' ? .62 : .42;
+  BLOBS.forEach((p,i)=>{
+    const c=colors[i%colors.length];
+    const x=p[0]*w, y=p[1]*h, rad=max*p[2]*0.5;
+    const g=ctx.createRadialGradient(x,y,0,x,y,rad);
+    g.addColorStop(0, `rgba(${c.r},${c.g},${c.b},${alpha})`);
+    g.addColorStop(1, `rgba(${c.r},${c.g},${c.b},0)`);
+    ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+  });
+  /* the wash that keeps the copy legible over whatever the logo turned out to be */
+  ctx.globalCompositeOperation='source-over';
+  ctx.fillStyle = mode==='dark' ? 'rgba(10,10,13,.42)' : 'rgba(255,255,255,.46)';
+  ctx.fillRect(0,0,w,h);
+}
+function paintBokeh(){
+  const cv=document.getElementById('bokehCanvas'); if(!cv) return;
+  const mode=activeMode(), src=tok('logo');
+  if(!src){ drawBokeh(cv, bokehFallback(), mode); return; }
+  if(BOKEH.src===src && BOKEH.colors){ drawBokeh(cv, BOKEH.colors, mode); return; }
+  drawBokeh(cv, BOKEH.colors || bokehFallback(), mode);   /* something now */
+  const img=new Image();
+  img.onload=()=>{
+    BOKEH.src=src; BOKEH.colors=sampleLogoColors(img) || bokehFallback();
+    const live=document.getElementById('bokehCanvas');
+    if(live) drawBokeh(live, BOKEH.colors, activeMode());
+  };
+  img.src=src;
 }
 
 function renderScreen(){
+  /* Replacing the stage's contents resets the inspector's scroll as a side
+     effect, which throws the panel to the top mid-edit. Hold its position. */
+  const insp0=document.getElementById('insp'), inspTop=insp0?insp0.scrollTop:0;
   const id=state.screen, pad='padding:22px 18px';
   const ink=tok('primaryText');
   let body='';
@@ -981,8 +1060,11 @@ function renderScreen(){
 
         <div style="padding:10px 18px 18px;flex:0 0 auto">
           <div data-el="release" style="background:${rb};border:1px solid ${rbd};border-radius:${rr}px;padding:10px 11px;display:flex;gap:9px;align-items:flex-start;margin-bottom:10px">
-            <span style="width:18px;height:18px;border:1.8px solid ${val('release','boxColor')};border-radius:5px;flex:0 0 auto;margin-top:1px;background:${val('sheet','bg')}"></span>
-            <span style="color:${val('release','color')};font-family:${fontStack(val('release','font'))};font-size:${val('release','size')}px;font-weight:${val('release','weight')};line-height:1.45;text-align:left">${esc(merchantify(val('release','text'))).replace(/\n/g,'<br>')}</span></div>
+            <span style="width:18px;height:18px;border:1.8px solid ${consentChecked?val('release','checkedFill'):val('release','boxColor')};border-radius:5px;flex:0 0 auto;margin-top:1px;
+              background:${consentChecked?val('release','checkedFill'):val('sheet','bg')};display:grid;place-items:center">${consentChecked
+              ? `<svg viewBox="0 0 24 24" style="width:11px;height:11px" fill="none" stroke="${val('release','checkedTick')}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>`
+              : ''}</span>
+            <span style="color:${val('release','color')};font-family:${fontStack(val('release','font'))};font-size:${val('release','size')}px;font-weight:${val('release','weight')};line-height:1.45;text-align:left">${esc(companify(val('release','text'))).replace(/\n/g,'<br>')}</span></div>
           ${button('btn')}
           ${txt('decline','margin-top:10px;text-decoration:underline;text-underline-offset:2px')}
         </div>
@@ -1032,8 +1114,8 @@ function renderScreen(){
     const navHelp = val('navbar','helpShow')
       ? (val('navbar','helpCustom')
         ? `<img src="${val('navbar','helpCustom')}" style="width:22px;height:22px;object-fit:contain;display:block">`
-        : `<svg viewBox="0 0 24 24" style="width:22px;height:22px;display:block" fill="none" stroke="${val('navbar','helpColor')}" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v.01M12 13.2c0-2 2-2.1 2-3.6A2 2 0 0010 9.4" stroke-linecap="round"/></svg>`)
-      : '<span style="width:22px;height:22px;display:block;flex:0 0 auto"></span>';   /* keep the slot */
+        : `<svg viewBox="0 0 24 24" style="width:20px;height:20px;display:block" fill="none" stroke="${val('navbar','helpColor')}" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 16.5v.01M12 13.2c0-2 2-2.1 2-3.6A2 2 0 0010 9.4" stroke-linecap="round"/></svg>`)
+      : '<span style="width:20px;height:20px;display:block;flex:0 0 auto"></span>';   /* keep the slot */
     /* this is a live camera feed in production — not a settable surface. Grey so a
        client's black message text stays legible against it. */
     body=`<div style="display:flex;flex-direction:column;height:100%;background:#6B6B6B;position:relative">
@@ -1077,7 +1159,9 @@ function renderScreen(){
      <button class="nav" title="Next screen" onclick="event.stopPropagation();goTo(flatIndex()+1)">\u203A</button>
      <div class="hint">Click anything — including the background — to style it</div>`;
   fitDevice();
+  paintBokeh();
 
+  if(insp0) insp0.scrollTop=inspTop;
   document.querySelectorAll('[data-el]').forEach(n=>{
     /* clicking the same element again clears the selection */
     n.onclick = e=>{ e.stopPropagation(); select(n.dataset.el===state.sel ? null : n.dataset.el); };
@@ -1130,7 +1214,7 @@ function readFile(input, cb){ const f=input.files[0]; if(!f) return; const r=new
 /* the last few uploads are kept so the same mark can be reused on the next
    element — e.g. giving all three step icons the same custom icon */
 let RECENT=[];
-function pushRecent(d){ if(!d) return; RECENT=[d, ...RECENT.filter(x=>x!==d)].slice(0,3); }
+function pushRecent(d){ if(!d) return; RECENT=[d, ...RECENT.filter(x=>x!==d)].slice(0,10); }
 function toggleRecent(e, btn){
   e.stopPropagation();
   const box=btn.closest('.upload'), was=box.classList.contains('open');
@@ -1585,27 +1669,39 @@ const PROP_UI = {
   search:  [['placeholder','Placeholder','text'],['bg','Field fill','color'],['color','Text color','color'],['radius','Corner radius','radius']],
   countrylist:[['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
   image:  [['custom','Illustration','upload'],['scale','Image scale','scale']],
-  consentbox:[['text','Consent wording','long'],['color','Text color','color'],['size','Size','size'],
-           ['font','Font','font'],['weight','Font weight','weight'],['boxColor','Checkbox outline','color'],
-           ['bg','Fill','color'],['border','Border','color'],['radius','Corner radius','radius']],
+  consentbox:[['text','Consent wording','long'],['radius','Corner radius','radius'],
+           ['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight'],
+           ['bg','Fill','color'],['border','Border','color'],
+           ['boxColor','Checkbox outline','color'],
+           ['checkedFill','Checkbox fill','color'],['checkedTick','Checkmark','color']],
   step:   [['title','Step title','text'],['titleWeight','Title weight','weight'],
            ['desc','Step description','text'],['descWeight','Description weight','weight']],
 };
 
-/* The merchant name is one value shared by every line that mentions it, so it
+/* The company name is one value shared by every line that mentions it, so it
    can be set from whichever of those lines the client happens to be editing —
    the wording of each line is still theirs to change. */
-function merchantRow(where){
-  const t=TOKENS.merchant, v=t.value||'';
-  const reset = v ? `<button class="reset" title="Clear" onclick="setToken('merchant','')">
+function companyRow(where){
+  const t=TOKENS.company, v=t.value||'';
+  const reset = v ? `<button class="reset" title="Clear" onclick="setToken('company','')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></button>` : '';
   return `<div class="row"><div class="lbl"><span>${t.label}</span>
       <span class="src${v?' custom':''}">${v?'Set':'Not set'}</span>${reset}</div>
     <input type="text" value="${attrEsc(v)}" placeholder="${t.placeholder}"
-      onfocus="markOnce('tok|merchant')" oninput="liveToken('merchant',this.value)" onchange="commit()">
+      onfocus="markOnce('tok|company')" oninput="liveToken('company',this.value)" onchange="commit()">
     <div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>${
-      where==='global' ? t.note : 'Shared with every other line that uses {Merchant} \u2014 the title, the purpose line and the consent checkbox.'}</div></div>`;
+      where==='global' ? t.note : 'Shared with every other line that uses {Company} \u2014 the title, the purpose line and the consent checkbox.'}</div></div>`;
 }
+
+/* Every uploaded image is mode-dependent, the same way the company logo is:
+   an icon or illustration drawn for a dark screen rarely survives a light one.
+   Driven off PROP_UI so a new upload prop is covered the day it is added. */
+SCREENS.forEach(scr=>Object.values(scr.els).forEach(el=>{
+  (PROP_UI[el.type]||[]).forEach(([prop,,type])=>{
+    const spec = el.props[prop];
+    if(type==='upload' && spec && !spec.bind) spec.modal = true;   /* bound ones follow their token */
+  });
+}));
 
 /* background gets a conditional panel: the style choice decides the rest */
 function bgRows(){
@@ -1618,7 +1714,7 @@ function bgRows(){
   if(st.value==='Solid')    rest = propRow('__bg','color','Background color','color');
   if(st.value==='Gradient') rest = propRow('__bg','color','Gradient start','color') + propRow('__bg','color2','Gradient end','color');
   if(st.value==='Image')    rest = propRow('__bg','image','Image','upload') + propRow('__bg','color','Fallback color','color');
-  if(st.value==='Logo blur')rest = propRow('__bg','color','Base color','color') +
+  if(st.value==='Logo blur')rest =
     `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
      Builds a blurred bokeh wash from the company logo for this theme mode.</div>`;
   return picker + rest;
@@ -1647,8 +1743,8 @@ function paintInspector(html){
   const keep = key===lastPanelKey ? insp.scrollTop : 0;
   lastPanelKey=key;
   insp.innerHTML=html;
-  insp.scrollTop=keep;
   insp.querySelectorAll('textarea').forEach(ta=>{ autosize(ta); if(ta.dataset.gutter) syncGutter(ta); });
+  insp.scrollTop=keep;
 }
 /* every repaint rebuilds its dropdowns, so the old handlers go with it */
 function renderInspector(){
@@ -1658,7 +1754,7 @@ function renderInspector(){
     const groups={};
     Object.entries(TOKENS).forEach(([k,t])=>{(groups[t.group]=groups[t.group]||[]).push([k,t])});
     let html=`<div class="hd"><div class="k">Brand</div><h3>Global settings</h3>
-      <p>Every screen inherits these. ${TOKENS.theme.value==='Dynamic'?'You’re editing the <b>'+activeMode()+'</b> values — flip the chip on a section or the switch above the preview.':'Change one here and it updates everywhere it hasn’t been overridden.'}</p></div>`;
+      <p>Every screen inherits these. Click an element to override and set custom values.</p></div>`;
     GROUP_ORDER.forEach(g=>{
       const list=groups[g]; if(!list) return;
       const anyModal=list.some(([,t])=>t.modal);
@@ -1670,7 +1766,7 @@ function renderInspector(){
             <div class="bgstyles">${BG_STYLES.map(b=>`<button class="${b===tok(k)?'on':''}" onclick="setToken('${k}','${b}')">${b}</button>`).join('')}</div></div>`;
         } else if(t.type==='color'){
           if(k==='pageBg2' && tok('bgStyle')!=='Gradient') return;
-          if(k==='pageBg'  && tok('bgStyle')==='Image')    return;
+          if(k==='pageBg'  && (tok('bgStyle')==='Image' || tok('bgStyle')==='Logo blur')) return;
           html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
             ${colorCtl(tok(k), `liveToken('${k}',this.value);syncPair(this,this.value)`, 'tok|'+k, 'tok|'+k)}</div>`;
         } else if(t.type==='upload'){
@@ -1690,7 +1786,7 @@ function renderInspector(){
           html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>
             ${ddCtl(t.value, t.options.map(o=>({v:o})), v=>setToken(k,v))}</div>`;
         } else if(t.type==='text'){
-          html+=merchantRow('global');
+          html+=companyRow('global');
         } else if(t.type==='logo'){
           html+=`<div class="row"><div class="lbl"><span>${t.label}</span></div>${uploadCtl(tok(k),`tok|${k}`)}</div>`;
         }
@@ -1707,20 +1803,27 @@ function renderInspector(){
 
   /* anything that declares a `show` prop gets a Visible toggle, first */
   const vis = ('show' in el.props) ? propRow(state.sel,'show','Visible','toggle') : '';
-  const mer = hasMerchant(val(state.sel,'text')) ? merchantRow('element') : '';
+  /* set once, where the name is most obviously the subject — the other lines
+     keep the placeholder and can be reworded in their own text box */
+  const mer = (state.sel==='title' && hasCompany(val(state.sel,'text'))) ? companyRow('element') : '';
   let rows;
   if(el.type==='bg') rows = bgRows();
   else {
     const map = DIM_WHEN[el.type]||{};
     const list = PROP_UI[el.type]||[];
-    const html = list.map(([p,l,t])=>{
+    const sc = stateScope();
+    const picker = statePicker();
+    /* the consent screen sizes its copy from the title alone */
+    const noSize = state.screen==='consent' && state.sel!=='title';
+    const html = list.filter(([p])=>{
+      if(noSize && p==='size') return false;
+      if(sc && sc.all.has(p) && !sc.keep.has(p)) return false;
+      return true;
+    }).map(([p,l,t])=>{
       const by = map[p];
-      return {dim: !!(by && val(state.sel, by)), html: propRow(state.sel,p,l,t, !!(by && val(state.sel, by)))};
+      const row = propRow(state.sel,p,l,t, !!(by && val(state.sel, by)));
+      return {dim: !!(by && val(state.sel, by)), html: (sc && p===sc.anchor ? picker : '') + row};
     });
-    const last = html.map(r=>r.dim).lastIndexOf(true);
-    if(last>-1) html[last].html += `<div class="note" style="margin:-6px 0 12px">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
-      Not used while a custom image is set — remove it to colour the built-in icon.</div>`;
     rows = vis + mer + html.map(r=>r.html).join('');
   }
   const nOvr = Object.keys(overrides).filter(k=>k.startsWith(state.screen+'|'+state.variant+'|'+state.sel+'|')).length;
@@ -1730,10 +1833,8 @@ function renderInspector(){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
       Apply to all ${scr.variants.length} ${scr.name.toLowerCase()} screens</button></div>`;
   }
-  const modeNote = TOKENS.theme.value==='Dynamic'
-    ? `<p>Editing the <b>${activeMode()}</b> values. Colours here are stored per mode.</p>` : '';
-  paintInspector(`<div class="hd"><div class="k">${scr.name}${scr.variants?' · '+scr.variants[state.variant]:''}</div>
-      <h3>${el.label}</h3><p>Values marked <b>Global</b> follow your brand settings.</p>${modeNote}</div>
+  paintInspector(`<div class="hd"><div class="hdtop"><div class="k">${scr.name}${scr.variants?' · '+scr.variants[state.variant]:''}</div>${modeChip()}</div>
+      <h3>${el.label}</h3><p>Values marked <b>Global</b> follow your brand settings.</p></div>
     <div class="sec">${rows||'<div class="empty">No style options for this element.</div>'}</div>${applyAll}`);
 }
 
@@ -1792,23 +1893,43 @@ function goTo(i){
   const f=FLAT[(i+FLAT.length)%FLAT.length];
   state.screen=f.id; state.variant=f.v; state.sel=null; state.panel='brand';
   document.getElementById('screenName').textContent = f.screen===f.label ? f.screen : f.screen+' · '+f.label;
-  renderStates(); renderRail(); renderScreen(); renderInspector();
+  renderRail(); renderScreen(); renderInspector();
 }
 function goScreen(id){ goTo(FLAT.findIndex(f=>f.id===id)); }
+/* A screen state belongs to the element that shows it, not to the canvas
+   toolbar at the other end of the window — the client is editing the message
+   or the checkbox, so the state sits in that element's panel. */
 let scanState='default';
-function setScanState(s){ scanState=s; renderStates(); renderScreen(); renderInspector(); }
-function renderStates(){
-  const seg=document.getElementById('stateSeg'), cap=document.getElementById('stateCap');
-  const setCap=on=>{ cap.style.display = on ? '' : 'none'; };
-  if(state.screen==='scan'){
-    seg.style.display=''; setCap(true);
-    seg.innerHTML=[['default','Default'],['error','Error'],['success','Success']].map(([k,label])=>
-      `<button class="${scanState===k?'on':''}" onclick="setScanState('${k}')">${label}</button>`).join('');
-    return;
-  }
-  const states = state.screen==='consent' ? ['Unchecked','Checked'] : null;
-  seg.innerHTML = states ? states.map((v,i)=>`<button class="${i===0?'on':''}" onclick="this.parentElement.querySelectorAll('button').forEach(b=>b.classList.remove('on'));this.classList.add('on')">${v}</button>`).join('') : '';
-  seg.style.display = states ? '' : 'none'; setCap(!!states);
+let consentChecked=false;
+function setScanState(s){ scanState=s; renderScreen(); renderInspector(); }
+function setConsentChecked(v){ consentChecked=v; renderScreen(); renderInspector(); }
+function stateRow(label, opts, cur, fn){
+  return `<div class="row"><div class="lbl"><span>${label}</span></div>
+    <div class="picker">${opts.map(([v,l])=>`<button class="${String(v)===String(cur)?'on':''}"
+      onclick="${fn}(${typeof v==='string'?`'${v}'`:v})">${l}</button>`).join('')}</div></div>`;
+}
+/* Which fields belong to which state. Showing all of them at once invites
+   editing the error colours while the preview shows success — so the panel
+   shows only the selected state's, with the switcher just above them. */
+const STATE_FIELDS = {
+  'scan|status':    {default:['text','bg','color'], error:['errorBg','errorColor'], success:['successBg','successColor']},
+  'consent|release':{false:['boxColor'], true:['checkedFill','checkedTick']},
+};
+/* props that belong to SOME state — hidden unless that state is current */
+function stateScope(){
+  const set = STATE_FIELDS[state.screen+'|'+state.sel];
+  if(!set) return null;
+  const cur = state.sel==='status' ? scanState : String(consentChecked);
+  const keep = new Set(set[cur]||[]);
+  const all  = new Set(Object.values(set).flat());
+  return {keep, all, anchor:(set[cur]||[])[0]};
+}
+function statePicker(){
+  if(state.screen==='scan' && state.sel==='status')
+    return stateRow('Message state', [['default','Default'],['error','Error'],['success','Success']], scanState, 'setScanState');
+  if(state.screen==='consent' && state.sel==='release')
+    return stateRow('Checkbox state', [[false,'Unchecked'],[true,'Checked']], consentChecked, 'setConsentChecked');
+  return '';
 }
 /* the canvas theme switch only exists when the theme is Dynamic —
    otherwise there is only one set of values and a switch would lie */
@@ -1831,7 +1952,7 @@ addEventListener('keydown',e=>{
 });
 
 /* boot */
-renderRail(); renderStates(); renderModeSwitch(); renderScreen(); renderInspector(); updateChrome();
+renderRail(); renderModeSwitch(); renderScreen(); renderInspector(); updateChrome();
 </script>
 </body>
 </html>
