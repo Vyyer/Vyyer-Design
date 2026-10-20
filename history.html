@@ -30,6 +30,7 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --font: 'Inter', system-ui, sans-serif;
+  --focus: #007aff;
 }
 
 html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
@@ -286,7 +287,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .btn-view { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; font-family: var(--font); font-size: 13px; font-weight: 600; color: #111110; background: var(--accent); border: none; border-radius: var(--radius-sm); padding: 11px; cursor: pointer; transition: filter .15s; }
 .btn-view:hover { filter: brightness(0.95); }
 
-footer { text-align: center; font-size: 11px; color: var(--text-tertiary); padding-top: 40px; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 860px) {
@@ -298,26 +298,28 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
 @media (max-width: 760px) {
   .filterbar { gap: 8px; }
   .search { flex: 1 1 auto; min-width: 0; }
-  .filter-toggle { display: inline-flex; align-items: center; gap: 7px; flex: 0 0 auto;
-    font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary);
+  .filter-toggle { display: inline-flex; align-items: stretch; flex: 0 0 auto;
     background: var(--field-float); border: 1px solid var(--field-float-line);
-    border-radius: var(--radius-sm); padding: 8px 12px; cursor: pointer; }
+    border-radius: var(--radius-sm); overflow: hidden; }
   .filter-toggle:hover { border-color: var(--text-tertiary); }
-  .filter-toggle[aria-expanded="true"] { border-color: var(--field-focus); color: var(--field-focus); }
-  .filter-toggle .fcount { min-width: 17px; height: 17px; border-radius: 99px; padding: 0 5px;
-    background: var(--field-focus); color: #fff; font-size: 10.5px; font-weight: 700;
-    display: inline-flex; align-items: center; justify-content: center; }
-  .filter-toggle .fcount[hidden] { display: none; }
+  .filter-toggle.on { border-color: var(--field-focus); }
+  .ft-main { display: inline-flex; align-items: center; gap: 7px; border: 0; background: none; cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); padding: 8px 12px; }
+  .filter-toggle.on .ft-main { color: var(--field-focus); cursor: default; }
+  /* with a filter on, the row stays open and the pill offers to clear it */
+  .ft-clear { display: none; align-items: center; border: 0; border-left: 1px solid var(--field-float-line);
+    background: none; cursor: pointer; color: var(--field-focus); padding: 0 9px; }
+  .filter-toggle.on .ft-clear { display: inline-flex; }
+  .ft-clear:hover { background: var(--surface-2); }
+  .btn-clear { display: none; }   /* the pill's X replaces it here */
   /* source order puts the filters first; visual order is search, button, row */
   .search { order: 1; }
   .filter-toggle { order: 2; }
   .filter-row { order: 3; display: none; flex: 1 1 100%; gap: 8px; }
-  .btn-clear { order: 4; }
   .filter-row.show { display: flex; }
   .dd, .date-field { flex: 1 1 0; min-width: 0; }
   .dd-trigger, .date-trigger { width: 100%; min-width: 0; padding: 8px 10px; font-size: 12.5px; }
   .dd-trigger > span:first-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .btn-clear { flex: 1 1 100%; }
 }
 @media (max-width: 680px) {
   .toolbar { padding: 12px 16px; margin: 0 -20px; }
@@ -422,10 +424,15 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
     <div class="dd" id="resultDd"></div>
     <div class="dd" id="profileDd"></div>
     </div>
-    <button id="filterToggle" class="filter-toggle" aria-expanded="false" aria-controls="filterRow">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h17M6.5 12h11M10 18.5h4"/></svg>
-      <span>Filters</span><span class="fcount" id="filterCount" hidden></span>
-    </button>
+    <div class="filter-toggle" id="filterToggle">
+      <button type="button" class="ft-main" id="filterToggleBtn" aria-expanded="false" aria-controls="filterRow">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 5.5h17M6.5 12h11M10 18.5h4"/></svg>
+        Filters
+      </button>
+      <button type="button" class="ft-clear" id="filterClearBtn" hidden aria-label="Clear filters" title="Clear filters">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg>
+      </button>
+    </div>
     <button id="clearBtn" class="btn-clear" disabled>Clear filters</button>
   </div>
 
@@ -465,7 +472,6 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
   </div>
 </main>
 
-<footer>&copy; 2026 Vyyer · Identity Verification Platform</footer>
 
 <script>
 /* ─── MOCK DATA ─── */
@@ -734,7 +740,7 @@ function resultBadge(result){
 }
 
 function render(){
-  if(document.getElementById('filterCount')) syncFilterCount();
+  if(typeof syncFilterChrome === 'function') syncFilterChrome();
   const filtered = getFiltered();
   const total = filtered.length;
   const pages = Math.max(1, Math.ceil(total / state.perPage));
@@ -908,28 +914,45 @@ const profileDropdown = createDropdown(document.getElementById('profileDd'), {
 clampPopovers();   /* every menu now exists */
 const filterRow = document.getElementById('filterRow');
 const filterToggle = document.getElementById('filterToggle');
-filterToggle.addEventListener('click', () => {
+const filterToggleBtn = document.getElementById('filterToggleBtn');
+const filterClearBtn = document.getElementById('filterClearBtn');
+
+const filtersActive = () => (state.date && state.date.preset !== 'all')
+  || state.result.length > 0 || state.profile !== 'all';
+
+filterToggleBtn.addEventListener('click', () => {
+  if(filtersActive()) return;          /* something is filtering — the row stays put */
   const open = filterRow.classList.toggle('show');
-  filterToggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+  filterToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
   if(open) clampPopovers();
 });
-/* the button carries a count so a collapsed filter is never invisible */
-function syncFilterCount(){
-  const n = (state.date && state.date.preset !== 'all' ? 1 : 0)
-          + (state.result.length ? 1 : 0)
-          + (state.profile !== 'all' ? 1 : 0);
-  const chip = document.getElementById('filterCount');
-  chip.textContent = n; chip.hidden = n === 0;
+filterClearBtn.addEventListener('click', () => {
+  clearFilters();
+  filterRow.classList.add('show');     /* cleared, but still filtering — keep it open */
+  filterToggleBtn.setAttribute('aria-expanded', 'true');
+});
+
+/* While a filter is applied the row can't be collapsed, and the pill offers to
+   clear instead — a filter that is both on and out of sight is a trap. */
+function syncFilterChrome(){
+  const on = filtersActive();
+  filterToggle.classList.toggle('on', on);
+  filterClearBtn.hidden = !on;
+  if(on){
+    filterRow.classList.add('show');
+    filterToggleBtn.setAttribute('aria-expanded', 'true');
+  }
 }
 
 document.getElementById('perPageSel').addEventListener('change', e => { state.perPage = parseInt(e.target.value,10); state.page = 1; render(); });
-document.getElementById('clearBtn').addEventListener('click', () => {
+function clearFilters(){
   state.search=''; state.result=[]; state.profile='all'; state.page=1;
   resetDateRange();
   document.getElementById('searchInput').value='';
   resultDropdown.reset(); profileDropdown.reset();
   render();
-});
+}
+document.getElementById('clearBtn').addEventListener('click', clearFilters);
 document.getElementById('pageNav').addEventListener('click', e => {
   const b = e.target.closest('.page-btn');
   if(!b || b.disabled || b.classList.contains('ellipsis') || b.classList.contains('active')) return;
