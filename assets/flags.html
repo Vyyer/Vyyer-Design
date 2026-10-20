@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Flag assets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!--
+  A contact sheet for assets/flags. Every tile is a direct download link to the
+  file, so the whole set can be grabbed from here, or from the folder itself.
+  The list is inlined rather than fetched, so this page also works from file://.
+-->
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0a0b;--surface:#121214;--line:rgba(255,255,255,.09);--line-2:rgba(255,255,255,.16);
+  --ink:rgba(255,255,255,.95);--ink-2:rgba(255,255,255,.56);--ink-3:rgba(255,255,255,.38);
+  --accent:#A0D959;--field:#0e0e10;--font:'Inter',system-ui,sans-serif}
+body{font-family:var(--font);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;font-size:14px}
+.wrap{max-width:1180px;margin:0 auto;padding:56px 32px 72px}
+h1{font-size:28px;font-weight:600;letter-spacing:-.02em}
+.lede{color:var(--ink-2);margin-top:8px;max-width:70ch;line-height:1.6}
+.lede code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;color:var(--accent)}
+.bar{display:flex;gap:12px;align-items:center;margin:26px 0 20px;flex-wrap:wrap}
+input{flex:1 1 280px;font-family:var(--font);font-size:14px;color:var(--ink);background:var(--field);
+  border:1px solid var(--line);border-radius:10px;padding:11px 14px;outline:none}
+input:focus{border-color:var(--accent)}
+.count{color:var(--ink-3);font-size:13px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px}
+.t{display:flex;align-items:center;gap:11px;padding:11px 13px;background:var(--surface);
+  border:1px solid var(--line);border-radius:12px;text-decoration:none;color:inherit}
+.t:hover{border-color:var(--line-2)}
+.t img{width:28px;height:28px;flex:0 0 auto;object-fit:contain}
+.t b{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;font-weight:600;color:var(--accent);flex:0 0 auto}
+.t span{font-size:12.5px;color:var(--ink-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.t[hidden]{display:none}
+.none{color:var(--ink-3);padding:28px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Flag assets</h1>
+  <p class="lede">One SVG per country, in <code>assets/flags/</code>, named by ISO 3166-1 alpha-2 code.
+  Use these instead of flag emoji — Windows ships no colour flag glyphs, so emoji flags render as
+  two letters in a box there. Click a tile to download that one; take the whole folder for the set.
+  <code>flags/countries.json</code> maps every code to its name, emoji and file. Twemoji, CC-BY 4.0 —
+  see <code>README.md</code>.</p>
+  <div class="bar">
+    <input type="text" id="q" placeholder="Search by country or code…" autocomplete="off">
+    <span class="count" id="count"></span>
+  </div>
+  <div class="grid" id="grid">
+  <a class="t" href="flags/AF.svg" download title="Afghanistan" data-q="afghanistan af"><img src="flags/AF.svg" alt="" loading="lazy"><b>AF</b><span>Afghanistan</span></a>
+  <a class="t" href="flags/AL.svg" download title="Albania" data-q="albania al"><img src="flags/AL.svg" alt="" loading="lazy"><b>AL</b><span>Albania</span></a>
+  <a class="t" href="flags/DZ.svg" download title="Algeria" data-q="algeria dz"><img src="flags/DZ.svg" alt="" loading="lazy"><b>DZ</b><span>Algeria</span></a>
+  <a class="t" href="flags/AS.svg" download title="American Samoa" data-q="american samoa as"><img src="flags/AS.svg" alt="" loading="lazy"><b>AS</b><span>American Samoa</span></a>
+  <a class="t" href="flags/AD.svg" download title="Andorra" data-q="andorra ad"><img src="flags/AD.svg" alt="" loading="lazy"><b>AD</b><span>Andorra</span></a>
+  <a class="t" href="flags/AO.svg" download title="Angola" data-q="angola ao"><img src="flags/AO.svg" alt="" loading="lazy"><b>AO</b><span>Angola</span></a>
+  <a class="t" href="flags/AI.svg" download title="Anguilla" data-q="anguilla ai"><img src="flags/AI.svg" alt="" loading="lazy"><b>AI</b><span>Anguilla</span></a>
+  <a class="t" href="flags/AG.svg" download title="Antigua & Barbuda" data-q="antigua & barbuda ag"><img src="flags/AG.svg" alt="" loading="lazy"><b>AG</b><span>Antigua & Barbuda</span></a>
+  <a class="t" href="flags/AR.svg" download title="Argentina" data-q="argentina ar"><img src="flags/AR.svg" alt="" loading="lazy"><b>AR</b><span>Argentina</span></a>
+  <a class="t" href="flags/AM.svg" download title="Armenia" data-q="armenia am"><img src="flags/AM.svg" alt="" loading="lazy"><b>AM</b><span>Armenia</span></a>
+  <a class="t" href="flags/AW.svg" download title="Aruba" data-q="aruba aw"><img src="flags/AW.svg" alt="" loading="lazy"><b>AW</b><span>Aruba</span></a>
+  <a class="t" href="flags/AU.svg" download title="Australia" data-q="australia au"><img src="flags/AU.svg" alt="" loading="lazy"><b>AU</b><span>Australia</span></a>
+  <a class="t" href="flags/AT.svg" download title="Austria" data-q="austria at"><img src="flags/AT.svg" alt="" loading="lazy"><b>AT</b><span>Austria</span></a>
+  <a class="t" href="flags/AZ.svg" download title="Azerbaijan" data-q="azerbaijan az"><img src="flags/AZ.svg" alt="" loading="lazy"><b>AZ</b><span>Azerbaijan</span></a>
+  <a class="t" href="flags/BS.svg" download title="Bahamas" data-q="bahamas bs"><img src="flags/BS.svg" alt="" loading="lazy"><b>BS</b><span>Bahamas</span></a>
+  <a class="t" href="flags/BH.svg" download title="Bahrain" data-q="bahrain bh"><img src="flags/BH.svg" alt="" loading="lazy"><b>BH</b><span>Bahrain</span></a>
+  <a class="t" href="flags/BD.svg" download title="Bangladesh" data-q="bangladesh bd"><img src="flags/BD.svg" alt="" loading="lazy"><b>BD</b><span>Bangladesh</span></a>
+  <a class="t" href="flags/BB.svg" download title="Barbados" data-q="barbados bb"><img src="flags/BB.svg" alt="" loading="lazy"><b>BB</b><span>Barbados</span></a>
+  <a class="t" href="flags/BY.svg" download title="Belarus" data-q="belarus by"><img src="flags/BY.svg" alt="" loading="lazy"><b>BY</b><span>Belarus</span></a>
+  <a class="t" href="flags/BE.svg" download title="Belgium" data-q="belgium be"><img src="flags/BE.svg" alt="" loading="lazy"><b>BE</b><span>Belgium</span></a>
+  <a class="t" href="flags/BZ.svg" download title="Belize" data-q="belize bz"><img src="flags/BZ.svg" alt="" loading="lazy"><b>BZ</b><span>Belize</span></a>
+  <a class="t" href="flags/BJ.svg" download title="Benin" data-q="benin bj"><img src="flags/BJ.svg" alt="" loading="lazy"><b>BJ</b><span>Benin</span></a>
+  <a class="t" href="flags/BM.svg" download title="Bermuda" data-q="bermuda bm"><img src="flags/BM.svg" alt="" loading="lazy"><b>BM</b><span>Bermuda</span></a>
+  <a class="t" href="flags/BT.svg" download title="Bhutan" data-q="bhutan bt"><img src="flags/BT.svg" alt="" loading="lazy"><b>BT</b><span>Bhutan</span></a>
+  <a class="t" href="flags/BO.svg" download title="Bolivia" data-q="bolivia bo"><img src="flags/BO.svg" alt="" loading="lazy"><b>BO</b><span>Bolivia</span></a>
+  <a class="t" href="flags/BA.svg" download title="Bosnia & Herzegovina" data-q="bosnia & herzegovina ba"><img src="flags/BA.svg" alt="" loading="lazy"><b>BA</b><span>Bosnia & Herzegovina</span></a>
+  <a class="t" href="flags/BW.svg" download title="Botswana" data-q="botswana bw"><img src="flags/BW.svg" alt="" loading="lazy"><b>BW</b><span>Botswana</span></a>
+  <a class="t" href="flags/BV.svg" download title="Bouvet Island" data-q="bouvet island bv"><img src="flags/BV.svg" alt="" loading="lazy"><b>BV</b><span>Bouvet Island</span></a>
+  <a class="t" href="flags/BR.svg" download title="Brazil" data-q="brazil br"><img src="flags/BR.svg" alt="" loading="lazy"><b>BR</b><span>Brazil</span></a>
+  <a class="t" href="flags/VG.svg" download title="British Virgin Islands" data-q="british virgin islands vg"><img src="flags/VG.svg" alt="" loading="lazy"><b>VG</b><span>British Virgin Islands</span></a>
+  <a class="t" href="flags/BN.svg" download title="Brunei" data-q="brunei bn"><img src="flags/BN.svg" alt="" loading="lazy"><b>BN</b><span>Brunei</span></a>
+  <a class="t" href="flags/BG.svg" download title="Bulgaria" data-q="bulgaria bg"><img src="flags/BG.svg" alt="" loading="lazy"><b>BG</b><span>Bulgaria</span></a>
+  <a class="t" href="flags/BF.svg" download title="Burkina Faso" data-q="burkina faso bf"><img src="flags/BF.svg" alt="" loading="lazy"><b>BF</b><span>Burkina Faso</span></a>
+  <a class="t" href="flags/BI.svg" download title="Burundi" data-q="burundi bi"><img src="flags/BI.svg" alt="" loading="lazy"><b>BI</b><span>Burundi</span></a>
+  <a class="t" href="flags/KH.svg" download title="Cambodia" data-q="cambodia kh"><img src="flags/KH.svg" alt="" loading="lazy"><b>KH</b><span>Cambodia</span></a>
+  <a class="t" href="flags/CM.svg" download title="Cameroon" data-q="cameroon cm"><img src="flags/CM.svg" alt="" loading="lazy"><b>CM</b><span>Cameroon</span></a>
+  <a class="t" href="flags/CA.svg" download title="Canada" data-q="canada ca"><img src="flags/CA.svg" alt="" loading="lazy"><b>CA</b><span>Canada</span></a>
+  <a class="t" href="flags/CV.svg" download title="Cape Verde" data-q="cape verde cv"><img src="flags/CV.svg" alt="" loading="lazy"><b>CV</b><span>Cape Verde</span></a>
+  <a class="t" href="flags/BQ.svg" download title="Caribbean Netherlands" data-q="caribbean netherlands bq"><img src="flags/BQ.svg" alt="" loading="lazy"><b>BQ</b><span>Caribbean Netherlands</span></a>
+  <a class="t" href="flags/KY.svg" download title="Cayman Islands" data-q="cayman islands ky"><img src="flags/KY.svg" alt="" loading="lazy"><b>KY</b><span>Cayman Islands</span></a>
+  <a class="t" href="flags/CF.svg" download title="Central African Republic" data-q="central african republic cf"><img src="flags/CF.svg" alt="" loading="lazy"><b>CF</b><span>Central African Republic</span></a>
+  <a class="t" href="flags/TD.svg" download title="Chad" data-q="chad td"><img src="flags/TD.svg" alt="" loading="lazy"><b>TD</b><span>Chad</span></a>
+  <a class="t" href="flags/IO.svg" download title="Chagos Archipelago" data-q="chagos archipelago io"><img src="flags/IO.svg" alt="" loading="lazy"><b>IO</b><span>Chagos Archipelago</span></a>
+  <a class="t" href="flags/CL.svg" download title="Chile" data-q="chile cl"><img src="flags/CL.svg" alt="" loading="lazy"><b>CL</b><span>Chile</span></a>
+  <a class="t" href="flags/CN.svg" download title="China mainland" data-q="china mainland cn"><img src="flags/CN.svg" alt="" loading="lazy"><b>CN</b><span>China mainland</span></a>
+  <a class="t" href="flags/CX.svg" download title="Christmas Island" data-q="christmas island cx"><img src="flags/CX.svg" alt="" loading="lazy"><b>CX</b><span>Christmas Island</span></a>
+  <a class="t" href="flags/CC.svg" download title="Cocos (Keeling) Islands" data-q="cocos (keeling) islands cc"><img src="flags/CC.svg" alt="" loading="lazy"><b>CC</b><span>Cocos (Keeling) Islands</span></a>
+  <a class="t" href="flags/CO.svg" download title="Colombia" data-q="colombia co"><img src="flags/CO.svg" alt="" loading="lazy"><b>CO</b><span>Colombia</span></a>
+  <a class="t" href="flags/KM.svg" download title="Comoros" data-q="comoros km"><img src="flags/KM.svg" alt="" loading="lazy"><b>KM</b><span>Comoros</span></a>
+  <a class="t" href="flags/CG.svg" download title="Congo - Brazzaville" data-q="congo - brazzaville cg"><img src="flags/CG.svg" alt="" loading="lazy"><b>CG</b><span>Congo - Brazzaville</span></a>
+  <a class="t" href="flags/CD.svg" download title="Congo - Kinshasa" data-q="congo - kinshasa cd"><img src="flags/CD.svg" alt="" loading="lazy"><b>CD</b><span>Congo - Kinshasa</span></a>
+  <a class="t" href="flags/CK.svg" download title="Cook Islands" data-q="cook islands ck"><img src="flags/CK.svg" alt="" loading="lazy"><b>CK</b><span>Cook Islands</span></a>
+  <a class="t" href="flags/CR.svg" download title="Costa Rica" data-q="costa rica cr"><img src="flags/CR.svg" alt="" loading="lazy"><b>CR</b><span>Costa Rica</span></a>
+  <a class="t" href="flags/HR.svg" download title="Croatia" data-q="croatia hr"><img src="flags/HR.svg" alt="" loading="lazy"><b>HR</b><span>Croatia</span></a>
+  <a class="t" href="flags/CU.svg" download title="Cuba" data-q="cuba cu"><img src="flags/CU.svg" alt="" loading="lazy"><b>CU</b><span>Cuba</span></a>
+  <a class="t" href="flags/CW.svg" download title="Curaçao" data-q="curaçao cw"><img src="flags/CW.svg" alt="" loading="lazy"><b>CW</b><span>Curaçao</span></a>
+  <a class="t" href="flags/CY.svg" download title="Cyprus" data-q="cyprus cy"><img src="flags/CY.svg" alt="" loading="lazy"><b>CY</b><span>Cyprus</span></a>
+  <a class="t" href="flags/CZ.svg" download title="Czechia" data-q="czechia cz"><img src="flags/CZ.svg" alt="" loading="lazy"><b>CZ</b><span>Czechia</span></a>
+  <a class="t" href="flags/CI.svg" download title="Côte d’Ivoire" data-q="côte d’ivoire ci"><img src="flags/CI.svg" alt="" loading="lazy"><b>CI</b><span>Côte d’Ivoire</span></a>
+  <a class="t" href="flags/DK.svg" download title="Denmark" data-q="denmark dk"><img src="flags/DK.svg" alt="" loading="lazy"><b>DK</b><span>Denmark</span></a>
+  <a class="t" href="flags/DJ.svg" download title="Djibouti" data-q="djibouti dj"><img src="flags/DJ.svg" alt="" loading="lazy"><b>DJ</b><span>Djibouti</span></a>
+  <a class="t" href="flags/DM.svg" download title="Dominica" data-q="dominica dm"><img src="flags/DM.svg" alt="" loading="lazy"><b>DM</b><span>Dominica</span></a>
+  <a class="t" href="flags/DO.svg" download title="Dominican Republic" data-q="dominican republic do"><img src="flags/DO.svg" alt="" loading="lazy"><b>DO</b><span>Dominican Republic</span></a>
+  <a class="t" href="flags/EC.svg" download title="Ecuador" data-q="ecuador ec"><img src="flags/EC.svg" alt="" loading="lazy"><b>EC</b><span>Ecuador</span></a>
+  <a class="t" href="flags/EG.svg" download title="Egypt" data-q="egypt eg"><img src="flags/EG.svg" alt="" loading="lazy"><b>EG</b><span>Egypt</span></a>
+  <a class="t" href="flags/SV.svg" download title="El Salvador" data-q="el salvador sv"><img src="flags/SV.svg" alt="" loading="lazy"><b>SV</b><span>El Salvador</span></a>
+  <a class="t" href="flags/GQ.svg" download title="Equatorial Guinea" data-q="equatorial guinea gq"><img src="flags/GQ.svg" alt="" loading="lazy"><b>GQ</b><span>Equatorial Guinea</span></a>
+  <a class="t" href="flags/ER.svg" download title="Eritrea" data-q="eritrea er"><img src="flags/ER.svg" alt="" loading="lazy"><b>ER</b><span>Eritrea</span></a>
+  <a class="t" href="flags/EE.svg" download title="Estonia" data-q="estonia ee"><img src="flags/EE.svg" alt="" loading="lazy"><b>EE</b><span>Estonia</span></a>
+  <a class="t" href="flags/SZ.svg" download title="Eswatini" data-q="eswatini sz"><img src="flags/SZ.svg" alt="" loading="lazy"><b>SZ</b><span>Eswatini</span></a>
+  <a class="t" href="flags/ET.svg" download title="Ethiopia" data-q="ethiopia et"><img src="flags/ET.svg" alt="" loading="lazy"><b>ET</b><span>Ethiopia</span></a>
+  <a class="t" href="flags/FK.svg" download title="Falkland Islands" data-q="falkland islands fk"><img src="flags/FK.svg" alt="" loading="lazy"><b>FK</b><span>Falkland Islands</span></a>
+  <a class="t" href="flags/FO.svg" download title="Faroe Islands" data-q="faroe islands fo"><img src="flags/FO.svg" alt="" loading="lazy"><b>FO</b><span>Faroe Islands</span></a>
+  <a class="t" href="flags/FJ.svg" download title="Fiji" data-q="fiji fj"><img src="flags/FJ.svg" alt="" loading="lazy"><b>FJ</b><span>Fiji</span></a>
+  <a class="t" href="flags/FI.svg" download title="Finland" data-q="finland fi"><img src="flags/FI.svg" alt="" loading="lazy"><b>FI</b><span>Finland</span></a>
+  <a class="t" href="flags/FR.svg" download title="France" data-q="france fr"><img src="flags/FR.svg" alt="" loading="lazy"><b>FR</b><span>France</span></a>
+  <a class="t" href="flags/GF.svg" download title="French Guiana" data-q="french guiana gf"><img src="flags/GF.svg" alt="" loading="lazy"><b>GF</b><span>French Guiana</span></a>
+  <a class="t" href="flags/PF.svg" download title="French Polynesia" data-q="french polynesia pf"><img src="flags/PF.svg" alt="" loading="lazy"><b>PF</b><span>French Polynesia</span></a>
+  <a class="t" href="flags/TF.svg" download title="French Southern Territories" data-q="french southern territories tf"><img src="flags/TF.svg" alt="" loading="lazy"><b>TF</b><span>French Southern Territories</span></a>
+  <a class="t" href="flags/GA.svg" download title="Gabon" data-q="gabon ga"><img src="flags/GA.svg" alt="" loading="lazy"><b>GA</b><span>Gabon</span></a>
+  <a class="t" href="flags/GM.svg" download title="Gambia" data-q="gambia gm"><img src="flags/GM.svg" alt="" loading="lazy"><b>GM</b><span>Gambia</span></a>
+  <a class="t" href="flags/GE.svg" download title="Georgia" data-q="georgia ge"><img src="flags/GE.svg" alt="" loading="lazy"><b>GE</b><span>Georgia</span></a>
+  <a class="t" href="flags/DE.svg" download title="Germany" data-q="germany de"><img src="flags/DE.svg" alt="" loading="lazy"><b>DE</b><span>Germany</span></a>
+  <a class="t" href="flags/GH.svg" download title="Ghana" data-q="ghana gh"><img src="flags/GH.svg" alt="" loading="lazy"><b>GH</b><span>Ghana</span></a>
+  <a class="t" href="flags/GI.svg" download title="Gibraltar" data-q="gibraltar gi"><img src="flags/GI.svg" alt="" loading="lazy"><b>GI</b><span>Gibraltar</span></a>
+  <a class="t" href="flags/GR.svg" download title="Greece" data-q="greece gr"><img src="flags/GR.svg" alt="" loading="lazy"><b>GR</b><span>Greece</span></a>
+  <a class="t" href="flags/GL.svg" download title="Greenland" data-q="greenland gl"><img src="flags/GL.svg" alt="" loading="lazy"><b>GL</b><span>Greenland</span></a>
+  <a class="t" href="flags/GD.svg" download title="Grenada" data-q="grenada gd"><img src="flags/GD.svg" alt="" loading="lazy"><b>GD</b><span>Grenada</span></a>
+  <a class="t" href="flags/GP.svg" download title="Guadeloupe" data-q="guadeloupe gp"><img src="flags/GP.svg" alt="" loading="lazy"><b>GP</b><span>Guadeloupe</span></a>
+  <a class="t" href="flags/GU.svg" download title="Guam" data-q="guam gu"><img src="flags/GU.svg" alt="" loading="lazy"><b>GU</b><span>Guam</span></a>
+  <a class="t" href="flags/GT.svg" download title="Guatemala" data-q="guatemala gt"><img src="flags/GT.svg" alt="" loading="lazy"><b>GT</b><span>Guatemala</span></a>
+  <a class="t" href="flags/GG.svg" download title="Guernsey" data-q="guernsey gg"><img src="flags/GG.svg" alt="" loading="lazy"><b>GG</b><span>Guernsey</span></a>
+  <a class="t" href="flags/GN.svg" download title="Guinea" data-q="guinea gn"><img src="flags/GN.svg" alt="" loading="lazy"><b>GN</b><span>Guinea</span></a>
+  <a class="t" href="flags/GW.svg" download title="Guinea-Bissau" data-q="guinea-bissau gw"><img src="flags/GW.svg" alt="" loading="lazy"><b>GW</b><span>Guinea-Bissau</span></a>
+  <a class="t" href="flags/GY.svg" download title="Guyana" data-q="guyana gy"><img src="flags/GY.svg" alt="" loading="lazy"><b>GY</b><span>Guyana</span></a>
+  <a class="t" href="flags/HT.svg" download title="Haiti" data-q="haiti ht"><img src="flags/HT.svg" alt="" loading="lazy"><b>HT</b><span>Haiti</span></a>
+  <a class="t" href="flags/HM.svg" download title="Heard & McDonald Islands" data-q="heard & mcdonald islands hm"><img src="flags/HM.svg" alt="" loading="lazy"><b>HM</b><span>Heard & McDonald Islands</span></a>
+  <a class="t" href="flags/HN.svg" download title="Honduras" data-q="honduras hn"><img src="flags/HN.svg" alt="" loading="lazy"><b>HN</b><span>Honduras</span></a>
+  <a class="t" href="flags/HK.svg" download title="Hong Kong" data-q="hong kong hk"><img src="flags/HK.svg" alt="" loading="lazy"><b>HK</b><span>Hong Kong</span></a>
+  <a class="t" href="flags/HU.svg" download title="Hungary" data-q="hungary hu"><img src="flags/HU.svg" alt="" loading="lazy"><b>HU</b><span>Hungary</span></a>
+  <a class="t" href="flags/IS.svg" download title="Iceland" data-q="iceland is"><img src="flags/IS.svg" alt="" loading="lazy"><b>IS</b><span>Iceland</span></a>
+  <a class="t" href="flags/IN.svg" download title="India" data-q="india in"><img src="flags/IN.svg" alt="" loading="lazy"><b>IN</b><span>India</span></a>
+  <a class="t" href="flags/ID.svg" download title="Indonesia" data-q="indonesia id"><img src="flags/ID.svg" alt="" loading="lazy"><b>ID</b><span>Indonesia</span></a>
+  <a class="t" href="flags/IR.svg" download title="Iran" data-q="iran ir"><img src="flags/IR.svg" alt="" loading="lazy"><b>IR</b><span>Iran</span></a>
+  <a class="t" href="flags/IQ.svg" download title="Iraq" data-q="iraq iq"><img src="flags/IQ.svg" alt="" loading="lazy"><b>IQ</b><span>Iraq</span></a>
+  <a class="t" href="flags/IE.svg" download title="Ireland" data-q="ireland ie"><img src="flags/IE.svg" alt="" loading="lazy"><b>IE</b><span>Ireland</span></a>
+  <a class="t" href="flags/IM.svg" download title="Isle of Man" data-q="isle of man im"><img src="flags/IM.svg" alt="" loading="lazy"><b>IM</b><span>Isle of Man</span></a>
+  <a class="t" href="flags/IL.svg" download title="Israel" data-q="israel il"><img src="flags/IL.svg" alt="" loading="lazy"><b>IL</b><span>Israel</span></a>
+  <a class="t" href="flags/IT.svg" download title="Italy" data-q="italy it"><img src="flags/IT.svg" alt="" loading="lazy"><b>IT</b><span>Italy</span></a>
+  <a class="t" href="flags/JM.svg" download title="Jamaica" data-q="jamaica jm"><img src="flags/JM.svg" alt="" loading="lazy"><b>JM</b><span>Jamaica</span></a>
+  <a class="t" href="flags/JP.svg" download title="Japan" data-q="japan jp"><img src="flags/JP.svg" alt="" loading="lazy"><b>JP</b><span>Japan</span></a>
+  <a class="t" href="flags/JE.svg" download title="Jersey" data-q="jersey je"><img src="flags/JE.svg" alt="" loading="lazy"><b>JE</b><span>Jersey</span></a>
+  <a class="t" href="flags/JO.svg" download title="Jordan" data-q="jordan jo"><img src="flags/JO.svg" alt="" loading="lazy"><b>JO</b><span>Jordan</span></a>
+  <a class="t" href="flags/KZ.svg" download title="Kazakhstan" data-q="kazakhstan kz"><img src="flags/KZ.svg" alt="" loading="lazy"><b>KZ</b><span>Kazakhstan</span></a>
+  <a class="t" href="flags/KE.svg" download title="Kenya" data-q="kenya ke"><img src="flags/KE.svg" alt="" loading="lazy"><b>KE</b><span>Kenya</span></a>
+  <a class="t" href="flags/KI.svg" download title="Kiribati" data-q="kiribati ki"><img src="flags/KI.svg" alt="" loading="lazy"><b>KI</b><span>Kiribati</span></a>
+  <a class="t" href="flags/KW.svg" download title="Kuwait" data-q="kuwait kw"><img src="flags/KW.svg" alt="" loading="lazy"><b>KW</b><span>Kuwait</span></a>
+  <a class="t" href="flags/KG.svg" download title="Kyrgyzstan" data-q="kyrgyzstan kg"><img src="flags/KG.svg" alt="" loading="lazy"><b>KG</b><span>Kyrgyzstan</span></a>
+  <a class="t" href="flags/LA.svg" download title="Laos" data-q="laos la"><img src="flags/LA.svg" alt="" loading="lazy"><b>LA</b><span>Laos</span></a>
+  <a class="t" href="flags/LV.svg" download title="Latvia" data-q="latvia lv"><img src="flags/LV.svg" alt="" loading="lazy"><b>LV</b><span>Latvia</span></a>
+  <a class="t" href="flags/LB.svg" download title="Lebanon" data-q="lebanon lb"><img src="flags/LB.svg" alt="" loading="lazy"><b>LB</b><span>Lebanon</span></a>
+  <a class="t" href="flags/LS.svg" download title="Lesotho" data-q="lesotho ls"><img src="flags/LS.svg" alt="" loading="lazy"><b>LS</b><span>Lesotho</span></a>
+  <a class="t" href="flags/LR.svg" download title="Liberia" data-q="liberia lr"><img src="flags/LR.svg" alt="" loading="lazy"><b>LR</b><span>Liberia</span></a>
+  <a class="t" href="flags/LY.svg" download title="Libya" data-q="libya ly"><img src="flags/LY.svg" alt="" loading="lazy"><b>LY</b><span>Libya</span></a>
+  <a class="t" href="flags/LI.svg" download title="Liechtenstein" data-q="liechtenstein li"><img src="flags/LI.svg" alt="" loading="lazy"><b>LI</b><span>Liechtenstein</span></a>
+  <a class="t" href="flags/LT.svg" download title="Lithuania" data-q="lithuania lt"><img src="flags/LT.svg" alt="" loading="lazy"><b>LT</b><span>Lithuania</span></a>
+  <a class="t" href="flags/LU.svg" download title="Luxembourg" data-q="luxembourg lu"><img src="flags/LU.svg" alt="" loading="lazy"><b>LU</b><span>Luxembourg</span></a>
+  <a class="t" href="flags/MO.svg" download title="Macao" data-q="macao mo"><img src="flags/MO.svg" alt="" loading="lazy"><b>MO</b><span>Macao</span></a>
+  <a class="t" href="flags/MG.svg" download title="Madagascar" data-q="madagascar mg"><img src="flags/MG.svg" alt="" loading="lazy"><b>MG</b><span>Madagascar</span></a>
+  <a class="t" href="flags/MW.svg" download title="Malawi" data-q="malawi mw"><img src="flags/MW.svg" alt="" loading="lazy"><b>MW</b><span>Malawi</span></a>
+  <a class="t" href="flags/MY.svg" download title="Malaysia" data-q="malaysia my"><img src="flags/MY.svg" alt="" loading="lazy"><b>MY</b><span>Malaysia</span></a>
+  <a class="t" href="flags/MV.svg" download title="Maldives" data-q="maldives mv"><img src="flags/MV.svg" alt="" loading="lazy"><b>MV</b><span>Maldives</span></a>
+  <a class="t" href="flags/ML.svg" download title="Mali" data-q="mali ml"><img src="flags/ML.svg" alt="" loading="lazy"><b>ML</b><span>Mali</span></a>
+  <a class="t" href="flags/MT.svg" download title="Malta" data-q="malta mt"><img src="flags/MT.svg" alt="" loading="lazy"><b>MT</b><span>Malta</span></a>
+  <a class="t" href="flags/MH.svg" download title="Marshall Islands" data-q="marshall islands mh"><img src="flags/MH.svg" alt="" loading="lazy"><b>MH</b><span>Marshall Islands</span></a>
+  <a class="t" href="flags/MQ.svg" download title="Martinique" data-q="martinique mq"><img src="flags/MQ.svg" alt="" loading="lazy"><b>MQ</b><span>Martinique</span></a>
+  <a class="t" href="flags/MR.svg" download title="Mauritania" data-q="mauritania mr"><img src="flags/MR.svg" alt="" loading="lazy"><b>MR</b><span>Mauritania</span></a>
+  <a class="t" href="flags/MU.svg" download title="Mauritius" data-q="mauritius mu"><img src="flags/MU.svg" alt="" loading="lazy"><b>MU</b><span>Mauritius</span></a>
+  <a class="t" href="flags/YT.svg" download title="Mayotte" data-q="mayotte yt"><img src="flags/YT.svg" alt="" loading="lazy"><b>YT</b><span>Mayotte</span></a>
+  <a class="t" href="flags/MX.svg" download title="Mexico" data-q="mexico mx"><img src="flags/MX.svg" alt="" loading="lazy"><b>MX</b><span>Mexico</span></a>
+  <a class="t" href="flags/FM.svg" download title="Micronesia" data-q="micronesia fm"><img src="flags/FM.svg" alt="" loading="lazy"><b>FM</b><span>Micronesia</span></a>
+  <a class="t" href="flags/MD.svg" download title="Moldova" data-q="moldova md"><img src="flags/MD.svg" alt="" loading="lazy"><b>MD</b><span>Moldova</span></a>
+  <a class="t" href="flags/MC.svg" download title="Monaco" data-q="monaco mc"><img src="flags/MC.svg" alt="" loading="lazy"><b>MC</b><span>Monaco</span></a>
+  <a class="t" href="flags/MN.svg" download title="Mongolia" data-q="mongolia mn"><img src="flags/MN.svg" alt="" loading="lazy"><b>MN</b><span>Mongolia</span></a>
+  <a class="t" href="flags/ME.svg" download title="Montenegro" data-q="montenegro me"><img src="flags/ME.svg" alt="" loading="lazy"><b>ME</b><span>Montenegro</span></a>
+  <a class="t" href="flags/MS.svg" download title="Montserrat" data-q="montserrat ms"><img src="flags/MS.svg" alt="" loading="lazy"><b>MS</b><span>Montserrat</span></a>
+  <a class="t" href="flags/MA.svg" download title="Morocco" data-q="morocco ma"><img src="flags/MA.svg" alt="" loading="lazy"><b>MA</b><span>Morocco</span></a>
+  <a class="t" href="flags/MZ.svg" download title="Mozambique" data-q="mozambique mz"><img src="flags/MZ.svg" alt="" loading="lazy"><b>MZ</b><span>Mozambique</span></a>
+  <a class="t" href="flags/MM.svg" download title="Myanmar (Burma)" data-q="myanmar (burma) mm"><img src="flags/MM.svg" alt="" loading="lazy"><b>MM</b><span>Myanmar (Burma)</span></a>
+  <a class="t" href="flags/NA.svg" download title="Namibia" data-q="namibia na"><img src="flags/NA.svg" alt="" loading="lazy"><b>NA</b><span>Namibia</span></a>
+  <a class="t" href="flags/NR.svg" download title="Nauru" data-q="nauru nr"><img src="flags/NR.svg" alt="" loading="lazy"><b>NR</b><span>Nauru</span></a>
+  <a class="t" href="flags/NP.svg" download title="Nepal" data-q="nepal np"><img src="flags/NP.svg" alt="" loading="lazy"><b>NP</b><span>Nepal</span></a>
+  <a class="t" href="flags/NL.svg" download title="Netherlands" data-q="netherlands nl"><img src="flags/NL.svg" alt="" loading="lazy"><b>NL</b><span>Netherlands</span></a>
+  <a class="t" href="flags/NC.svg" download title="New Caledonia" data-q="new caledonia nc"><img src="flags/NC.svg" alt="" loading="lazy"><b>NC</b><span>New Caledonia</span></a>
+  <a class="t" href="flags/NZ.svg" download title="New Zealand" data-q="new zealand nz"><img src="flags/NZ.svg" alt="" loading="lazy"><b>NZ</b><span>New Zealand</span></a>
+  <a class="t" href="flags/NI.svg" download title="Nicaragua" data-q="nicaragua ni"><img src="flags/NI.svg" alt="" loading="lazy"><b>NI</b><span>Nicaragua</span></a>
+  <a class="t" href="flags/NE.svg" download title="Niger" data-q="niger ne"><img src="flags/NE.svg" alt="" loading="lazy"><b>NE</b><span>Niger</span></a>
+  <a class="t" href="flags/NG.svg" download title="Nigeria" data-q="nigeria ng"><img src="flags/NG.svg" alt="" loading="lazy"><b>NG</b><span>Nigeria</span></a>
+  <a class="t" href="flags/NU.svg" download title="Niue" data-q="niue nu"><img src="flags/NU.svg" alt="" loading="lazy"><b>NU</b><span>Niue</span></a>
+  <a class="t" href="flags/NF.svg" download title="Norfolk Island" data-q="norfolk island nf"><img src="flags/NF.svg" alt="" loading="lazy"><b>NF</b><span>Norfolk Island</span></a>
+  <a class="t" href="flags/KP.svg" download title="North Korea" data-q="north korea kp"><img src="flags/KP.svg" alt="" loading="lazy"><b>KP</b><span>North Korea</span></a>
+  <a class="t" href="flags/MK.svg" download title="North Macedonia" data-q="north macedonia mk"><img src="flags/MK.svg" alt="" loading="lazy"><b>MK</b><span>North Macedonia</span></a>
+  <a class="t" href="flags/MP.svg" download title="Northern Mariana Islands" data-q="northern mariana islands mp"><img src="flags/MP.svg" alt="" loading="lazy"><b>MP</b><span>Northern Mariana Islands</span></a>
+  <a class="t" href="flags/NO.svg" download title="Norway" data-q="norway no"><img src="flags/NO.svg" alt="" loading="lazy"><b>NO</b><span>Norway</span></a>
+  <a class="t" href="flags/OM.svg" download title="Oman" data-q="oman om"><img src="flags/OM.svg" alt="" loading="lazy"><b>OM</b><span>Oman</span></a>
+  <a class="t" href="flags/PK.svg" download title="Pakistan" data-q="pakistan pk"><img src="flags/PK.svg" alt="" loading="lazy"><b>PK</b><span>Pakistan</span></a>
+  <a class="t" href="flags/PW.svg" download title="Palau" data-q="palau pw"><img src="flags/PW.svg" alt="" loading="lazy"><b>PW</b><span>Palau</span></a>
+  <a class="t" href="flags/PS.svg" download title="Palestinian Territories" data-q="palestinian territories ps"><img src="flags/PS.svg" alt="" loading="lazy"><b>PS</b><span>Palestinian Territories</span></a>
+  <a class="t" href="flags/PA.svg" download title="Panama" data-q="panama pa"><img src="flags/PA.svg" alt="" loading="lazy"><b>PA</b><span>Panama</span></a>
+  <a class="t" href="flags/PG.svg" download title="Papua New Guinea" data-q="papua new guinea pg"><img src="flags/PG.svg" alt="" loading="lazy"><b>PG</b><span>Papua New Guinea</span></a>
+  <a class="t" href="flags/PY.svg" download title="Paraguay" data-q="paraguay py"><img src="flags/PY.svg" alt="" loading="lazy"><b>PY</b><span>Paraguay</span></a>
+  <a class="t" href="flags/PE.svg" download title="Peru" data-q="peru pe"><img src="flags/PE.svg" alt="" loading="lazy"><b>PE</b><span>Peru</span></a>
+  <a class="t" href="flags/PH.svg" download title="Philippines" data-q="philippines ph"><img src="flags/PH.svg" alt="" loading="lazy"><b>PH</b><span>Philippines</span></a>
+  <a class="t" href="flags/PN.svg" download title="Pitcairn Islands" data-q="pitcairn islands pn"><img src="flags/PN.svg" alt="" loading="lazy"><b>PN</b><span>Pitcairn Islands</span></a>
+  <a class="t" href="flags/PL.svg" download title="Poland" data-q="poland pl"><img src="flags/PL.svg" alt="" loading="lazy"><b>PL</b><span>Poland</span></a>
+  <a class="t" href="flags/PT.svg" download title="Portugal" data-q="portugal pt"><img src="flags/PT.svg" alt="" loading="lazy"><b>PT</b><span>Portugal</span></a>
+  <a class="t" href="flags/PR.svg" download title="Puerto Rico" data-q="puerto rico pr"><img src="flags/PR.svg" alt="" loading="lazy"><b>PR</b><span>Puerto Rico</span></a>
+  <a class="t" href="flags/QA.svg" download title="Qatar" data-q="qatar qa"><img src="flags/QA.svg" alt="" loading="lazy"><b>QA</b><span>Qatar</span></a>
+  <a class="t" href="flags/RO.svg" download title="Romania" data-q="romania ro"><img src="flags/RO.svg" alt="" loading="lazy"><b>RO</b><span>Romania</span></a>
+  <a class="t" href="flags/RU.svg" download title="Russia" data-q="russia ru"><img src="flags/RU.svg" alt="" loading="lazy"><b>RU</b><span>Russia</span></a>
+  <a class="t" href="flags/RW.svg" download title="Rwanda" data-q="rwanda rw"><img src="flags/RW.svg" alt="" loading="lazy"><b>RW</b><span>Rwanda</span></a>
+  <a class="t" href="flags/RE.svg" download title="Réunion" data-q="réunion re"><img src="flags/RE.svg" alt="" loading="lazy"><b>RE</b><span>Réunion</span></a>
+  <a class="t" href="flags/WS.svg" download title="Samoa" data-q="samoa ws"><img src="flags/WS.svg" alt="" loading="lazy"><b>WS</b><span>Samoa</span></a>
+  <a class="t" href="flags/SM.svg" download title="San Marino" data-q="san marino sm"><img src="flags/SM.svg" alt="" loading="lazy"><b>SM</b><span>San Marino</span></a>
+  <a class="t" href="flags/SA.svg" download title="Saudi Arabia" data-q="saudi arabia sa"><img src="flags/SA.svg" alt="" loading="lazy"><b>SA</b><span>Saudi Arabia</span></a>
+  <a class="t" href="flags/SN.svg" download title="Senegal" data-q="senegal sn"><img src="flags/SN.svg" alt="" loading="lazy"><b>SN</b><span>Senegal</span></a>
+  <a class="t" href="flags/RS.svg" download title="Serbia" data-q="serbia rs"><img src="flags/RS.svg" alt="" loading="lazy"><b>RS</b><span>Serbia</span></a>
+  <a class="t" href="flags/SC.svg" download title="Seychelles" data-q="seychelles sc"><img src="flags/SC.svg" alt="" loading="lazy"><b>SC</b><span>Seychelles</span></a>
+  <a class="t" href="flags/SL.svg" download title="Sierra Leone" data-q="sierra leone sl"><img src="flags/SL.svg" alt="" loading="lazy"><b>SL</b><span>Sierra Leone</span></a>
+  <a class="t" href="flags/SG.svg" download title="Singapore" data-q="singapore sg"><img src="flags/SG.svg" alt="" loading="lazy"><b>SG</b><span>Singapore</span></a>
+  <a class="t" href="flags/SX.svg" download title="Sint Maarten" data-q="sint maarten sx"><img src="flags/SX.svg" alt="" loading="lazy"><b>SX</b><span>Sint Maarten</span></a>
+  <a class="t" href="flags/SK.svg" download title="Slovakia" data-q="slovakia sk"><img src="flags/SK.svg" alt="" loading="lazy"><b>SK</b><span>Slovakia</span></a>
+  <a class="t" href="flags/SI.svg" download title="Slovenia" data-q="slovenia si"><img src="flags/SI.svg" alt="" loading="lazy"><b>SI</b><span>Slovenia</span></a>
+  <a class="t" href="flags/GS.svg" download title="So. Georgia & So. Sandwich Isl." data-q="so. georgia & so. sandwich isl. gs"><img src="flags/GS.svg" alt="" loading="lazy"><b>GS</b><span>So. Georgia & So. Sandwich Isl.</span></a>
+  <a class="t" href="flags/SB.svg" download title="Solomon Islands" data-q="solomon islands sb"><img src="flags/SB.svg" alt="" loading="lazy"><b>SB</b><span>Solomon Islands</span></a>
+  <a class="t" href="flags/SO.svg" download title="Somalia" data-q="somalia so"><img src="flags/SO.svg" alt="" loading="lazy"><b>SO</b><span>Somalia</span></a>
+  <a class="t" href="flags/ZA.svg" download title="South Africa" data-q="south africa za"><img src="flags/ZA.svg" alt="" loading="lazy"><b>ZA</b><span>South Africa</span></a>
+  <a class="t" href="flags/KR.svg" download title="South Korea" data-q="south korea kr"><img src="flags/KR.svg" alt="" loading="lazy"><b>KR</b><span>South Korea</span></a>
+  <a class="t" href="flags/SS.svg" download title="South Sudan" data-q="south sudan ss"><img src="flags/SS.svg" alt="" loading="lazy"><b>SS</b><span>South Sudan</span></a>
+  <a class="t" href="flags/ES.svg" download title="Spain" data-q="spain es"><img src="flags/ES.svg" alt="" loading="lazy"><b>ES</b><span>Spain</span></a>
+  <a class="t" href="flags/LK.svg" download title="Sri Lanka" data-q="sri lanka lk"><img src="flags/LK.svg" alt="" loading="lazy"><b>LK</b><span>Sri Lanka</span></a>
+  <a class="t" href="flags/BL.svg" download title="St. Barthélemy" data-q="st. barthélemy bl"><img src="flags/BL.svg" alt="" loading="lazy"><b>BL</b><span>St. Barthélemy</span></a>
+  <a class="t" href="flags/SH.svg" download title="St. Helena" data-q="st. helena sh"><img src="flags/SH.svg" alt="" loading="lazy"><b>SH</b><span>St. Helena</span></a>
+  <a class="t" href="flags/KN.svg" download title="St. Kitts & Nevis" data-q="st. kitts & nevis kn"><img src="flags/KN.svg" alt="" loading="lazy"><b>KN</b><span>St. Kitts & Nevis</span></a>
+  <a class="t" href="flags/LC.svg" download title="St. Lucia" data-q="st. lucia lc"><img src="flags/LC.svg" alt="" loading="lazy"><b>LC</b><span>St. Lucia</span></a>
+  <a class="t" href="flags/MF.svg" download title="St. Martin" data-q="st. martin mf"><img src="flags/MF.svg" alt="" loading="lazy"><b>MF</b><span>St. Martin</span></a>
+  <a class="t" href="flags/PM.svg" download title="St. Pierre & Miquelon" data-q="st. pierre & miquelon pm"><img src="flags/PM.svg" alt="" loading="lazy"><b>PM</b><span>St. Pierre & Miquelon</span></a>
+  <a class="t" href="flags/VC.svg" download title="St. Vincent & Grenadines" data-q="st. vincent & grenadines vc"><img src="flags/VC.svg" alt="" loading="lazy"><b>VC</b><span>St. Vincent & Grenadines</span></a>
+  <a class="t" href="flags/SD.svg" download title="Sudan" data-q="sudan sd"><img src="flags/SD.svg" alt="" loading="lazy"><b>SD</b><span>Sudan</span></a>
+  <a class="t" href="flags/SR.svg" download title="Suriname" data-q="suriname sr"><img src="flags/SR.svg" alt="" loading="lazy"><b>SR</b><span>Suriname</span></a>
+  <a class="t" href="flags/SJ.svg" download title="Svalbard & Jan Mayen" data-q="svalbard & jan mayen sj"><img src="flags/SJ.svg" alt="" loading="lazy"><b>SJ</b><span>Svalbard & Jan Mayen</span></a>
+  <a class="t" href="flags/SE.svg" download title="Sweden" data-q="sweden se"><img src="flags/SE.svg" alt="" loading="lazy"><b>SE</b><span>Sweden</span></a>
+  <a class="t" href="flags/CH.svg" download title="Switzerland" data-q="switzerland ch"><img src="flags/CH.svg" alt="" loading="lazy"><b>CH</b><span>Switzerland</span></a>
+  <a class="t" href="flags/SY.svg" download title="Syria" data-q="syria sy"><img src="flags/SY.svg" alt="" loading="lazy"><b>SY</b><span>Syria</span></a>
+  <a class="t" href="flags/ST.svg" download title="São Tomé & Príncipe" data-q="são tomé & príncipe st"><img src="flags/ST.svg" alt="" loading="lazy"><b>ST</b><span>São Tomé & Príncipe</span></a>
+  <a class="t" href="flags/TW.svg" download title="Taiwan" data-q="taiwan tw"><img src="flags/TW.svg" alt="" loading="lazy"><b>TW</b><span>Taiwan</span></a>
+  <a class="t" href="flags/TJ.svg" download title="Tajikistan" data-q="tajikistan tj"><img src="flags/TJ.svg" alt="" loading="lazy"><b>TJ</b><span>Tajikistan</span></a>
+  <a class="t" href="flags/TZ.svg" download title="Tanzania" data-q="tanzania tz"><img src="flags/TZ.svg" alt="" loading="lazy"><b>TZ</b><span>Tanzania</span></a>
+  <a class="t" href="flags/TH.svg" download title="Thailand" data-q="thailand th"><img src="flags/TH.svg" alt="" loading="lazy"><b>TH</b><span>Thailand</span></a>
+  <a class="t" href="flags/TL.svg" download title="Timor-Leste" data-q="timor-leste tl"><img src="flags/TL.svg" alt="" loading="lazy"><b>TL</b><span>Timor-Leste</span></a>
+  <a class="t" href="flags/TG.svg" download title="Togo" data-q="togo tg"><img src="flags/TG.svg" alt="" loading="lazy"><b>TG</b><span>Togo</span></a>
+  <a class="t" href="flags/TK.svg" download title="Tokelau" data-q="tokelau tk"><img src="flags/TK.svg" alt="" loading="lazy"><b>TK</b><span>Tokelau</span></a>
+  <a class="t" href="flags/TO.svg" download title="Tonga" data-q="tonga to"><img src="flags/TO.svg" alt="" loading="lazy"><b>TO</b><span>Tonga</span></a>
+  <a class="t" href="flags/TT.svg" download title="Trinidad & Tobago" data-q="trinidad & tobago tt"><img src="flags/TT.svg" alt="" loading="lazy"><b>TT</b><span>Trinidad & Tobago</span></a>
+  <a class="t" href="flags/TN.svg" download title="Tunisia" data-q="tunisia tn"><img src="flags/TN.svg" alt="" loading="lazy"><b>TN</b><span>Tunisia</span></a>
+  <a class="t" href="flags/TM.svg" download title="Turkmenistan" data-q="turkmenistan tm"><img src="flags/TM.svg" alt="" loading="lazy"><b>TM</b><span>Turkmenistan</span></a>
+  <a class="t" href="flags/TC.svg" download title="Turks & Caicos Islands" data-q="turks & caicos islands tc"><img src="flags/TC.svg" alt="" loading="lazy"><b>TC</b><span>Turks & Caicos Islands</span></a>
+  <a class="t" href="flags/TV.svg" download title="Tuvalu" data-q="tuvalu tv"><img src="flags/TV.svg" alt="" loading="lazy"><b>TV</b><span>Tuvalu</span></a>
+  <a class="t" href="flags/TR.svg" download title="Türkiye" data-q="türkiye tr"><img src="flags/TR.svg" alt="" loading="lazy"><b>TR</b><span>Türkiye</span></a>
+  <a class="t" href="flags/UM.svg" download title="U.S. Outlying Islands" data-q="u.s. outlying islands um"><img src="flags/UM.svg" alt="" loading="lazy"><b>UM</b><span>U.S. Outlying Islands</span></a>
+  <a class="t" href="flags/UG.svg" download title="Uganda" data-q="uganda ug"><img src="flags/UG.svg" alt="" loading="lazy"><b>UG</b><span>Uganda</span></a>
+  <a class="t" href="flags/UA.svg" download title="Ukraine" data-q="ukraine ua"><img src="flags/UA.svg" alt="" loading="lazy"><b>UA</b><span>Ukraine</span></a>
+  <a class="t" href="flags/AE.svg" download title="United Arab Emirates" data-q="united arab emirates ae"><img src="flags/AE.svg" alt="" loading="lazy"><b>AE</b><span>United Arab Emirates</span></a>
+  <a class="t" href="flags/GB.svg" download title="United Kingdom" data-q="united kingdom gb"><img src="flags/GB.svg" alt="" loading="lazy"><b>GB</b><span>United Kingdom</span></a>
+  <a class="t" href="flags/US.svg" download title="United States" data-q="united states us"><img src="flags/US.svg" alt="" loading="lazy"><b>US</b><span>United States</span></a>
+  <a class="t" href="flags/UY.svg" download title="Uruguay" data-q="uruguay uy"><img src="flags/UY.svg" alt="" loading="lazy"><b>UY</b><span>Uruguay</span></a>
+  <a class="t" href="flags/UZ.svg" download title="Uzbekistan" data-q="uzbekistan uz"><img src="flags/UZ.svg" alt="" loading="lazy"><b>UZ</b><span>Uzbekistan</span></a>
+  <a class="t" href="flags/VU.svg" download title="Vanuatu" data-q="vanuatu vu"><img src="flags/VU.svg" alt="" loading="lazy"><b>VU</b><span>Vanuatu</span></a>
+  <a class="t" href="flags/VA.svg" download title="Vatican City" data-q="vatican city va"><img src="flags/VA.svg" alt="" loading="lazy"><b>VA</b><span>Vatican City</span></a>
+  <a class="t" href="flags/VE.svg" download title="Venezuela" data-q="venezuela ve"><img src="flags/VE.svg" alt="" loading="lazy"><b>VE</b><span>Venezuela</span></a>
+  <a class="t" href="flags/VN.svg" download title="Vietnam" data-q="vietnam vn"><img src="flags/VN.svg" alt="" loading="lazy"><b>VN</b><span>Vietnam</span></a>
+  <a class="t" href="flags/WF.svg" download title="Wallis & Futuna" data-q="wallis & futuna wf"><img src="flags/WF.svg" alt="" loading="lazy"><b>WF</b><span>Wallis & Futuna</span></a>
+  <a class="t" href="flags/EH.svg" download title="Western Sahara" data-q="western sahara eh"><img src="flags/EH.svg" alt="" loading="lazy"><b>EH</b><span>Western Sahara</span></a>
+  <a class="t" href="flags/YE.svg" download title="Yemen" data-q="yemen ye"><img src="flags/YE.svg" alt="" loading="lazy"><b>YE</b><span>Yemen</span></a>
+  <a class="t" href="flags/ZM.svg" download title="Zambia" data-q="zambia zm"><img src="flags/ZM.svg" alt="" loading="lazy"><b>ZM</b><span>Zambia</span></a>
+  <a class="t" href="flags/ZW.svg" download title="Zimbabwe" data-q="zimbabwe zw"><img src="flags/ZW.svg" alt="" loading="lazy"><b>ZW</b><span>Zimbabwe</span></a>
+  <a class="t" href="flags/AX.svg" download title="Åland Islands" data-q="åland islands ax"><img src="flags/AX.svg" alt="" loading="lazy"><b>AX</b><span>Åland Islands</span></a>
+  </div>
+  <div class="none" id="none" hidden>No country matches that search.</div>
+</div>
+<script>
+const tiles = [...document.querySelectorAll('.t')];
+const count = document.getElementById('count'), none = document.getElementById('none');
+function filter(v){
+  const q = v.trim().toLowerCase();
+  let n = 0;
+  for(const t of tiles){ const hit = !q || t.dataset.q.includes(q); t.hidden = !hit; if(hit) n++; }
+  count.textContent = n + ' of ' + tiles.length + ' countries';
+  none.hidden = n > 0;
+}
+document.getElementById('q').addEventListener('input', e => filter(e.target.value));
+filter('');
+</script>
+</body>
+</html>
