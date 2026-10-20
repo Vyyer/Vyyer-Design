@@ -98,7 +98,7 @@ function build(nav){
   +     '<div class="sh-div"></div>'
   +     '<button class="sh-act quiet" type="button" id="shOut">'
   +       icon('<path d="M15 17l5-5-5-5"/><path d="M20 12H9"/><path d="M12 20H5.8A1.8 1.8 0 014 18.2V5.8A1.8 1.8 0 015.8 4H12"/>')
-  +       +'Sign out</button>'
+  +       'Log out</button>'
   +   '</div>'
   +   '<div class="sh-pop sh-confirm" id="shConfirm" role="alertdialog">'
   +     '<h4 id="shCfTitle"></h4><p id="shCfDesc"></p>'
@@ -293,9 +293,9 @@ function init(){
     $('shMenu').classList.contains('open') ? closeAcct() : openAcct(); };
   $('shEdit').onclick = ()=>openModal('edit');
   $('shAdd').onclick  = ()=>openModal('new');
-  $('shOut').onclick  = ()=>askConfirm('Sign out?',
-    'You’ll be signed out of '+ACCOUNT.email+' and returned to the login screen.',
-    'Sign out', ()=>{ closeAcct(); toast('Signed out'); });
+  $('shOut').onclick  = ()=>askConfirm('Log out?',
+    'You’ll be logged out of '+ACCOUNT.email+' and returned to the login screen.',
+    'Log out', ()=>{ closeAcct(); toast('Logged out'); });
   $('shList').onclick = e=>{
     const p = e.target.closest('.sh-pick'), d = e.target.closest('.sh-trash');
     if(d){ const i = +d.dataset.del;
