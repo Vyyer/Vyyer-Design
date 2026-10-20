@@ -38,6 +38,34 @@
   --sh-scrim:rgba(6,8,11,.62);
 }
 
+/* ── Shared page tokens ──────────────────────────────────────────────────────
+   Every dashboard page loads this file, so the surfaces that pages have in
+   common are defined once here instead of being re-picked per page. These are
+   deliberately NOT `--sh-` prefixed: they belong to the pages, not the shell.
+   Change a field colour here and Dashboard, History, Workflow and Branding
+   all move together.
+   A page may still override one locally, but it should be for a reason. */
+:root{
+  /* Two classes of field, and the difference is what they sit on.
+     SUNKEN — inside a card or panel: a tint darker than the surface.
+     FLOATING — on the page background itself, e.g. the filters in a page
+     header: white, so it reads as a control rather than a hole. */
+  --field:#F7F8F9;                      /* sunken fill */
+  --field-line:rgba(17,20,24,.10);      /* sunken border */
+  --field-float:#ffffff;                /* floating fill */
+  --field-float-line:rgba(17,20,24,.14);/* floating border */
+  --field-focus:#007aff;                /* focus ring hue, both classes */
+  --chip:rgba(17,20,24,.06);            /* small neutral pill fill */
+}
+[data-theme="dark"]{
+  --field:#0e0e10;
+  --field-line:rgba(255,255,255,.09);
+  --field-float:#121214;
+  --field-float-line:rgba(255,255,255,.16);
+  --field-focus:#5AA9FF;
+  --chip:rgba(255,255,255,.07);
+}
+
 /* the placeholder reserves the row's height before the script fills it, so
    nothing below it jumps on load */
 .sh-nav{height:var(--sh-h);display:flex;align-items:center;gap:6px;padding:0 16px;flex:0 0 auto;
@@ -160,13 +188,13 @@
 /* export control — one component, so Dashboard and History offer the same
    formats in the same place */
 .sh-exp{position:relative;flex:0 0 auto}
-.sh-exp>button{display:flex;align-items:center;gap:6px;font:500 12px var(--sh-font);color:var(--sh-ink-2);
-  background:var(--sh-panel);border:1px solid var(--sh-line-2);border-radius:10px;padding:6px 10px 6px 12px;
+.sh-exp>button{display:flex;align-items:center;gap:7px;font:600 12.5px var(--sh-font);color:var(--sh-ink);
+  background:var(--sh-panel);border:1px solid var(--sh-line-2);border-radius:10px;padding:8px 13px;
   cursor:pointer;white-space:nowrap}
-.sh-exp>button:hover{background:var(--sh-hover);color:var(--sh-ink)}
-.sh-exp.open>button{border-color:var(--sh-accent-text);color:var(--sh-ink)}
-.sh-exp>button svg{width:13px;height:13px;flex:0 0 auto}
-.sh-exp>button .cv{opacity:.55;transition:transform .15s;width:11px;height:11px}
+.sh-exp>button:hover{border-color:var(--sh-ink-3);background:var(--sh-panel)}
+.sh-exp.open>button{border-color:var(--sh-ink-3)}
+.sh-exp>button svg{width:14px;height:14px;flex:0 0 auto}
+.sh-exp>button .cv{opacity:.5;transition:transform .15s;width:12px;height:12px;margin-left:-1px}
 .sh-exp.open>button .cv{transform:rotate(180deg)}
 .sh-expmenu{display:none;position:absolute;top:calc(100% + 6px);right:0;z-index:60;min-width:188px;padding:5px;
   background:var(--sh-panel);border:1px solid var(--sh-line-2);border-radius:11px;box-shadow:var(--sh-shadow-pop)}

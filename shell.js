@@ -30,7 +30,7 @@ const I = {
 const TABS = [
   {id:'dashboard', label:'Dashboard', href:'dashboard.html'},
   {id:'history',   label:'History',   href:'history.html'},
-  {id:'workflows', label:'Workflows', href:'#'},
+  {id:'workflows', label:'Workflow',  href:'workflow.html'},
   {id:'branding',  label:'Branding',  href:'branding.html'},
   {id:'apikeys',   label:'API Keys',  href:'#'},
   {id:'settings',  label:'Settings',  href:'#'},

@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vyyer — Workflow</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="shell.css">
+<!-- the stored dashboard theme is applied before paint, so the page never flashes the other one -->
+<script>try{document.documentElement.dataset.theme=localStorage.getItem('vyyer.dashTheme')||'light'}catch(e){}</script>
+<!--
+  ============================================================================
+  VYYER DASHBOARD — WORKFLOW
+
+  ONE workflow per profile, so the page is singular throughout. Multiple
+  workflows come later; nothing here assumes a list, but the data is keyed so
+  a list can wrap it.
+
+  Three things this redesign fixes:
+
+  1. DEPENDENCIES ARE EXPLAINED. The live page greys out checks with no reason
+     given — Back Scan is required, Front OCR needs Front Capture. Every
+     unavailable row here says what it is waiting on, and turning a parent off
+     visibly releases its children instead of silently dropping them.
+
+  2. THE CONSEQUENCE IS VISIBLE. These switches decide which screens the
+     customer sees, which is the whole link to Branding. The journey strip
+     under the checks lists the screens this configuration produces.
+
+  3. THE COUNTRY PICKER IS A PICKER. The live one prints ~200 chips with no
+     search. This one has an All / Selected mode, a search, and add-one,
+     remove-one, select-all and clear.
+  ============================================================================
+-->
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #f8fafc;
+  --surface: #ffffff;
+  --surface-2: #edf0f5;
+  --border: rgba(0,0,0,0.08);
+  --border-md: rgba(0,0,0,0.14);
+  --text-primary: #111110;
+  --text-secondary: #6f6e6b;
+  --text-tertiary: #9d9c99;
+  --accent: #A0D959;
+  --on-accent: #16240a;
+  --ok: #3a7d1e;
+  --info: #007aff;
+  --warn: #c47a1a;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
+  --radius-sm: 8px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --font: 'Inter', system-ui, sans-serif;
+}
+
+html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { min-height: 100vh; }
+main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
+
+/* ── page header ── */
+.toolbar {
+  position: sticky; top: var(--sh-h); z-index: 20; background: rgba(248,250,252,0.95);
+  backdrop-filter: blur(8px); display: flex; align-items: center; gap: 14px;
+  padding: 18px 0 14px; border-bottom: 1px solid var(--border); margin-bottom: 22px;
+}
+.toolbar h1 { font-size: 19px; font-weight: 600; letter-spacing: -0.02em; }
+.toolbar .sp { flex: 1; }
+
+.btn { font-family: var(--font); font-size: 12.5px; font-weight: 600; color: var(--text-primary);
+  background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md);
+  padding: 8px 14px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+.btn:hover:not(:disabled) { border-color: var(--text-tertiary); }
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn:disabled { opacity: .4; cursor: not-allowed; }
+.btn.primary.saved:disabled { opacity: 1; }
+.btn svg { width: 14px; height: 14px; }
+.spin { animation: spin .8s linear infinite; transform-origin: 50% 50%; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── section ── */
+.sec { margin-bottom: 26px; }
+.sec-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.sec-head h2 { font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary); }
+.sec-head p { font-size: 12.5px; color: var(--text-tertiary); }
+
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; }
+
+/* ── service rows on the list view ── */
+.svc { display: flex; align-items: flex-start; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.svc:last-child { border-bottom: 0; }
+.svc-ic { width: 38px; height: 38px; flex: 0 0 auto; border-radius: 10px; display: grid; place-items: center;
+  background: var(--chip); color: var(--text-secondary); }
+.svc-ic svg { width: 19px; height: 19px; }
+.svc-main { flex: 1; min-width: 0; }
+.svc-name { font-size: 14.5px; font-weight: 600; }
+.svc-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+.svc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 9px; font-size: 11.5px; color: var(--text-tertiary); }
+.svc-meta b { color: var(--text-secondary); font-weight: 600; }
+.svc-side { display: flex; align-items: center; gap: 10px; flex: 0 0 auto; padding-top: 2px; }
+.svc.off .svc-name, .svc.off .svc-desc, .svc.off .svc-ic { opacity: .5; }
+
+.chip { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600;
+  padding: 2px 8px; border-radius: 20px; background: var(--chip); color: var(--text-secondary); white-space: nowrap; }
+.chip.on { background: rgba(122,201,67,.16); color: var(--ok); }
+.chip.soon { background: rgba(0,122,255,.1); color: var(--info); }
+
+.linkbtn { font-family: var(--font); font-size: 12.5px; font-weight: 600; color: var(--info);
+  background: none; border: 0; padding: 4px 2px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+.linkbtn:hover { text-decoration: underline; }
+.linkbtn svg { width: 12px; height: 12px; }
+.linkbtn:disabled { color: var(--text-tertiary); cursor: not-allowed; text-decoration: none; }
+
+/* ── switch ── */
+.sw { -webkit-appearance: none; appearance: none; border: 0; padding: 0; cursor: pointer; background: none; flex: 0 0 auto; }
+.sw .track { width: 38px; height: 22px; border-radius: 99px; background: var(--border-md); position: relative; transition: background .15s; display: block; }
+.sw .track i { position: absolute; top: 2px; left: 2px; width: 18px; height: 18px; border-radius: 50%; background: #fff; transition: transform .15s; box-shadow: 0 1px 2px rgba(0,0,0,.25); }
+.sw.on .track { background: var(--ok); }
+.sw.on .track i { transform: translateX(16px); }
+.sw:disabled { cursor: not-allowed; opacity: .45; }
+/* an always-on check is locked, not unavailable — it shouldn't read as half-off */
+.sw.locked:disabled { opacity: 1; cursor: default; }
+
+/* ── check rows in the detail view ── */
+.chk { display: flex; align-items: flex-start; gap: 14px; padding: 13px 18px; border-bottom: 1px solid var(--border); }
+.chk:last-child { border-bottom: 0; }
+.chk-main { flex: 1; min-width: 0; }
+.chk-name { font-size: 13.5px; font-weight: 600; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.chk-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 2px; }
+/* a row that cannot be used says why, rather than greying out in silence */
+.chk-why { font-size: 11.5px; color: var(--warn); margin-top: 5px; display: flex; align-items: center; gap: 5px; }
+.chk-why svg { width: 12px; height: 12px; flex: 0 0 auto; }
+.chk.blocked .chk-name, .chk.blocked .chk-desc { opacity: .55; }
+
+/* ── banner ── */
+.note { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: var(--radius-md);
+  background: rgba(0,122,255,.07); border: 1px solid rgba(0,122,255,.18); font-size: 12.5px; color: var(--text-secondary); margin-bottom: 20px; }
+.note svg { width: 15px; height: 15px; flex: 0 0 auto; color: var(--info); margin-top: 1px; }
+.note b { color: var(--text-primary); font-weight: 600; }
+
+/* ── customer journey strip ── */
+.journey { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.step { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500;
+  padding: 5px 11px; border-radius: 20px; white-space: nowrap;
+  border: 1px dashed var(--border-md); color: var(--text-secondary); }
+.step.lead { border-color: var(--ok); color: var(--ok); }
+.step-sep { color: var(--text-tertiary); font-size: 11px; }
+
+/* ── country picker ── */
+.cty-head { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
+.seg { display: inline-flex; gap: 2px; background: var(--field); border: 1px solid var(--field-line);
+  border-radius: var(--radius-md); padding: 3px; }
+.seg button { border: 0; background: transparent; font-family: var(--font); font-size: 12.5px; font-weight: 600;
+  color: var(--text-secondary); padding: 6px 12px; border-radius: 7px; cursor: pointer; }
+.seg button.on { background: var(--surface); color: var(--text-primary); box-shadow: var(--shadow-sm); }
+[data-theme="dark"] .seg button.on { background: var(--surface-2); }
+.cty-count { font-size: 12.5px; color: var(--text-tertiary); margin-left: auto; }
+.cty-count b { color: var(--text-primary); font-weight: 600; }
+
+.cty-body { padding: 14px 18px 16px; }
+.search { position: relative; margin-bottom: 12px; }
+.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-tertiary); }
+.search input { width: 100%; font-family: var(--font); font-size: 13.5px; color: var(--text-primary);
+  background: var(--field); border: 1px solid var(--field-line); border-radius: var(--radius-md); padding: 10px 12px 10px 36px;
+  outline: none; transition: border-color .15s, box-shadow .15s; }
+.search input::placeholder { color: var(--text-tertiary); }
+.search input:focus { border-color: var(--field-focus); box-shadow: 0 0 0 3px rgba(0,122,255,.12); }
+
+.picked { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
+.picked:empty { display: none; }
+.cchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
+  background: var(--chip); border: 1px solid var(--field-line); border-radius: 20px; padding: 4px 6px 4px 11px; }
+.cchip button { border: 0; background: none; cursor: pointer; color: var(--text-tertiary); display: grid; place-items: center;
+  width: 18px; height: 18px; border-radius: 50%; }
+.cchip button:hover { color: #d63f3f; background: var(--surface); }
+[data-theme="dark"] .cchip button:hover { color: #F0756A; background: var(--surface-2); }
+.cchip svg { width: 11px; height: 11px; }
+
+.cchip.more { font-family: var(--font); color: var(--info); cursor: pointer; padding: 4px 11px; }
+.cchip.more:hover { border-color: var(--border-md); }
+.cty-actions { display: flex; align-items: center; gap: 14px; margin-bottom: 10px; }
+.cty-actions .sp { flex: 1; }
+.hint { font-size: 11.5px; color: var(--text-tertiary); text-align: right; }
+.hint b { font-weight: 600; color: var(--text-secondary); }
+.results { max-height: 232px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+.cty { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none;
+  font-family: var(--font); font-size: 13px; color: var(--text-primary); padding: 8px 12px; cursor: pointer; }
+.cty:hover { background: var(--surface-2); }
+.cty .box { width: 16px; height: 16px; flex: 0 0 auto; border: 1.5px solid var(--border-md); border-radius: 4px;
+  display: grid; place-items: center; color: #fff; }
+.cty.on .box { background: var(--info); border-color: var(--info); }
+.cty .box svg { width: 10px; height: 10px; opacity: 0; }
+.cty.on .box svg { opacity: 1; }
+.empty { padding: 22px; text-align: center; font-size: 12.5px; color: var(--text-tertiary); }
+.all-note { display: flex; align-items: center; gap: 8px; padding: 16px 18px; font-size: 12.5px; color: var(--text-secondary); }
+.all-note svg { width: 15px; height: 15px; color: var(--ok); flex: 0 0 auto; }
+
+/* ── detail header ── */
+.back { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
+  background: none; border: 0; font-family: var(--font); cursor: pointer; padding: 18px 0 2px; }
+.back:hover { color: var(--text-primary); }
+.back svg { width: 13px; height: 13px; }
+.toolbar-switch { display: flex; align-items: center; gap: 9px; font-size: 12.5px; font-weight: 600; color: var(--text-secondary); }
+
+@media (max-width: 720px) {
+  .svc { flex-wrap: wrap; }
+  .toolbar { flex-wrap: wrap; }
+}
+
+/* ══ DARK MODE ═════════════════════════════════════════════════════════════
+   Matches the other dashboard pages: the theme comes from the nav switcher
+   and is stored per user. */
+[data-theme="dark"] {
+  --bg: #0a0a0b;
+  --surface: #121214;
+  --surface-2: #1c1c20;
+  --border: rgba(255,255,255,0.09);
+  --border-md: rgba(255,255,255,0.18);
+  --text-primary: rgba(255,255,255,0.95);
+  --text-secondary: rgba(255,255,255,0.56);
+  --text-tertiary: rgba(255,255,255,0.38);
+  --ok: #8CCB5C;
+  --info: #5AA9FF;
+  --warn: #E0A24E;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.5);
+  --shadow-md: 0 6px 18px rgba(0,0,0,0.55);
+}
+[data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
+[data-theme="dark"] .note { background: rgba(90,169,255,.09); border-color: rgba(90,169,255,.22); }
+[data-theme="dark"] .chip.on { background: rgba(122,201,67,.16); }
+[data-theme="dark"] .chip.soon { background: rgba(90,169,255,.16); }
+[data-theme="dark"] .sw .track i { background: #e9e9ec; }
+[data-theme="dark"] .cty.on .box { color: #07131f; }
+</style>
+</head>
+<body>
+
+<header class="sh-nav" data-tab="workflows"></header>
+
+<main>
+  <div id="listView"></div>
+  <div id="detailView" hidden></div>
+</main>
+
+<script>
+/* ============================================================================
+   1. THE WORKFLOW
+      One per profile. `on` is the service switch; `checks` are its settings.
+      Every check can declare `needs` — other checks it cannot run without —
+      and `required:true` for the ones Vyyer always performs.
+   ============================================================================ */
+const ICONS = {
+  id:'<path d="M3.5 6.5h17a1.5 1.5 0 011.5 1.5v8a1.5 1.5 0 01-1.5 1.5h-17A1.5 1.5 0 012 16.5v-8a1.5 1.5 0 011.5-1.5z"/><circle cx="8.5" cy="11.5" r="2"/><path d="M5.6 15.4a3.2 3.2 0 015.8 0M14 10h5M14 13.5h3.5"/>',
+  passport:'<path d="M5 3.5h11.5a1.5 1.5 0 011.5 1.5v14a1.5 1.5 0 01-1.5 1.5H5A1.5 1.5 0 013.5 19V5A1.5 1.5 0 015 3.5z"/><circle cx="10.8" cy="10" r="2.6"/><path d="M7.8 15.5h6M21 7v10"/>',
+  kyc:'<path d="M12 3l7.5 3v6c0 4.4-3.1 7.6-7.5 9-4.4-1.4-7.5-4.6-7.5-9V6z"/><path d="M9 12l2.2 2.2L15.5 10"/>',
+  kyb:'<path d="M3.5 20.5h17M5.5 20.5V8l6-4.5L17.5 8v12.5"/><path d="M9.5 12.5h4M9.5 16.5h4"/>',
+};
+const SERVICES = [
+  { id:'id', group:'Document verification', name:'ID Verification',
+    desc:'Customers scan a driver’s license or identity card',
+    on:true,
+    groups:[
+      { name:'Biometrics', note:'What the customer is asked to capture of themselves', checks:[
+        { id:'selfieCapture',  name:'Selfie capture',  desc:'Have customers take a selfie during verification' },
+        { id:'selfieLiveness', name:'Selfie liveness', desc:'Verify the selfie is live and has not been manipulated', needs:['selfieCapture'] },
+      ]},
+      { name:'Document checks', note:'What Vyyer reads and verifies on the document itself', checks:[
+        { id:'frontCapture',  name:'Front capture',        desc:'Capture an image of the front of the ID' },
+        { id:'frontOcr',      name:'Front OCR',            desc:'Extract the data printed on the front of the ID', needs:['frontCapture'] },
+        { id:'frontLiveness', name:'Front ID liveness',    desc:'Verify the document is real and has not been manipulated', needs:['frontCapture'] },
+        { id:'licenseNumber', name:'Verify license number',desc:'Check the license number against issuing records', needs:['frontOcr'] },
+        { id:'backScan',      name:'Back scan',            desc:'Capture and read the barcode on the back of the ID', required:true },
+        { id:'barcode',       name:'Barcode detective',    desc:'Verify the license number encoded in the barcode', needs:['backScan'] },
+      ]},
+      { name:'Data matching', note:'How the captured pieces are checked against each other', checks:[
+        { id:'frontBackMatch', name:'Front & back data matching', desc:'Match the printed front data against the encoded back data', needs:['frontOcr','backScan'] },
+        { id:'selfieIdMatch',  name:'Selfie & ID face matching',  desc:'Confirm the document holder is present by matching the selfie to the ID photo', needs:['selfieCapture','frontCapture'] },
+        { id:'nameMatch',      name:'Name on file match',         desc:'Match the name on the document against the name you supplied' },
+        { id:'ageMatch',       name:'Age on file match',          desc:'Check the date of birth is not below the minimum age you supplied' },
+      ]},
+    ],
+    checked:{ selfieCapture:true, selfieLiveness:true, frontCapture:true, frontOcr:true, frontLiveness:true,
+              licenseNumber:true, backScan:true, barcode:true, frontBackMatch:true, selfieIdMatch:true, nameMatch:true, ageMatch:true },
+    countries:{ mode:'some', list:['US'] },
+  },
+
+  { id:'passport', group:'Document verification', name:'Passport Verification',
+    desc:'Customers scan the photo page of a passport',
+    on:true,
+    groups:[
+      { name:'Biometrics', note:'What the customer is asked to capture of themselves', checks:[
+        { id:'selfieCapture',  name:'Selfie capture',  desc:'Have customers take a selfie during verification' },
+        { id:'selfieLiveness', name:'Selfie liveness', desc:'Verify the selfie is live and has not been manipulated', needs:['selfieCapture'] },
+      ]},
+      { name:'Document checks', note:'What Vyyer reads and verifies on the photo page', checks:[
+        { id:'frontCapture', name:'Photo page capture', desc:'Capture an image of the passport photo page' },
+        { id:'docLiveness',  name:'Document liveness',  desc:'Verify the passport is real and has not been manipulated', needs:['frontCapture'] },
+        { id:'ocrCapture',   name:'OCR capture',        desc:'Extract the data printed on the photo page', needs:['frontCapture'] },
+        { id:'mrzCapture',   name:'MRZ capture',        desc:'Read the machine-readable zone on the photo page', required:true },
+      ]},
+      { name:'Data matching', note:'How the captured pieces are checked against each other', checks:[
+        { id:'selfieDocMatch', name:'Selfie & passport face matching', desc:'Confirm the document holder is present by matching the selfie to the passport photo', needs:['selfieCapture','frontCapture'] },
+        { id:'mrzOcrMatch',    name:'MRZ / OCR matching',              desc:'Match the printed data against the encoded MRZ data', needs:['ocrCapture','mrzCapture'] },
+        { id:'nameMatch',      name:'Name on file match',              desc:'Match the name on the document against the name you supplied' },
+        { id:'ageMatch',       name:'Age on file match',               desc:'Check the date of birth is not below the minimum age you supplied' },
+      ]},
+    ],
+    checked:{ selfieCapture:true, selfieLiveness:true, frontCapture:true, docLiveness:true, ocrCapture:true,
+              mrzCapture:true, selfieDocMatch:false, mrzOcrMatch:true, nameMatch:true, ageMatch:true },
+    countries:{ mode:'all', list:[] },
+  },
+
+  { id:'kyc', group:'Database checks', name:'KYC Verification',
+    desc:'Cross-check customer details against TIN Check databases',
+    on:false, soon:true },
+
+  { id:'kyb', group:'Database checks', name:'Advanced KYC Verification',
+    desc:'Cross-check customer details against Kevari databases',
+    on:false, soon:true },
+];
+const svc = id => SERVICES.find(s => s.id === id);
+
+/* ---------------------------------------------------------------------------
+   2. DEPENDENCIES
+   A check is only available when everything it needs is on. Turning a parent
+   off does not erase a child's setting — the child is held, and comes back as
+   the client left it. That is why `checked` is kept separate from `active`.
+   --------------------------------------------------------------------------- */
+function allChecks(s){ return (s.groups||[]).flatMap(g => g.checks); }
+function checkById(s, id){ return allChecks(s).find(c => c.id === id); }
+function isActive(s, c){
+  if(c.required) return true;
+  if(!s.checked[c.id]) return false;
+  return (c.needs||[]).every(n => { const p = checkById(s, n); return p && isActive(s, p); });
+}
+/* the first unmet dependency, for the explanation under a blocked row */
+function blockedBy(s, c){
+  if(c.required) return null;
+  for(const n of (c.needs||[])){
+    const p = checkById(s, n);
+    if(p && !isActive(s, p)) return p.name;
+  }
+  return null;
+}
+const activeCount = s => allChecks(s).filter(c => isActive(s, c)).length;
+
+/* ---------------------------------------------------------------------------
+   3. COUNTRIES
+   Names come from Intl rather than a hardcoded table, so they stay correct and
+   the file stays small. The codes are the ISO 3166-1 alpha-2 set Vyyer lists.
+   --------------------------------------------------------------------------- */
+const CODES = ('AF AX AL DZ AS AD AO AI AG AR AM AW AU AT AZ BS BH BD BB BY BE BZ BJ BM BT BO BQ BA BW BV BR IO VG BN BG BF BI KH CM CA CV KY CF TD CL CN CX CC CO KM CK CR CI HR CU CW CY CZ CD DK DJ DM DO TL EC EG SV GQ ER EE SZ ET FK FO FJ FI FR GF PF TF GA GM GE DE GH GI GR GL GD GP GU GT GG GN GW GY HT HM HN HK HU IS IN ID IR IQ IE IM IL IT JM JP JE JO KZ KE KI KW KG LA LV LB LS LR LY LI LT LU MO MG MW MY MV ML MT MH MQ MR MU YT MX FM MD MC MN ME MS MA MZ MM NA NR NP NL NC NZ NI NE NG NU NF KP MK MP NO OM PK PW PS PA PG PY PE PH PN PL PT PR QA CG RO RU RW RE BL SH KN LC MF PM VC WS SM ST SA SN RS SC SL SG SX SK SI SB SO ZA GS KR SS ES LK SD SR SJ SE CH SY TW TJ TZ TH TG TK TO TT TN TR TM TC TV UG UA AE GB US UM UY UZ VU VA VE VN WF EH YE ZM ZW').split(' ');
+const REGION_NAMES = (() => {
+  try { return new Intl.DisplayNames(['en'], { type:'region' }); } catch(e){ return null; }
+})();
+const countryName = code => { try { return (REGION_NAMES && REGION_NAMES.of(code)) || code; } catch(e){ return code; } };
+const COUNTRIES = CODES.map(c => ({ code:c, name:countryName(c) }))
+                       .sort((a,b) => a.name.localeCompare(b.name));
+
+/* ---------------------------------------------------------------------------
+   4. SAVE STATE — the same contract as the Branding studio: disabled at rest,
+   a spinner while saving, and a confirmation that settles back to disabled.
+   --------------------------------------------------------------------------- */
+const designState = () => JSON.stringify(SERVICES.map(s => ({ on:s.on, c:s.checked||null, k:s.countries||null })));
+let savedState = designState(), saving = false, savedFlash = false;
+const isDirty = () => designState() !== savedState;
+const SPIN = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3a9 9 0 11-9 9"/></svg>';
+const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
+function saveBtnHtml(){
+  const label = saving ? SPIN + 'Saving…' : savedFlash ? TICK + 'Saved' : 'Save changes';
+  return `<button class="btn primary${savedFlash ? ' saved' : ''}" id="saveBtn"
+    ${saving || !isDirty() ? 'disabled' : ''} onclick="doSave()">${label}</button>`;
+}
+async function doSave(){
+  if(saving || !isDirty()) return;
+  saving = true; render();
+  await new Promise(r => setTimeout(r, 900));   /* stands in for the request */
+  savedState = designState();
+  saving = false; savedFlash = true; render();
+  setTimeout(() => { savedFlash = false; render(); }, 1600);
+}
+
+/* ---------------------------------------------------------------------------
+   5. VIEWS
+   --------------------------------------------------------------------------- */
+const CHIP_CAP = 12;
+let view = { page:'list', service:null, search:'', allChips:false };
+const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const icon = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.7}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
+
+function countrySummary(s){
+  if(!s.countries) return '';
+  if(s.countries.mode === 'all') return 'All countries';
+  const n = s.countries.list.length;
+  if(n === 0) return 'No countries selected';
+  if(n === 1) return countryName(s.countries.list[0]);
+  return n + ' countries';
+}
+
+function switchHtml(on, onclick, disabled, locked){
+  return `<button class="sw${on ? ' on' : ''}${locked ? ' locked' : ''}" ${disabled ? 'disabled' : ''} role="switch"
+    aria-checked="${!!on}" onclick="${onclick}"><span class="track"><i></i></span></button>`;
+}
+
+/* ---- list ---- */
+function renderList(){
+  const groups = [...new Set(SERVICES.map(s => s.group))];
+  const body = groups.map(g => `
+    <div class="sec">
+      <div class="sec-head"><h2>${esc(g)}</h2></div>
+      <div class="card">${SERVICES.filter(s => s.group === g).map(serviceRow).join('')}</div>
+    </div>`).join('');
+
+  document.getElementById('listView').innerHTML = `
+    <div class="toolbar">
+      <h1>Workflow</h1>
+      <span class="sp"></span>${saveBtnHtml()}
+    </div>
+    <div class="note">
+      ${icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>', 1.9)}
+      <div>Turn a method on to offer it, then <b>configure</b> which checks run. These settings decide
+      what the customer is asked for — and which widget screens appear in <b>Branding</b>.</div>
+    </div>
+    ${body}
+    ${journeyCard()}`;
+}
+
+function serviceRow(s){
+  const configurable = !s.soon;
+  return `<div class="svc${s.on ? '' : ' off'}">
+    <span class="svc-ic">${icon(ICONS[s.id])}</span>
+    <div class="svc-main">
+      <div class="svc-name">${esc(s.name)}</div>
+      <div class="svc-desc">${esc(s.desc)}</div>
+      <div class="svc-meta">
+        ${s.soon ? '<span class="chip soon">Configuration coming next</span>' : `
+          <span class="chip${s.on ? ' on' : ''}">${activeCount(s)} of ${allChecks(s).length} checks on</span>
+          <span>${esc(countrySummary(s))}</span>`}
+      </div>
+    </div>
+    <div class="svc-side">
+      ${configurable ? `<button class="linkbtn" onclick="openService('${s.id}')">Configure ${CHEV}</button>` : ''}
+      ${switchHtml(s.on, `toggleService('${s.id}')`)}
+    </div>
+  </div>`;
+}
+
+/* The point of the page: these switches decide what the customer is asked to
+   do, so the page shows that rather than leaving it to be inferred. */
+function journeySteps(){
+  const live = SERVICES.filter(s => s.on && s.groups);
+  if(!live.length) return [];
+  const any = id => live.some(s => { const c = checkById(s, id); return c && isActive(s, c); });
+  const steps = [];
+  if(live.length > 1) steps.push('Choose document type');
+  if(any('selfieCapture')) steps.push('Scan face');
+  if(any('frontCapture')) steps.push(svc('id').on && isActive(svc('id'), checkById(svc('id'),'frontCapture')) ? 'Scan ID front' : 'Scan passport page');
+  if(svc('id').on && isActive(svc('id'), checkById(svc('id'),'backScan'))) steps.push('Scan ID back');
+  steps.push('Result');
+  return steps;
+}
+function journeyCard(){
+  const steps = journeySteps();
+  return `<div class="sec">
+    <div class="sec-head"><h2>What the customer sees</h2></div>
+    ${steps.length ? `<div class="journey">${steps.map((t, i) =>
+        `${i ? '<span class="step-sep">→</span>' : ''}<span class="step${i === steps.length-1 ? ' lead' : ''}">${esc(t)}</span>`
+      ).join('')}</div>`
+      : '<div class="empty">No verification method is on, so the widget has nothing to ask for.</div>'}
+  </div>`;
+}
+
+/* ---- detail ---- */
+function renderDetail(){
+  const s = svc(view.service);
+  document.getElementById('detailView').innerHTML = `
+    <button class="back" onclick="closeService()">${icon('<path d="M15 6l-6 6 6 6"/>', 2.2)} Back to workflow</button>
+    <div class="toolbar">
+      <h1>${esc(s.name)}</h1>
+      <span class="sp"></span>
+      <span class="toolbar-switch">${s.on ? 'On' : 'Off'} ${switchHtml(s.on, `toggleService('${s.id}')`)}</span>
+      ${saveBtnHtml()}
+    </div>
+    ${s.on ? '' : `<div class="note">${icon('<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01"/>', 1.9)}
+      <div>This method is <b>off</b>, so none of these checks run. Settings are kept for when it goes back on.</div></div>`}
+    ${s.groups.map(groupCard).join('')}
+    ${countryCard(s)}
+    ${journeyCard()}`;
+}
+
+function groupCard(g){
+  const s = svc(view.service);
+  return `<div class="sec">
+    <div class="sec-head"><h2>${esc(g.name)}</h2><p>${esc(g.note)}</p></div>
+    <div class="card">${g.checks.map(c => checkRow(s, c)).join('')}</div>
+  </div>`;
+}
+
+function checkRow(s, c){
+  const why = blockedBy(s, c);
+  const on = isActive(s, c);
+  return `<div class="chk${why ? ' blocked' : ''}">
+    <div class="chk-main">
+      <div class="chk-name">${esc(c.name)}</div>
+      <div class="chk-desc">${esc(c.desc)}</div>
+      ${why ? `<div class="chk-why">${icon('<path d="M12 3l9.5 17H2.5z"/><path d="M12 10v4M12 17v.01"/>', 1.8)}<span>Needs <b style="font-weight:600">${esc(why)}</b>, which is off</span></div>` : ''}
+    </div>
+    ${switchHtml(on, `toggleCheck('${c.id}')`, c.required || !!why || !s.on, c.required && s.on)}
+  </div>`;
+}
+
+/* ---- countries ---- */
+function countryCard(s){
+  const k = s.countries;
+  const picked = k.list.map(code => COUNTRIES.find(c => c.code === code)).filter(Boolean);
+  /* a 200-chip wall is what made the live picker unreadable, so the list of
+     selected countries is capped until the client asks for the rest */
+  const shown = view.allChips ? picked : picked.slice(0, CHIP_CAP);
+  const hidden = picked.length - shown.length;
+  const q = view.search.trim().toLowerCase();
+  const results = q ? COUNTRIES.filter(c => c.name.toLowerCase().includes(q)) : COUNTRIES;
+
+  const body = k.mode === 'all'
+    ? `<div class="all-note">${icon('<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>', 1.9)}
+        Documents from every country Vyyer supports are accepted.</div>`
+    : `<div class="cty-body">
+        <div class="search">
+          ${icon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 2)}
+          <input type="text" id="ctySearch" placeholder="Search countries…" value="${esc(view.search)}"
+            autocomplete="off" oninput="onSearch(this.value)">
+        </div>
+        <div class="picked">${shown.map(c => `<span class="cchip">${esc(c.name)}
+          <button title="Remove" onclick="dropCountry('${c.code}')">${icon('<path d="M5 5l14 14M19 5L5 19"/>', 2.4)}</button></span>`).join('')}
+          ${hidden > 0 ? `<button class="cchip more" onclick="view.allChips=true;repaintCountries()">+${hidden} more</button>` : ''}
+          ${view.allChips && picked.length > CHIP_CAP ? `<button class="cchip more" onclick="view.allChips=false;repaintCountries()">Show fewer</button>` : ''}</div>
+        <div class="cty-actions">
+          <button class="linkbtn" onclick="selectAllCountries()">Select all</button>
+          <button class="linkbtn" onclick="clearCountries()" ${picked.length ? '' : 'disabled'}>Clear</button>
+          <span class="sp"></span>
+          ${picked.length === COUNTRIES.length
+            ? '<span class="hint">Every country is picked — <b>All countries</b> also covers ones Vyyer adds later.</span>' : ''}
+        </div>
+        <div class="results">${results.length ? results.map(c => `
+          <button class="cty${k.list.includes(c.code) ? ' on' : ''}" onclick="toggleCountry('${c.code}')">
+            <span class="box">${icon('<path d="M5 12.5l4.5 4.5L19 7"/>', 3)}</span>${esc(c.name)}
+          </button>`).join('') : '<div class="empty">No country matches that search.</div>'}</div>
+      </div>`;
+
+  return `<div class="sec" id="ctySec">
+    <div class="sec-head"><h2>Accepted countries</h2><p>Documents issued elsewhere are turned away before the scan</p></div>
+    <div class="card">
+      <div class="cty-head">
+        <span class="seg">
+          <button class="${k.mode === 'all' ? 'on' : ''}" onclick="setCountryMode('all')">All countries</button>
+          <button class="${k.mode === 'some' ? 'on' : ''}" onclick="setCountryMode('some')">Selected</button>
+        </span>
+        <span class="cty-count"><b>${k.mode === 'all' ? COUNTRIES.length : k.list.length}</b> accepted</span>
+      </div>
+      ${body}
+    </div>
+  </div>`;
+}
+
+/* ---------------------------------------------------------------------------
+   6. ACTIONS
+   --------------------------------------------------------------------------- */
+/* Searching and picking only touch the country card. Re-rendering the whole
+   page on every keystroke made the page jump as the results list shortened. */
+function repaintCountries(){
+  const sec = document.getElementById('ctySec');
+  if(!sec) return render();
+  const res = sec.querySelector('.results'), sc = res ? res.scrollTop : 0;
+  const inp = sec.querySelector('#ctySearch');
+  const focused = document.activeElement === inp, pos = inp ? inp.selectionStart : 0;
+  sec.outerHTML = countryCard(svc(view.service));
+  const now = document.getElementById('ctySec');
+  const res2 = now.querySelector('.results'); if(res2) res2.scrollTop = sc;
+  const inp2 = now.querySelector('#ctySearch');
+  if(inp2 && focused){ inp2.focus(); try { inp2.setSelectionRange(pos, pos); } catch(e){} }
+  const btn = document.getElementById('saveBtn');
+  if(btn) btn.outerHTML = saveBtnHtml();
+}
+
+function render(){
+  const list = document.getElementById('listView'), detail = document.getElementById('detailView');
+  const onDetail = view.page === 'detail';
+  list.hidden = onDetail; detail.hidden = !onDetail;
+  /* keep the caret where the client left it while typing in the search */
+  const act = document.activeElement, keepId = act && act.id, pos = act && act.selectionStart;
+  const res = document.querySelector('.results'), sc = res ? res.scrollTop : 0;
+  onDetail ? renderDetail() : renderList();
+  const res2 = document.querySelector('.results'); if(res2) res2.scrollTop = sc;
+  if(keepId){ const el = document.getElementById(keepId); if(el){ el.focus(); try{ el.setSelectionRange(pos, pos); }catch(e){} } }
+}
+function openService(id){ view.page = 'detail'; view.service = id; view.search = ''; view.allChips = false; render(); scrollTo(0, 0); }
+function closeService(){ view.page = 'list'; view.service = null; render(); scrollTo(0, 0); }
+function toggleService(id){ const s = svc(id); s.on = !s.on; render(); }
+function toggleCheck(cid){
+  const s = svc(view.service), c = checkById(s, cid);
+  if(c.required || blockedBy(s, c) || !s.on) return;
+  s.checked[cid] = !s.checked[cid];
+  render();
+}
+function onSearch(v){ view.search = v; repaintCountries(); }
+function setCountryMode(m){ svc(view.service).countries.mode = m; repaintCountries(); }
+function toggleCountry(code){
+  const k = svc(view.service).countries;
+  k.list = k.list.includes(code) ? k.list.filter(c => c !== code) : [...k.list, code];
+  repaintCountries();
+}
+function dropCountry(code){
+  const k = svc(view.service).countries;
+  k.list = k.list.filter(c => c !== code);
+  repaintCountries();
+}
+function selectAllCountries(){ svc(view.service).countries.list = COUNTRIES.map(c => c.code); repaintCountries(); }
+function clearCountries(){ svc(view.service).countries.list = []; repaintCountries(); }
+
+render();
+</script>
+<script src="shell.js"></script>
+</body>
+</html>
