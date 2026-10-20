@@ -32,8 +32,8 @@ const TABS = [
   {id:'history',   label:'History',   href:'history.html'},
   {id:'workflows', label:'Workflow',  href:'workflow.html'},
   {id:'branding',  label:'Branding',  href:'branding.html'},
-  {id:'apikeys',   label:'API Keys',  href:'#'},
-  {id:'settings',  label:'Settings',  href:'#'},
+  {id:'apikeys',   label:'API Keys',  href:'apikeys.html'},
+  {id:'settings',  label:'Settings',  href:'settings.html'},
 ];
 
 const ACCOUNT = {name:'Dev User', email:'devuser@vyyer.com'};
