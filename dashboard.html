@@ -35,6 +35,8 @@
   --radius-md: 10px;
   --radius-lg: 14px;
   --font: 'Inter', system-ui, sans-serif;
+  --focus: #007aff;
+  --grid: rgba(0,0,0,0.04);
 }
 
 html, body { font-family: var(--font); background: var(--bg); color: var(--text-primary); font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
@@ -94,7 +96,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .dd-label { overflow: hidden; text-overflow: ellipsis; }
 .dd-chev { color: var(--text-tertiary); flex-shrink: 0; transition: transform .15s; }
 .dd.open .dd-chev { transform: rotate(180deg); }
-.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%; background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
+.dd-menu { position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; min-width: 100%; max-width: calc(100vw - 24px); background: var(--surface); border: 1px solid var(--border-md); border-radius: var(--radius-md); box-shadow: var(--shadow-md); padding: 5px; opacity: 0; visibility: hidden; transform: translateY(-4px); transition: opacity .14s, transform .14s, visibility .14s; }
 .dd.open .dd-menu { opacity: 1; visibility: visible; transform: translateY(0); }
 .dd-item { display: flex; align-items: center; gap: 9px; width: 100%; font-family: var(--font); font-size: 13px; font-weight: 500; color: var(--text-primary); background: none; border: none; border-radius: 7px; padding: 7px 9px; cursor: pointer; text-align: left; white-space: nowrap; transition: background .12s; }
 .dd-item:hover { background: var(--surface-2); }
@@ -105,6 +107,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 
 /* ── DATE RANGE PICKER ── */
 .date-field { position: relative; }
+.dp-custom { display: none; }
 .date-trigger {
   display: flex; align-items: center; gap: 7px;
   font-family: var(--font); font-size: 13px; font-weight: 500;
@@ -114,6 +117,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 }
 .date-trigger:hover { border-color: var(--text-tertiary); }
 .date-trigger.open { border-color: #007aff; box-shadow: 0 0 0 3px rgba(0,122,255,0.12); }
+.date-trigger span { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .date-trigger .dt-cal { color: var(--text-tertiary); flex-shrink: 0; }
 .date-trigger .dt-chev { color: var(--text-tertiary); margin-left: 2px; transition: transform .15s; }
 .date-trigger.open .dt-chev { transform: rotate(180deg); }
@@ -161,12 +165,34 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .dp-cancel:hover { background: var(--surface-2); color: var(--text-primary); }
 .dp-apply { background: #007aff; color: #fff; border-color: #007aff; font-weight: 600; }
 .dp-apply:hover { background: #006ae0; }
-@media (max-width: 680px) {
-  .date-popover { width: calc(100vw - 32px); }
+@media (max-width: 760px) {
+  /* Phone layout for the picker: the periods become a plain menu, with Custom
+     range as the last row — tapping it swaps the menu for the calendar.
+     (The breakpoint matches the one the filters collapse at; when these two
+     disagreed, 681–760px got the desktop preset rail with no calendar.) */
+  .date-popover { width: min(248px, calc(100vw - 32px)); }
+  /* one month, at a size where a day is a comfortable tap target rather
+     than a 100px block — the cells are square, so width sets height */
+  .date-popover.custom { width: min(320px, calc(100vw - 32px)); }
+  .dp-main { padding: 10px 12px 12px; }
   .dp-body { flex-direction: column; }
-  .dp-presets { flex-direction: row; flex-wrap: wrap; width: auto; border-right: none; border-bottom: 1px solid var(--border); gap: 6px; }
-  .dp-preset { flex: 1 0 auto; text-align: center; padding: 6px 10px; border: 1px solid var(--border-md); }
-  .dp-preset.active { border-color: #007aff; }
+  .dp-presets { flex-direction: column; width: auto; border-right: none; gap: 1px; padding: 5px; }
+  .dp-preset { text-align: left; font-size: 13px; padding: 8px 10px; border: 0; border-radius: 7px; }
+  .dp-custom { display: flex; align-items: center; gap: 9px; width: 100%; border: 0;
+    border-top: 1px solid var(--border); border-radius: 0; background: none; cursor: pointer;
+    font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--focus, #007aff);
+    padding: 10px 14px; text-align: left; }
+  .dp-custom svg { flex: 0 0 auto; }
+  .dp-custom .sp { flex: 1; }
+  .dp-custom .cv { transition: transform .15s; }
+  .dp-custom:hover { background: var(--surface-2); }
+  .dp-main { display: none; }
+  .dp-footer { display: none; }                       /* nothing to confirm in a plain menu */
+  .date-popover.custom .dp-footer { display: flex; }  /* the calendar still needs Apply */
+  .date-popover.custom .dp-presets { display: none; }
+  .date-popover.custom .dp-main { display: block; }
+  .date-popover.custom .dp-custom { background: var(--surface-2); }
+  .date-popover.custom .dp-custom .cv { transform: rotate(180deg); }
   .dp-cals .dp-cal:first-child { display: none; }
 }
 
@@ -328,7 +354,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .micro-pct { font-size: 11px; font-weight: 600; color: var(--text-primary); min-width: 28px; text-align: right; }
 .micro-section-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .07em; color: var(--text-tertiary); margin-top: 4px; margin-bottom: 4px; }
 
-footer { text-align: center; font-size: 11px; color: var(--text-tertiary); padding-top: 40px; }
 
 /* ── RESPONSIVE ── */
 @media (max-width: 1120px) { .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(3,1fr); } }
@@ -390,7 +415,6 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
   --focus: #5AA9FF;
   --grid: rgba(255,255,255,0.07);
 }
-:root { --focus: #007aff; --grid: rgba(0,0,0,0.04); }
 
 [data-theme="dark"] .toolbar { background: rgba(10,10,11,0.95); }
 [data-theme="dark"] .pill-group button.active,
@@ -452,6 +476,11 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
           <div class="date-popover" id="datePopover" role="dialog" aria-label="Select date range">
             <div class="dp-body">
               <div class="dp-presets" id="dpPresets"><!-- JS --></div>
+              <button type="button" class="dp-custom" id="dpCustom">
+                <svg width="13" height="13" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3"><rect x="1.5" y="2.5" width="11" height="10" rx="1.5"/><path d="M1.5 5.5h11M4.5 1v2.5M9.5 1v2.5"/></svg>
+                Custom range<span class="sp"></span>
+                <svg class="cv" width="11" height="7" viewBox="0 0 10 6" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M1 1l4 4 4-4"/></svg>
+          </button>
               <div class="dp-main">
                 <div class="dp-cals" id="dpCals"><!-- JS --></div>
               </div>
@@ -568,7 +597,6 @@ footer { text-align: center; font-size: 11px; color: var(--text-tertiary); paddi
 
 </main>
 
-<footer>&copy; 2026 Vyyer · Identity Verification Platform</footer>
 
 <script>
 /* ─── DATA ─── */
@@ -804,13 +832,29 @@ function navMonth(i,delta){
   dpMonths[i]=nd; renderCals();
 }
 
+/* An absolutely positioned menu widens the page even while hidden, which put a
+   horizontal scrollbar on this screen at narrower widths. Every popover is
+   pulled back inside the viewport — on load, on resize, and when one opens. */
+function clampPopovers(){
+  const vw = document.documentElement.clientWidth;
+  document.querySelectorAll('.dd-menu, .date-popover').forEach(p => {
+    p.style.left = '0px';
+    const over = p.getBoundingClientRect().right - (vw - 12);
+    if(over > 0) p.style.left = (-over) + 'px';
+  });
+}
+addEventListener('resize', clampPopovers);
+
 function openPicker(){
   dpStart=committed.start; dpEnd=committed.end; dpActivePreset=committed.preset;
   syncMonthsTo(dpEnd);
   renderPresets(); renderCals(); updateRangeDisplay();
   document.getElementById('dateTrigger').classList.add('open');
   document.getElementById('dateTrigger').setAttribute('aria-expanded','true');
-  document.getElementById('datePopover').classList.add('open');
+  const pop = document.getElementById('datePopover');
+  pop.classList.remove('custom');        /* always opens on the presets */
+  pop.classList.add('open');
+  clampPopovers();
 }
 function closePicker(){
   document.getElementById('dateTrigger').classList.remove('open');
@@ -841,14 +885,26 @@ function initDatePicker(){
   });
   pop.addEventListener('click', e => {
     e.stopPropagation(); // keep clicks inside the popover from reaching the outside-close handler
-    const preset = e.target.closest('[data-preset]'); if(preset){ selectPreset(preset.dataset.preset); return; }
+    const preset = e.target.closest('[data-preset]');
+    if(preset){
+      selectPreset(preset.dataset.preset);
+      /* in the compact menu there is no Apply button, so the choice commits now */
+      if(matchMedia('(max-width: 760px)').matches && !pop.classList.contains('custom')) applyRange();
+      return;
+    }
     const nav = e.target.closest('[data-nav]'); if(nav){ const [i,dl]=nav.dataset.nav.split(':').map(Number); navMonth(i,dl); return; }
     const day = e.target.closest('[data-date]'); if(day && !day.disabled){ const [y,m,d]=day.dataset.date.split('-').map(Number); dayClick(y,m,d); }
+  });
+  document.getElementById('dpCustom').addEventListener('click', e => {
+    e.stopPropagation();
+    pop.classList.toggle('custom');
+    clampPopovers();
   });
   document.getElementById('dpCancel').addEventListener('click', closePicker);
   document.getElementById('dpApply').addEventListener('click', applyRange);
   document.addEventListener('click', e => { if(pop.classList.contains('open') && !e.target.closest('#dateField')) closePicker(); });
   document.addEventListener('keydown', e => { if(e.key==='Escape' && pop.classList.contains('open')) closePicker(); });
+  clampPopovers();
 }
 
 /* ── FUNNEL ── */
