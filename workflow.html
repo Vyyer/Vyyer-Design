@@ -344,6 +344,26 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
 .empty { padding: 22px; text-align: center; font-size: 12.5px; color: var(--text-tertiary); }
 .all-note { display: flex; align-items: center; gap: 8px; padding: 16px 18px; font-size: 12.5px; color: var(--text-secondary); }
 .all-note svg { width: 15px; height: 15px; color: var(--ok); flex: 0 0 auto; }
+.all-note .linkbtn { margin-left: 2px; }
+
+/* ── the list of countries Vyyer supports ── */
+.ctyl-wrap { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 24px; }
+.ctyl-scrim { position: absolute; inset: 0; background: rgba(0,0,0,.55); }
+.ctyl { position: relative; width: min(680px, 100%); max-height: min(560px, calc(100vh - 48px));
+  display: flex; flex-direction: column; background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: 0 24px 60px -18px rgba(0,0,0,.6); overflow: hidden; }
+.ctyl-head { display: flex; align-items: center; gap: 10px; padding: 16px 18px; border-bottom: 1px solid var(--border); }
+.ctyl-head h3 { font-size: 14px; font-weight: 600; }
+.ctyl-head .n { font-size: 12.5px; color: var(--text-tertiary); }
+.ctyl-x { margin-left: auto; width: 28px; height: 28px; display: grid; place-items: center; cursor: pointer;
+  background: none; border: 0; border-radius: var(--radius-sm); color: var(--text-secondary); }
+.ctyl-x:hover { background: var(--hover); color: var(--text-primary); }
+.ctyl-x svg { width: 15px; height: 15px; }
+.ctyl-body { overflow-y: auto; padding: 14px 18px 18px;
+  columns: 3; column-gap: 22px; font-size: 12.5px; color: var(--text-secondary); }
+.ctyl-body div { break-inside: avoid; padding: 5px 0; }
+@media (max-width: 620px) { .ctyl-body { columns: 2; } }
+@media (max-width: 400px) { .ctyl-body { columns: 1; } }
 
 /* ── detail header ── */
 .back { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--text-secondary);
@@ -625,7 +645,7 @@ async function doSave(){
    5. VIEWS
    --------------------------------------------------------------------------- */
 const CHIP_CAP = 12;
-let view = { page:'list', service:null, search:'', allChips:false, dd:null, ctyOpen:false };
+let view = { page:'list', service:null, search:'', allChips:false, dd:null, ctyOpen:false, ctyList:false };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const icon = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.7}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -1071,7 +1091,8 @@ function countryCard(s){
 
   const body = k.mode === 'all'
     ? `<div class="all-note">${icon('<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>', 1.9)}
-        Documents from every country Vyyer supports are accepted.</div>`
+        <span>Documents from every country Vyyer supports are accepted.</span>
+        <button class="linkbtn" onclick="openCtyList()">View countries</button></div>`
     : `<div class="cty-body">
         ${picked.length ? `<div class="picked">${shown.map(c => `<span class="cchip">${esc(c.name)}
           <button title="Remove" onclick="dropCountry('${c.code}')">${icon('<path d="M5 5l14 14M19 5L5 19"/>', 2.4)}</button></span>`).join('')}
@@ -1108,6 +1129,22 @@ function countryCard(s){
         <span class="cty-count"><b>${k.mode === 'all' ? COUNTRIES.length : k.list.length}</b> accepted</span>
       </div>
       ${body}
+    </div>
+    ${view.ctyList ? ctyListHtml() : ''}
+  </div>`;
+}
+
+/* "All countries" is a promise the merchant can't check — so let them read it */
+function ctyListHtml(){
+  return `<div class="ctyl-wrap" onclick="closeCtyList()">
+    <div class="ctyl-scrim"></div>
+    <div class="ctyl" onclick="event.stopPropagation()">
+      <div class="ctyl-head">
+        <h3>Countries Vyyer supports</h3>
+        <span class="n">${COUNTRIES.length} accepted</span>
+        <button class="ctyl-x" title="Close" onclick="closeCtyList()">${icon('<path d="M5 5l14 14M19 5L5 19"/>', 2.2)}</button>
+      </div>
+      <div class="ctyl-body">${COUNTRIES.map(c => `<div>${esc(c.name)}</div>`).join('')}</div>
     </div>
   </div>`;
 }
@@ -1175,6 +1212,8 @@ function dropCountry(code){
   k.list = k.list.filter(c => c !== code);
   repaintCountries();
 }
+function openCtyList(){ view.ctyList = true; repaintCountries(); }
+function closeCtyList(){ if(view.ctyList){ view.ctyList = false; repaintCountries(); } }
 function openCty(){ if(!view.ctyOpen){ view.ctyOpen = true; repaintCountries(); } }
 function closeCty(){ if(view.ctyOpen){ view.ctyOpen = false; repaintCountries(); } }
 function selectMatches(){
@@ -1189,9 +1228,12 @@ function clearCountries(){ svc(view.service).countries.list = []; repaintCountri
 
 document.addEventListener('click', e => {
   if(view.dd && !e.target.closest('.dd')) { view.dd = null; render(); }
-  if(view.ctyOpen && !e.target.closest('.search')) closeCty();
+  if(view.ctyOpen && !e.target.closest('.search') && !e.target.closest('.ctyl-wrap')) closeCty();
 }, true);
-document.addEventListener('keydown', e => { if(e.key === 'Escape' && view.ctyOpen) closeCty(); });
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(view.ctyList) closeCtyList(); else if(view.ctyOpen) closeCty();
+});
 
 render();
 </script>
