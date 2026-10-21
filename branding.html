@@ -161,7 +161,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);height:100vh;
 .fitwrap>.frame{transform:scale(var(--fit,1));transform-origin:center center;flex:0 0 auto}
 .frame{position:relative;background:#000;overflow:hidden;box-shadow:0 30px 70px -30px rgba(0,0,0,.9)}
 .frame.mobile{width:390px;height:844px;border-radius:38px;border:10px solid #0e0e10}
-.frame.desktop{width:620px;height:470px;border-radius:14px;border:1px solid var(--line)}
+.frame.desktop{width:380px;height:480px;border-radius:14px;border:1px solid var(--line)}
 /* background selection outlines the whole device, like any other element */
 .frame.selbg{box-shadow:0 0 0 2px var(--accent),0 0 0 6px rgba(160,217,89,.18),0 30px 70px -30px rgba(0,0,0,.9)}
 .bgtag{position:absolute;top:-12px;right:0;background:var(--accent);color:var(--accent-ink);
@@ -447,6 +447,9 @@ select{appearance:none;background-image:var(--caret-img);
 </div>
 
 <script src="shell.js"></script>
+<!-- the same generator the live widget uses, so the colours a client picks here
+     are the colours the shipped code is drawn with -->
+<script src="https://cdn.jsdelivr.net/npm/qr-code-styling@1.5.0/lib/qr-code-styling.js"></script>
 <script>
 /* ============================================================================
    1. BRAND TOKENS
@@ -566,7 +569,7 @@ const SCREENS = [
  {id:'country', group:'Start', name:'Choose country', els:{
     back:   {label:'Back icon',   type:'icon',   props:{color:{bind:'primaryText'}, custom:{value:''}}},
     search: {label:'Search field',type:'search', props:{placeholder:{value:'Type country name...'},
-              bg:{bind:'cardBg'}, color:{bind:'secondaryText'}, radius:{bind:'cardRadius'}}},
+              bg:{bind:'cardBg'}, border:{bind:'cardBorder'}, color:{bind:'secondaryText'}, radius:{bind:'cardRadius'}}},
     searchIcon:{label:'Search icon',type:'icon', props:{color:{bind:'secondaryText'}, custom:{value:''}}},
     clist:  {label:'Country list',type:'countrylist',props:{color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:15}, weight:{value:400}}},
     check:  {label:'Selected check',type:'icon',  props:{color:{bind:'accent'}, custom:{value:''}}},
@@ -628,11 +631,49 @@ const SCREENS = [
     desc:   {label:'Description', type:'text',  props:S('Your identity was successfully verified.')},
     btn:    {label:'Button',      type:'button',props:BTN('Done')},
  }},
+ /* ── Desktop hand-off ───────────────────────────────────────────────────
+    A customer who starts on a laptop has to finish on a phone, so these four
+    screens are what the desktop window shows while that happens: how to get
+    the link, that it is running, and how it ended. The alternative to the QR
+    code is a link sent by text or email — the customer picks which. */
  {id:'qr', group:'Desktop hand-off', name:'QR code', device:'desktop', els:{
-    logo:   {label:'Logo',        type:'logo',  props:{src:{bind:'logo'}, scale:{value:.8}}},
-    title:  {label:'Title',       type:'text',  props:T('Scan the QR Code to continue verifying on your mobile device')},
-    qr:     {label:'QR frame',    type:'card',  props:{bg:{value:'#FFFFFF'}, border:{bind:'cardBorder'}, radius:{bind:'cardRadius'}}},
-    link:   {label:'Email link',  type:'text',  props:{text:{value:'Email me a link instead'}, color:{bind:'accent'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:500}}},
+    close:  {label:'Close icon',  type:'icon',  props:{color:{bind:'secondaryText'}, custom:{value:''}}},
+    logo:   {label:'Logo',        type:'logo',  props:{src:{bind:'logo'}, scale:{value:.9}, align:{value:'Left'}}},
+    title:  {label:'Title',       type:'text',  props:{...T('Scan the QR to continue on your mobile device', 19), align:{value:'Left'}}},
+    qr:     {label:'QR code',     type:'qrcode',props:{
+             bg:{value:'#FFFFFF'}, dots:{value:'#000000'}, dotStyle:{value:'Square'},
+             cnrSqStyle:{value:'Square'},  cnrSqColor:{derive:()=>val('qr','dots')},
+             cnrDotStyle:{value:'Square'}, cnrDotColor:{derive:()=>val('qr','dots')},
+             image:{value:''}, imageSize:{value:.4}, imageMargin:{value:4}, hideBgDots:{value:true},
+             margin:{value:0}, ecLevel:{value:'M'}}},
+    marks:  {label:'Corner marks',type:'qrguide',props:{boxBg:{bind:'pageBg'}, color:{bind:'secondaryText'}, width:{value:2}}},
+    link:   {label:'Alternative link', type:'textlink', props:{text:{value:'Send me a link instead'}, align:{value:'Center'},
+             color:{bind:'accent'}, font:{bind:'fontBody'}, size:{value:15}, weight:{value:600}, underline:{value:true}}},
+ }},
+ {id:'handoff', group:'Desktop hand-off', name:'Send a link', device:'desktop', els:{
+    close:  {label:'Close icon',  type:'icon',  props:{color:{bind:'secondaryText'}, custom:{value:''}}},
+    logo:   {label:'Logo',        type:'logo',  props:{src:{bind:'logo'}, scale:{value:.9}, align:{value:'Left'}}},
+    title:  {label:'Title',       type:'text',  props:{...T('Send a link to continue on your mobile device', 19), align:{value:'Left'}}},
+    flabel: {label:'Field label', type:'text',  props:{text:{value:'Phone number or email *'}, align:{value:'Left'},
+             color:{bind:'primaryText'}, font:{bind:'fontBody'}, size:{value:14}, weight:{value:600}}},
+    field:  {label:'Input field', type:'search',props:{placeholder:{value:'Phone number or email'}, bg:{bind:'cardBg'},
+             border:{bind:'cardBorder'}, color:{bind:'secondaryText'}, radius:{bind:'buttonRadius'}}},
+    btn:    {label:'Button',      type:'button',props:BTN('Send Link')},
+    link:   {label:'Alternative link', type:'textlink', props:{text:{value:'Scan a QR code instead'}, align:{value:'Center'},
+             color:{bind:'accent'}, font:{bind:'fontBody'}, size:{value:15}, weight:{value:600}, underline:{value:true}}},
+ }},
+ {id:'dprogress', group:'Desktop hand-off', name:'In progress', device:'desktop', els:{
+    close:  {label:'Close icon',  type:'icon',  props:{color:{bind:'secondaryText'}, custom:{value:''}}},
+    img:    {label:'Illustration',type:'image', props:{custom:{value:''}, scale:{value:1}}},
+    title:  {label:'Title',       type:'text',  props:T('Verification in progress', 21)},
+    desc:   {label:'Description', type:'text',  props:S('Keep this window open — we’ll update it as soon as your phone is done.')},
+ }},
+ {id:'dverdict', group:'Desktop hand-off', name:'Verdict', device:'desktop',
+  variants:['Verified','Failed','Underage','Expired','In review','Max attempts'], els:{
+    close:  {label:'Close icon',  type:'icon',  props:{color:{bind:'secondaryText'}, custom:{value:''}}},
+    icon:   {label:'Verdict icon',type:'verdicticon',props:{color:{bind:'accent'}, shape:{value:'check'}, custom:{value:''}, scale:{value:1}}},
+    title:  {label:'Title',       type:'text',  props:T('Thank You!', 21)},
+    desc:   {label:'Description', type:'text',  props:S('Your identity was successfully verified.')},
  }},
 ];
 
@@ -659,6 +700,12 @@ const VARIANT_COPY = {
         'ID front':['','Scan the front side of your ID',''],
         'ID back':['','Scan the back side of your ID',''],
         'Passport':['','Scan passport photo page','']},
+  dverdict:{'Verified':['Thank You!','Your identity was successfully verified. You can close this window.','','check','#4ADE80'],
+        'Failed':['Verification Failed','We were unable to verify your identity. Try again from your phone.','','cross','#F87171'],
+        'Underage':['Must be 18','Sorry, you must be at least 18 years old to use our services.','','warn','#E5A33C'],
+        'Expired':['Expired ID','Please try again using a currently valid ID document.','','warn','#E5A33C'],
+        'In review':['Thank You','Your data has been sent to us for review. You can close this window.','','check','#4ADE80'],
+        'Max attempts':['Max Attempts Reached','You have reached the max number of attempts for verification.','','cross','#F87171']},
   verdict:{'Verified':['Thank You!','Your identity was successfully verified.','Done','check','#4ADE80'],
         'Failed':['Verification Failed','We were unable to verify your identity, please try again.','Close','cross','#F87171'],
         'Underage':['Must be 18','Sorry, you must be at least 18 years old to use our services.','Retry','warn','#E5A33C'],
@@ -767,7 +814,29 @@ function textBlock(el, inner, extra, isList){
   return `<div data-el="${el}" style="color:${c};font-family:${fontStack(f)};font-size:${s}px;font-weight:${w};line-height:1.45;
     ${alignBox(el,isList)};${ghostCss(el)}${extra||''}">${inner}</div>`;
 }
-function txt(el, extra){ return textBlock(el, esc(companify(val(el,'text'))).replace(/\n/g,'<br>'), extra, false); }
+function txt(el, extra){ return txtFrom(el, 'text', extra); }
+/* same block, but the copy comes from a named prop — an element whose wording
+   changes with a state keeps one prop per state so editing one never rewrites
+   the other */
+/* PARKED: the Text message / Email switcher. Vyyer ships email only today, so the
+   hand-off screen takes one field that accepts either and reads the method off
+   what was typed. Kept whole — renderer, `segment` prop rows and the `methods`
+   element shape — because the switcher is expected back once SMS ships. To
+   restore: add the `methods` element to the handoff screen and call segment()
+   above the field label. Like every other screen state it is SHOWN, not operated:
+   a click selects it, and which side reads as chosen comes from its own panel. */
+function segment(el){
+  const a=val(el,'aLabel'), b=val(el,'bLabel'), bg=val(el,'bg'), sbg=val(el,'selectedBg'),
+        c=val(el,'color'), sc=val(el,'selectedColor'), r=val(el,'radius'),
+        f=val(el,'font'), w=val(el,'weight')||600;
+  const half=(label,on)=>`<div style="flex:1;text-align:center;padding:9px 8px;border-radius:${Math.max(0,r-3)}px;
+    background:${on?sbg:'transparent'};color:${on?sc:c};font-family:${fontStack(f)};font-size:13px;
+    font-weight:${w};white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(label)}</div>`;
+  return `<div data-el="${el}" style="display:flex;gap:3px;width:100%;background:${bg};
+    border-radius:${r}px;padding:3px;margin-bottom:16px;${ghostCss(el)}">
+    ${half(a, linkMethod==='sms')}${half(b, linkMethod==='email')}</div>`;
+}
+function txtFrom(el, prop, extra){ return textBlock(el, esc(companify(val(el,prop))).replace(/\n/g,'<br>'), extra, false); }
 function list(el, extra){
   const g=BULLETS[val(el,'bullet')||'Disc'];
   const bc=val(el,'bulletColor')||val(el,'color');
@@ -793,10 +862,11 @@ function textIcon(el, extra){
     color:${val(el,'color')};font-family:${fontStack(val(el,'font'))};font-size:${s}px;font-weight:${val(el,'weight')||400};
     ${ghostCss(el)}${extra||''}">${icon}<span>${esc(companify(val(el,'text')))}</span></div>`;
 }
-function button(el){
+/* 55 is the live MOBILE button; the desktop window ships a 48 */
+function button(el, h, sz){
   const l=val(el,'label'), bg=val(el,'bg'), fg=val(el,'fg'), r=val(el,'radius'), w=val(el,'weight')||700;
-  return `<div data-el="${el}" style="background:${bg};color:${fg};border-radius:${r}px;height:55px;display:flex;
-    align-items:center;justify-content:center;font-family:${fontStack(tok('fontBody'))};font-size:${BTN_SIZE}px;font-weight:${w};width:100%">${esc(l)}</div>`;
+  return `<div data-el="${el}" style="background:${bg};color:${fg};border-radius:${r}px;height:${h||55}px;display:flex;
+    align-items:center;justify-content:center;font-family:${fontStack(tok('fontBody'))};font-size:${sz||BTN_SIZE}px;font-weight:${w};width:100%">${esc(l)}</div>`;
 }
 /* A logo is sized by HEIGHT and keeps its own aspect ratio — square, circular or
    a wide wordmark all just fit the box height. Scale is a MULTIPLIER (0.5–2),
@@ -810,6 +880,82 @@ const VY_ROUNDEL_LIGHT = `<path d="M104,208 C161.437614,208 208,161.437614 208,1
   + `<g transform="translate(29.7143, 50.1429)" fill="#A0D959" fill-rule="nonzero"><path d="M0.795067966,0 C0.0529434857,0 -0.220340459,0.499919324 0.19309318,1.12942456 L14.0885588,22.2870355 C14.4982217,22.9107995 15.440205,23.4164601 16.1801382,23.4164601 L42.680607,23.4164601 C43.4260919,23.4164601 43.7050128,23.9184633 43.296402,24.5488131 L30.1643972,44.8070804 C29.7590064,45.432462 29.7559941,46.4420584 30.1596337,47.0651105 L73.9612776,114.676684 C74.3640371,115.298379 75.0142111,115.298723 75.4151462,114.674865 L148.38864,1.12749578 C148.788831,0.504797028 148.509722,0 147.767924,0 L121.562981,0 C120.819978,0 119.890114,0.50905268 119.493341,1.1257006 L75.4148533,69.6307135 C75.0148251,70.2524204 74.3663994,70.2565199 73.9617775,69.6325017 L59.1923828,46.8547992 C58.7898993,46.2340802 58.7894684,45.2328941 59.2032862,44.6004551 L87.6465726,1.13043269 C88.0550778,0.506111973 87.7828757,0 87.0425014,0 L0.795067966,0 Z"/></g>`;
 const VY_ROUNDEL_DARK  = `<path d="M104,0 C161.437614,0 208,46.562386 208,104 C208,161.437614 161.437614,208 104,208 C46.562386,208 0,161.437614 0,104 C0,46.562386 46.562386,0 104,0 Z M116.756787,50.1428571 L30.5093537,50.1428571 C29.7672292,50.1428571 29.4939453,50.6427765 29.9073789,51.2722817 L43.8028445,72.4298926 C44.2125074,73.0536566 45.1544907,73.5593172 45.8944239,73.5593172 L72.3948927,73.5593172 C73.1403776,73.5593172 73.4192985,74.0613204 73.0106877,74.6916702 L59.8786829,94.9499375 C59.4732921,95.5753191 59.4702798,96.5849156 59.8739194,97.2079676 L103.675563,164.819542 C104.078323,165.441236 104.728497,165.441581 105.129432,164.817722 L178.102926,51.2703529 C178.503116,50.6476542 178.224008,50.1428571 177.482209,50.1428571 L151.277266,50.1428571 C150.534264,50.1428571 149.6044,50.6519098 149.207627,51.2685577 L105.129139,119.773571 C104.729111,120.395277 104.080685,120.399377 103.676063,119.775359 L88.9066685,96.9976564 C88.5041851,96.3769374 88.5037541,95.3757513 88.9175719,94.7433123 L117.360858,51.2732898 C117.769363,50.6489691 117.497161,50.1428571 116.756787,50.1428571 Z" fill="#A0D959" fill-rule="nonzero"/>`;
 const VY_WORDMARK = `<polygon points="82.7553489 1.15023526 54.1617654 82.9684171 28.5935835 82.9684171 1.13686838e-13 1.15023526 23.9909779 1.15023526 40.9515381 59.7015381 41.8038108 59.7015381 58.764371 1.15023526"/><path d="M108.366134,113.650235 C105.489713,113.650235 102.801531,113.428289 100.301586,112.984397 C97.801642,112.540505 95.7313017,111.988414 94.0905658,111.328125 L99.2042021,94.3675648 C101.874768,95.1915394 104.280663,95.6354315 106.421887,95.6992409 C108.563111,95.7630504 110.431064,95.2622847 112.025746,94.1969438 C113.620429,93.1316029 114.914929,91.3205233 115.909247,88.7637052 L117.230103,85.3121671 L87.8691413,1.15023526 L111.732778,1.15023526 L128.693338,61.2354625 L129.545611,61.2354625 L146.633512,1.15023526 L170.62449,1.15023526 L138.834884,91.8323864 C137.315109,96.2285822 135.246572,100.065474 132.629273,103.343062 C130.011975,106.62065 126.721764,109.157909 122.75864,110.95484 C118.795516,112.75177 113.998014,113.650235 108.366134,113.650235 Z"/><path d="M196.235275,113.650235 C193.358855,113.650235 190.670672,113.428289 188.170728,112.984397 C185.670783,112.540505 183.600443,111.988414 181.959707,111.328125 L187.073343,94.3675648 C189.743909,95.1915394 192.149804,95.6354315 194.291028,95.6992409 C196.432252,95.7630504 198.300206,95.2622847 199.894888,94.1969438 C201.48957,93.1316029 202.78407,91.3205233 203.778388,88.7637052 L205.099245,85.3121671 L175.738283,1.15023526 L199.601919,1.15023526 L216.562479,61.2354625 L217.414752,61.2354625 L234.502654,1.15023526 L258.493632,1.15023526 L226.704025,91.8323864 C225.18425,96.2285822 223.115713,100.065474 220.498414,103.343062 C217.881116,106.62065 214.590905,109.157909 210.627781,110.95484 C206.664658,112.75177 201.867156,113.650235 196.235275,113.650235 Z"/><path d="M307.371296,84.5447887 C298.976742,84.5447887 291.748515,82.8385787 285.686614,79.4261586 C279.624714,76.0137385 274.962044,71.1558949 271.698605,64.8526278 C268.435166,58.5493608 266.803447,51.07949 266.803447,42.4430154 C266.803447,34.0196089 268.440576,26.6296387 271.714835,20.2731046 C274.989093,13.9165705 279.59489,8.96273526 285.532223,5.4115989 C291.469557,1.86046254 298.451007,0.0848943537 306.476576,0.0848943537 C311.888729,0.0848943537 316.927875,0.94424161 321.594013,2.66293612 C326.260151,4.38163064 330.340351,6.96868896 333.834613,10.4241111 C337.328876,13.8795332 340.056177,18.2066484 342.016515,23.4054565 C343.976853,28.6042647 344.957022,34.6801758 344.957022,41.6331898 L344.957022,47.8546143 L275.880484,47.8546143 L275.880484,33.7921143 L323.607757,33.7921143 C323.586117,30.5394953 322.863405,27.6507291 321.439622,25.1258157 C320.015838,22.6009022 318.052032,20.6157338 315.548203,19.1703103 C313.044375,17.7248868 310.148395,17.0021751 306.860265,17.0021751 C303.429534,17.0021751 300.389567,17.7993774 297.740364,19.3937822 C295.091161,20.9881869 293.019156,23.106523 291.52435,25.7487904 C290.029543,28.3910578 289.260778,31.3279585 289.218053,34.5594926 L289.218053,47.9395086 C289.218053,51.9883589 289.977941,55.4865057 291.497716,58.4339489 C293.017491,61.381392 295.162322,63.6505127 297.932209,65.2413108 C300.702095,66.8321089 303.976354,67.627508 307.754985,67.627508 C310.290718,67.627508 312.600899,67.2689264 314.685527,66.5517634 C316.770155,65.8346003 318.565282,64.7710627 320.070908,63.3611506 C321.576535,61.9512385 322.71276,60.2200595 323.479583,58.1676136 L344.445159,59.5309171 C343.379818,64.5879572 341.210157,68.9897017 337.936176,72.7361506 C334.662195,76.4825994 330.438146,79.387318 325.264029,81.4503063 C320.089912,83.5132946 314.125668,84.5447887 307.371296,84.5447887 Z"/><path d="M359.786641,82.9684171 L359.786641,1.15023526 L381.774278,1.15023526 L381.774278,15.4258034 L382.626551,15.4258034 C384.118028,10.3548917 386.619915,6.51619651 390.13221,3.90971791 C393.644506,1.3032393 397.691137,0 402.272103,0 C403.408467,0 404.631805,0.065612793 405.942119,0.196838379 C407.252433,0.328063965 408.401142,0.514359908 409.388247,0.755726207 L409.388247,20.9222967 C408.344546,20.5816096 406.881645,20.2905828 404.999542,20.0492165 C403.11744,19.8078502 401.384319,19.6871671 399.800179,19.6871671 C396.483751,19.6871671 393.516887,20.4062722 390.899589,21.8444824 C388.28229,23.2826926 386.220828,25.2784035 384.715202,27.8316151 C383.209575,30.3848267 382.456762,33.3376798 382.456762,36.6901744 L382.456762,82.9684171 L359.786641,82.9684171 Z"/>`;
+/* The QR is generated, not an image — so the two colours a client sets here are
+   the ones the live code is drawn with. One instance, updated in place and
+   re-appended after each render, because the stage is rebuilt every time. */
+const QR_SIZE = 118, QR_DATA = 'https://verify.vyyer.com/s/8F3QK2';
+/* the library's own option vocabularies, worded as its UI words them */
+const QR_DOT_STYLES = ['Square','Dots','Rounded','Extra rounded','Classy','Classy rounded'];
+const QR_CNR_SQ     = ['None','Square','Dot','Extra rounded'];
+const QR_CNR_DOT    = ['None','Square','Dot'];
+const QR_EC         = ['L','M','Q','H'];
+const QR_EC_NOTE    = {L:'L — 7% recoverable', M:'M — 15% recoverable',
+                       Q:'Q — 25% recoverable', H:'H — 30% recoverable'};
+/* None means "leave it to the dot style", which the library spells as no type */
+const qrType = label => ({'Square':'square','Dots':'dots','Rounded':'rounded','Extra rounded':'extra-rounded',
+  'Classy':'classy','Classy rounded':'classy-rounded','Dot':'dot'})[label];
+let qrGen = null, qrGenKey = '';
+function qrOptions(){
+  const img = val('qr','image');
+  return {width:QR_SIZE, height:QR_SIZE, type:'svg', data:QR_DATA,
+    margin: +val('qr','margin') || 0,
+    image: img || undefined,
+    qrOptions:{errorCorrectionLevel: val('qr','ecLevel') || 'M'},
+    imageOptions:{hideBackgroundDots: !!val('qr','hideBgDots'),
+                  imageSize: +val('qr','imageSize') || .4,
+                  margin: +val('qr','imageMargin') || 0},
+    dotsOptions:{color: val('qr','dots'), type: qrType(val('qr','dotStyle'))},
+    backgroundOptions:{color: val('qr','bg')},
+    cornersSquareOptions:{color: val('qr','cnrSqColor'), type: qrType(val('qr','cnrSqStyle'))},
+    cornersDotOptions:{color: val('qr','cnrDotColor'), type: qrType(val('qr','cnrDotStyle'))}};
+}
+function paintQR(){
+  const host = document.getElementById('qrTarget');
+  if(!host) return;
+  const bg = val('qr','bg'), dots = val('qr','dots');
+  if(typeof QRCodeStyling === 'undefined'){            /* offline — keep the layout honest */
+    host.style.background = bg;
+    host.innerHTML = `<div style="display:grid;place-items:center;height:100%;color:${dots};
+      font:600 10px var(--font);opacity:.6">QR</div>`;
+    return;
+  }
+  const o = qrOptions(), k = JSON.stringify(o);
+  if(!qrGen) qrGen = new QRCodeStyling(o);
+  else if(k !== qrGenKey) qrGen.update(o);
+  qrGenKey = k;
+  qrGen.append(host);
+}
+/* a QR has to out-contrast its own background to scan at all */
+function qrContrast(bg, dots){
+  const lum = c => { const h=parseColor(c).hex.replace('#','');
+    const ch = i => { const v=parseInt(h.substr(i,2),16)/255; return v<=.03928 ? v/12.92 : Math.pow((v+.055)/1.055, 2.4); };
+    return .2126*ch(0) + .7152*ch(2) + .0722*ch(4); };
+  const a = lum(bg), b = lum(dots);
+  return (Math.max(a,b) + .05) / (Math.min(a,b) + .05);
+}
+
+/* the desktop window has a close control in the corner on every screen */
+function closeBtn(){
+  const c = val('close','color'), custom = val('close','custom');
+  return `<div data-el="close" style="position:absolute;top:18px;right:18px;width:30px;height:30px;border-radius:50%;
+    background:rgba(127,127,127,.22);display:grid;place-items:center">
+    ${custom ? `<img src="${custom}" style="width:14px;height:14px;object-fit:contain;display:block">`
+      : `<svg viewBox="0 0 24 24" style="width:14px;height:14px;display:block" fill="none" stroke="${c}" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>`}
+  </div>`;
+}
+
+/* a stand-in for whatever animation ships — swappable like any other image */
+function progressMark(scale, custom){
+  const sz = Math.round(62 * (scale || 1));
+  if(custom) return `<img src="${custom}" style="width:${sz}px;height:${sz}px;object-fit:contain;display:block">`;
+  const c = tok('accent');
+  return `<svg viewBox="0 0 48 48" style="width:${sz}px;height:${sz}px;display:block" fill="none">
+    <circle cx="24" cy="24" r="20" stroke="${withAlpha(parseColor(c).hex, .22)}" stroke-width="4"/>
+    <path d="M24 4a20 20 0 0 1 20 20" stroke="${c}" stroke-width="4" stroke-linecap="round">
+      <animateTransform attributeName="transform" type="rotate" from="0 24 24" to="360 24 24" dur="1.1s" repeatCount="indefinite"/>
+    </path></svg>`;
+}
+
 function logoMark(scale, color, custom, markOnly){
   const h = LOGO_H * (scale||1);
   if(custom) return `<img src="${custom}" style="height:${h}px;width:auto;max-width:100%;object-fit:contain;display:block">`;
@@ -1008,7 +1154,7 @@ function renderScreen(){
   /* Replacing the stage's contents resets the inspector's scroll as a side
      effect, which throws the panel to the top mid-edit. Hold its position. */
   const insp0=document.getElementById('insp'), inspTop=insp0?insp0.scrollTop:0;
-  const id=state.screen, pad='padding:22px 18px';
+  const id=state.screen, pad='padding:22px 18px', dpad='padding:30px 32px';
   const ink=tok('primaryText');
   let body='';
 
@@ -1075,7 +1221,8 @@ function renderScreen(){
     body=`<div style="padding:20px 22px;display:flex;flex-direction:column;height:100%">
       <div style="display:flex;align-items:center;gap:14px">
         <span data-el="back" style="display:grid;place-items:center;flex:0 0 auto">${icon('back','<path d="M15 5l-7 7 7 7"/>',22)}</span>
-        <div data-el="search" style="flex:1;height:46px;background:${sb};border-radius:${sr}px;display:flex;align-items:center;gap:10px;padding:0 14px">
+        <div data-el="search" style="flex:1;height:46px;background:${sb};border:1px solid ${val('search','border')};
+          border-radius:${sr}px;display:flex;align-items:center;gap:10px;padding:0 14px">
           <span data-el="searchIcon" style="display:grid;place-items:center;flex:0 0 auto">${icon('searchIcon','<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>',18)}</span>
           <span style="color:${sc};font-family:${fontStack(tok('fontBody'))};font-size:15px">${esc(val('search','placeholder'))}</span></div>
       </div>
@@ -1210,15 +1357,63 @@ function renderScreen(){
       ${txt('desc','line-height:1.5')}
       <div style="flex:1"></div><div style="align-self:stretch">${button('btn')}</div></div>`;
   }
+  /* ── Desktop hand-off ─────────────────────────────────────────────────
+     The desktop window is a 380×480 card, so these lay out centred with the
+     close control pinned to the corner, rather than the mobile stack. */
   else if(id==='qr'){
-    const qb=val('qr','bg'), qbd=val('qr','border'), qr_=val('qr','radius');
-    body=`<div style="${pad};display:flex;flex-direction:column;height:100%;align-items:center">
-      <div data-el="logo" style="align-self:flex-start;margin-bottom:16px">${logoMark(val('logo','scale'), ink, val('logo','src'))}</div>
-      ${txt('title','margin-bottom:16px;line-height:1.35')}
-      <div data-el="qr" style="background:${qb};border:1px solid ${qbd};border-radius:${qr_}px;width:112px;height:112px;display:grid;place-items:center">
-        <svg viewBox="0 0 24 24" style="width:78px" fill="#111"><path d="M3 3h7v7H3zM5 5v3h3V5zM14 3h7v7h-7zM16 5v3h3V5zM3 14h7v7H3zM5 16v3h3v-3zM14 14h3v3h-3zM18 14h3v3h-3zM14 18h3v3h-3zM18 18h3v3h-3z"/></svg>
+    const qb=val('qr','bg'), qdots=val('qr','dots');
+    const mk=val('marks','color'), mw=val('marks','width'), mbg=val('marks','boxBg');
+    const corner = (css)=>`<span style="position:absolute;${css};width:26px;height:26px;border-color:${mk};border-style:solid;border-width:0"></span>`;
+    body=`<div style="${dpad};display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;position:relative">
+      ${closeBtn()}
+      <div data-el="logo" style="display:flex;width:100%;justify-content:${JUST[(val('logo','align')||'Center')]};
+        margin-bottom:18px">${logoMark(val('logo','scale'), ink, val('logo','src'))}</div>
+      ${txt('title','margin-bottom:20px;line-height:1.35;width:100%')}
+      <div data-el="marks" style="position:relative;padding:32px 84px;background:${mbg};border-radius:6px">
+        <span style="position:absolute;top:0;left:0;width:26px;height:26px;border-top:${mw}px solid ${mk};border-left:${mw}px solid ${mk};border-radius:4px 0 0 0"></span>
+        <span style="position:absolute;top:0;right:0;width:26px;height:26px;border-top:${mw}px solid ${mk};border-right:${mw}px solid ${mk};border-radius:0 4px 0 0"></span>
+        <span style="position:absolute;bottom:0;left:0;width:26px;height:26px;border-bottom:${mw}px solid ${mk};border-left:${mw}px solid ${mk};border-radius:0 0 0 4px"></span>
+        <span style="position:absolute;bottom:0;right:0;width:26px;height:26px;border-bottom:${mw}px solid ${mk};border-right:${mw}px solid ${mk};border-radius:0 0 4px 0"></span>
+        <div data-el="qr" style="background:${qb};width:${QR_SIZE}px;height:${QR_SIZE}px;display:block">
+          <div id="qrTarget" style="width:${QR_SIZE}px;height:${QR_SIZE}px;display:block"></div>
+        </div>
       </div>
-      <div style="margin-top:16px">${txt('link','text-decoration:underline')}</div></div>`;
+      <div style="width:100%;margin-top:22px">${txt('link', val('link','underline') ? 'text-decoration:underline' : '')}</div>
+    </div>`;
+  }
+  else if(id==='handoff'){
+    const fb=val('field','bg'), fc=val('field','color'), fr=val('field','radius');
+    body=`<div style="${dpad};display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;position:relative">
+      ${closeBtn()}
+      <div data-el="logo" style="display:flex;width:100%;justify-content:${JUST[(val('logo','align')||'Center')]};
+        margin-bottom:18px">${logoMark(val('logo','scale'), ink, val('logo','src'))}</div>
+      ${txt('title','margin-bottom:20px;line-height:1.35;width:100%')}
+      <div style="width:100%;max-width:284px">
+        ${txt('flabel','margin-bottom:7px')}
+        <div data-el="field" style="background:${fb};border:1px solid ${val('field','border')};border-radius:${fr}px;
+          height:46px;display:flex;align-items:center;padding:0 14px;margin-bottom:16px">
+          <span style="color:${fc};font-family:${fontStack(tok('fontBody'))};font-size:15px">${esc(val('field','placeholder'))}</span>
+        </div>
+        ${button('btn', 48, 15)}
+      </div>
+      <div style="width:100%;margin-top:22px">${txt('link', val('link','underline') ? 'text-decoration:underline' : '')}</div>
+    </div>`;
+  }
+  else if(id==='dprogress'){
+    body=`<div style="${dpad};display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;position:relative">
+      ${closeBtn()}
+      <div data-el="img" style="margin-bottom:26px">${progressMark(val('img','scale'), val('img','custom'))}</div>
+      ${txt('title','margin-bottom:8px')}
+      ${txt('desc','line-height:1.5;max-width:28ch')}
+    </div>`;
+  }
+  else if(id==='dverdict'){
+    body=`<div style="${dpad};display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center;position:relative">
+      ${closeBtn()}
+      ${verdictIcon()}
+      ${txt('title','margin:22px 0 8px')}
+      ${txt('desc','line-height:1.5;max-width:28ch')}
+    </div>`;
   }
 
   const frameCls = curScreen().device==='desktop' ? 'desktop' : 'mobile';
@@ -1240,6 +1435,7 @@ function renderScreen(){
     /* clicking the same element again clears the selection */
     n.onclick = e=>{ e.stopPropagation(); select(n.dataset.el===state.sel ? null : n.dataset.el); };
   });
+  if(id==='qr') paintQR();
   paintSelection();
   /* clicking the empty stage (outside the device) clears the selection,
      because the background itself is now a selectable element */
@@ -1267,7 +1463,7 @@ function paintSelection(){
 /* The device renders at TRUE size (390x844) so every value in the inspector is a
    real device value — then it's scaled down to a comfortable canvas size. The cap
    keeps the preview the same size on screen regardless of the device dimensions. */
-const DISPLAY_CAP = {mobile:{w:330,h:668}, desktop:{w:560,h:430}};
+const DISPLAY_CAP = {mobile:{w:330,h:668}, desktop:{w:380,h:480}};
 function fitDevice(){
   const w=document.getElementById('fitwrap'); if(!w) return;
   const f=w.querySelector('.frame'), st=document.getElementById('stage');
@@ -1690,7 +1886,7 @@ function weightCtl(value, pick){
     v=>pick(+v));
 }
 
-function ctlFor(type, value, elId, prop){
+function ctlFor(type, value, elId, prop, opts){
   const mk=elId+'|'+prop;
   const live=`liveProp('${elId}','${prop}',this.value${type==='radius'||type==='scale'?',1':''});syncPair(this,this.value)`;
   if(type==='color')  return colorCtl(value, live, mk, `el|${elId}|${prop}`);
@@ -1699,6 +1895,9 @@ function ctlFor(type, value, elId, prop){
   if(type==='listlong') return listFieldCtl(value, live, mk);
   if(type==='radius') return sliderCtl(value, 0, 32, 1, live, mk);
   if(type==='scale')  return sliderCtl(value, .5, 2, .05, live, mk);
+  /* a logo may cover at most about a third of a code and still scan */
+  if(type==='qrsize') return sliderCtl(value, .1, .5, .05, live, mk);
+  if(type==='pick')   return ddCtl(value, (opts||[]).map(o=>({v:o, desc:QR_EC_NOTE[o]})), v=>setProp(elId,prop,v));
   if(type==='upload') return uploadCtl(value, `el|${elId}|${prop}`);
   if(type==='font')   return fontCtl(value, v=>setProp(elId,prop,v));
   if(type==='weight') return weightCtl(value, v=>setProp(elId,prop,v));
@@ -1709,6 +1908,7 @@ function ctlFor(type, value, elId, prop){
 }
 /* rows that only matter while their toggle is on */
 const SHOW_WHEN = {
+  qrcode:{ imageSize:'image', imageMargin:'image', hideBgDots:'image' },
   navbar:{ logoSrc:'logoShow', logoScale:'logoShow',
            closeColor:'closeShow', closeCustom:'closeShow',
            helpColor:'helpShow',  helpCustom:'helpShow' },
@@ -1721,17 +1921,23 @@ const DIM_WHEN = {
   texticon:{iconColor:'iconCustom'},
   navbar:  {helpColor:'helpCustom', closeColor:'closeCustom'},
 };
-function propRow(elId, prop, label, type, dim){
+function propRow(elId, prop, label, type, dim, opts){
   const r = resolve(state.screen, state.variant, elId, prop);
   const srcLbl = r.source==='custom' ? 'Custom' : (r.source==='global' ? 'Global' : 'Default');
   const cls = r.source==='custom' ? 'src custom' : 'src';
   const resetBtn = r.source==='custom' ? `<button class="reset" title="Reset" onclick="resetProp('${elId}','${prop}')">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 109-9 9 9 0 00-6.4 2.6L3 8"/><path d="M3 3v5h5"/></svg></button>` : '';
   return `<div class="row${dim?' dim':''}"><div class="lbl"><span>${label}</span><span class="${cls}">${srcLbl}</span>${resetBtn}</div>
-    ${ctlFor(type, r.value, elId, prop)}</div>`;
+    ${ctlFor(type, r.value, elId, prop, opts)}</div>`;
 }
 
 const PROP_UI = {
+  textlink:[['text','Content','long'],['align','Alignment','align'],['underline','Underline','toggle'],
+           ['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
+  /* parked with segment() — the two option labels are fixed, they name a method */
+  segment: [['bg','Track fill','color'],
+           ['selectedBg','Selected fill','color'],['color','Text color','color'],['selectedColor','Selected text','color'],
+           ['radius','Corner radius','radius'],['font','Font','font'],['weight','Font weight','weight']],
   text:    [['text','Content','long'],['align','Alignment','align'],['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
   list:    [['text','Content','listlong'],['bullet','List style','bullet'],['bulletColor','Bullet color','color'],
            ['align','Block alignment','align'],['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
@@ -1751,10 +1957,20 @@ const PROP_UI = {
             ['helpShow','Show help icon','toggle'],['helpColor','Help icon color','color'],['helpCustom','Custom help icon','upload']],
   stepicon:[['bg','Fill','color'],['fg','Number color','color'],['custom','Custom icon','upload']],
   guide:   [['color','Guide color','color'],['successColor','Capture colour','color'],['width','Line weight','radius']],
+  /* the QR has no capture state, and its box has a fill the camera guide doesn't */
+  qrguide: [['boxBg','Guide box BG','color'],['color','Guide color','color'],['width','Line weight','radius']],
+  qrcode:  [['bg','Background','color'],
+           ['dotStyle','Dots style','pick',QR_DOT_STYLES],['dots','Dots color','color'],
+           ['cnrSqStyle','Corner square style','pick',QR_CNR_SQ],['cnrSqColor','Corner square color','color'],
+           ['cnrDotStyle','Corner dot style','pick',QR_CNR_DOT],['cnrDotColor','Corner dot color','color'],
+           ['image','Center image','upload'],['imageSize','Image size','qrsize'],
+           ['imageMargin','Image margin','radius'],['hideBgDots','Hide dots behind image','toggle'],
+           ['margin','Quiet zone','radius'],['ecLevel','Error correction','pick',QR_EC]],
   status:  [['text','Initial message','text'],['bg','Message fill','color'],['color','Message text','color'],
             ['errorBg','Error fill','color'],['errorColor','Error text','color'],
             ['successBg','Success fill','color'],['successColor','Success text','color']],
-  search:  [['placeholder','Placeholder','text'],['bg','Field fill','color'],['color','Text color','color'],['radius','Corner radius','radius']],
+  search:  [['placeholder','Placeholder','text'],['bg','Field fill','color'],['border','Field border','color'],
+           ['color','Text color','color'],['radius','Corner radius','radius']],
   countrylist:[['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
   image:  [['custom','Illustration','upload'],['scale','Image scale','scale']],
   consentbox:[['text','Consent wording','long'],['radius','Corner radius','radius'],
@@ -1915,12 +2131,29 @@ function renderInspector(){
       /* the brand-wide switch wins over the per-screen one */
       if(gate==='closeShow' && tok('hideClose')) return false;
       return true;
-    }).map(([p,l,t])=>{
+    }).map(([p,l,t,opts])=>{
       const by = map[p];
-      const row = propRow(state.sel,p,l,t, !!(by && val(state.sel, by)));
+      const row = propRow(state.sel,p,l,t, !!(by && val(state.sel, by)), opts);
       return {dim: !!(by && val(state.sel, by)), html: (sc && p===sc.anchor ? picker : '') + row};
     });
-    rows = vis + mer + html.map(r=>r.html).join('');
+    rows = vis + mer + (picker && !sc ? picker : '') + html.map(r=>r.html).join('');
+    /* the one branding choice on this screen that can stop the product working */
+    if(el.type==='qrcode' && qrContrast(val('qr','bg'), val('qr','dots')) < 3)
+      rows += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17v.01" stroke-linecap="round"/></svg>
+        These two colours are too close for a camera to read the code. Keep a clear
+        light/dark contrast between the dots and the background.</div>`;
+    if(state.screen==='handoff' && state.sel==='field')
+      rows += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
+        One field takes either. Digits format as a phone number from the fourth one on
+        — (917) 860-1156 — and anything with an @ is treated as an email.</div>`;
+    /* a logo in the middle eats modules, so the level has to carry it */
+    if(el.type==='qrcode' && val('qr','image') && 'LM'.includes(val('qr','ecLevel')))
+      rows += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
+        A centre image covers part of the code. Raise error correction to Q or H so
+        scanners can still rebuild what it hides.</div>`;
   }
   const nOvr = Object.keys(overrides).filter(k=>k.startsWith(state.screen+'|'+state.variant+'|'+state.sel+'|')).length;
   let applyAll='';
@@ -2044,8 +2277,13 @@ function goScreen(id){ goTo(FLAT.findIndex(f=>f.id===id)); }
    or the checkbox, so the state sits in that element's panel. */
 let scanState='default';
 let consentChecked=false;
+/* PARKED with segment(): which side of the method switcher reads as chosen.
+   Nothing drives it today — the hand-off screen takes one field for either, and
+   the button says Send Link whichever was typed. */
+let linkMethod='sms';
 function setScanState(s){ scanState=s; renderScreen(); renderInspector(); }
 function setConsentChecked(v){ consentChecked=v; renderScreen(); renderInspector(); }
+function setLinkMethod(v){ linkMethod=v; renderScreen(); renderInspector(); }
 function stateRow(label, opts, cur, fn){
   return `<div class="row"><div class="lbl"><span>${label}</span></div>
     <div class="picker">${opts.map(([v,l])=>`<button class="${String(v)===String(cur)?'on':''}"
@@ -2059,11 +2297,13 @@ const STATE_FIELDS = {
   'consent|release':{false:['bg','border','boxColor'],
                      true:['checkedBg','checkedBorder','checkedFill','checkedTick']},
 };
+/* which value the switcher is currently on, per scoped element */
+const STATE_CUR = {'scan|status':()=>scanState, 'consent|release':()=>String(consentChecked)};
 /* props that belong to SOME state — hidden unless that state is current */
 function stateScope(){
   const set = STATE_FIELDS[state.screen+'|'+state.sel];
   if(!set) return null;
-  const cur = state.sel==='status' ? scanState : String(consentChecked);
+  const cur = STATE_CUR[state.screen+'|'+state.sel]();
   const keep = new Set(set[cur]||[]);
   const all  = new Set(Object.values(set).flat());
   return {keep, all, anchor:(set[cur]||[])[0]};

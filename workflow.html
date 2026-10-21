@@ -294,8 +294,8 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
 .cty-count b { color: var(--text-primary); font-weight: 600; }
 
 .cty-body { padding: 14px 18px 16px; }
-.search { position: relative; margin-bottom: 12px; }
-.search svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-tertiary); }
+.search { position: relative; }
+.search > svg { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); width: 15px; height: 15px; color: var(--text-tertiary); }
 .search input { width: 100%; font-family: var(--font); font-size: 13.5px; color: var(--text-primary);
   background: var(--field); border: 1px solid var(--field-line); border-radius: var(--radius-md); padding: 10px 12px 10px 36px;
   outline: none; transition: border-color .15s, box-shadow .15s; }
@@ -304,6 +304,7 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
 
 .picked { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .picked:empty { display: none; }
+.picked-empty { font-size: 12.5px; color: var(--text-tertiary); margin-bottom: 12px; }
 .cchip { display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500;
   background: var(--chip); border: 1px solid var(--field-line); border-radius: 20px; padding: 4px 6px 4px 11px; }
 .cchip button { border: 0; background: none; cursor: pointer; color: var(--text-tertiary); display: grid; place-items: center;
@@ -318,7 +319,20 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
 .cty-actions .sp { flex: 1; }
 .hint { font-size: 11.5px; color: var(--text-tertiary); text-align: right; }
 .hint b { font-weight: 600; color: var(--text-secondary); }
-.results { max-height: 232px; overflow-y: auto; border: 1px solid var(--border); border-radius: var(--radius-md); }
+/* the list belongs to the field it filters, so it hangs off it as a menu —
+   detached, it read as a separate list that happened to change */
+.search.open input { border-color: var(--field-focus); border-bottom-left-radius: 0; border-bottom-right-radius: 0; }
+.results { display: none; position: absolute; top: 100%; left: 0; right: 0; z-index: 40;
+  background: var(--surface); border: 1px solid var(--field-focus); border-top: 0;
+  border-radius: 0 0 var(--radius-md) var(--radius-md); box-shadow: var(--shadow-md); overflow: hidden; }
+.search.open .results { display: block; }
+/* the menu hangs past the card, so this one can't clip its children */
+.cty-card { overflow: visible; }
+.cty-card > .cty-head { border-radius: var(--radius-lg) var(--radius-lg) 0 0; }
+.res-head { display: flex; align-items: center; gap: 14px; padding: 8px 12px;
+  border-bottom: 1px solid var(--border); font-size: 11.5px; color: var(--text-tertiary); }
+.res-head .sp { flex: 1; }
+.res-list { max-height: 228px; overflow-y: auto; }
 .cty { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 0; background: none;
   font-family: var(--font); font-size: 13px; color: var(--text-primary); padding: 8px 12px; cursor: pointer; }
 .cty:hover { background: var(--surface-2); }
@@ -366,7 +380,6 @@ main { max-width: 1000px; margin: 0 auto; padding: 0 20px 72px; }
 [data-theme="dark"] .chip.on { background: rgba(122,201,67,.16); }
 [data-theme="dark"] .chip.soon { background: rgba(90,169,255,.16); }
 [data-theme="dark"] .sw .track i { background: #e9e9ec; }
-[data-theme="dark"] .cty.on .box { color: #07131f; }
 </style>
 </head>
 <body>
@@ -603,7 +616,7 @@ async function doSave(){
    5. VIEWS
    --------------------------------------------------------------------------- */
 const CHIP_CAP = 12;
-let view = { page:'list', service:null, search:'', allChips:false, dd:null };
+let view = { page:'list', service:null, search:'', allChips:false, dd:null, ctyOpen:false };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const icon = (d, w) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w||1.7}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
 const CHEV = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>';
@@ -1052,31 +1065,33 @@ function countryCard(s){
     ? `<div class="all-note">${icon('<circle cx="12" cy="12" r="9"/><path d="M8.5 12.5l2.5 2.5 4.5-5"/>', 1.9)}
         Documents from every country Vyyer supports are accepted.</div>`
     : `<div class="cty-body">
-        <div class="search">
-          ${icon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 2)}
-          <input type="text" id="ctySearch" placeholder="Search countries…" value="${esc(view.search)}"
-            autocomplete="off" oninput="onSearch(this.value)">
-        </div>
-        <div class="picked">${shown.map(c => `<span class="cchip">${esc(c.name)}
+        ${picked.length ? `<div class="picked">${shown.map(c => `<span class="cchip">${esc(c.name)}
           <button title="Remove" onclick="dropCountry('${c.code}')">${icon('<path d="M5 5l14 14M19 5L5 19"/>', 2.4)}</button></span>`).join('')}
           ${hidden > 0 ? `<button class="cchip more" onclick="view.allChips=true;repaintCountries()">+${hidden} more</button>` : ''}
-          ${view.allChips && picked.length > CHIP_CAP ? `<button class="cchip more" onclick="view.allChips=false;repaintCountries()">Show fewer</button>` : ''}</div>
-        <div class="cty-actions">
-          <button class="linkbtn" onclick="selectAllCountries()">Select all</button>
-          <button class="linkbtn" onclick="clearCountries()" ${picked.length ? '' : 'disabled'}>Clear</button>
-          <span class="sp"></span>
-          ${picked.length === COUNTRIES.length
-            ? '<span class="hint">Every country is picked — <b>All countries</b> also covers ones Vyyer adds later.</span>' : ''}
+          ${view.allChips && picked.length > CHIP_CAP ? `<button class="cchip more" onclick="view.allChips=false;repaintCountries()">Show fewer</button>` : ''}</div>`
+          : '<div class="picked-empty">No countries picked yet — search below to add them.</div>'}
+        <div class="search${view.ctyOpen ? ' open' : ''}">
+          ${icon('<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/>', 2)}
+          <input type="text" id="ctySearch" placeholder="Search countries…" value="${esc(view.search)}"
+            autocomplete="off" onfocus="openCty()" oninput="onSearch(this.value)">
+          <div class="results">
+            <div class="res-head">
+              <span>${q ? results.length + (results.length === 1 ? ' match' : ' matches') : COUNTRIES.length + ' countries'}</span>
+              <span class="sp"></span>
+              ${q && results.length ? `<button class="linkbtn" onmousedown="event.preventDefault()" onclick="selectMatches()">Select ${results.length === 1 ? 'it' : 'these'}</button>` : ''}
+              <button class="linkbtn" onmousedown="event.preventDefault()" onclick="clearCountries()" ${picked.length ? '' : 'disabled'}>Clear</button>
+            </div>
+            <div class="res-list">${results.length ? results.map(c => `
+              <button class="cty${k.list.includes(c.code) ? ' on' : ''}" onmousedown="event.preventDefault()" onclick="toggleCountry('${c.code}')">
+                <span class="box">${icon('<path d="M5 12.5l4.5 4.5L19 7"/>', 3)}</span>${esc(c.name)}
+              </button>`).join('') : '<div class="empty">No country matches that search.</div>'}</div>
+          </div>
         </div>
-        <div class="results">${results.length ? results.map(c => `
-          <button class="cty${k.list.includes(c.code) ? ' on' : ''}" onclick="toggleCountry('${c.code}')">
-            <span class="box">${icon('<path d="M5 12.5l4.5 4.5L19 7"/>', 3)}</span>${esc(c.name)}
-          </button>`).join('') : '<div class="empty">No country matches that search.</div>'}</div>
       </div>`;
 
   return `<div class="sec" id="ctySec">
     <div class="sec-head"><h2>Accepted countries</h2><p>Documents issued elsewhere are turned away before the scan</p></div>
-    <div class="card">
+    <div class="card cty-card">
       <div class="cty-head">
         <span class="seg">
           <button class="${k.mode === 'all' ? 'on' : ''}" onclick="setCountryMode('all')">All countries</button>
@@ -1097,14 +1112,22 @@ function countryCard(s){
 function repaintCountries(){
   const sec = document.getElementById('ctySec');
   if(!sec) return render();
-  const res = sec.querySelector('.results'), sc = res ? res.scrollTop : 0;
+  /* the scroller is the list inside the menu now, not the menu itself */
+  const list = sec.querySelector('.res-list'), sc = list ? list.scrollTop : 0;
   const inp = sec.querySelector('#ctySearch');
   const focused = document.activeElement === inp, pos = inp ? inp.selectionStart : 0;
+  const y = window.scrollY;
   sec.outerHTML = countryCard(svc(view.service));
   const now = document.getElementById('ctySec');
-  const res2 = now.querySelector('.results'); if(res2) res2.scrollTop = sc;
+  const list2 = now.querySelector('.res-list'); if(list2) list2.scrollTop = sc;
   const inp2 = now.querySelector('#ctySearch');
-  if(inp2 && focused){ inp2.focus(); try { inp2.setSelectionRange(pos, pos); } catch(e){} }
+  if(inp2 && focused){
+    /* refocusing a freshly created input makes the browser scroll it into view,
+       which is what jumped the page on every keystroke */
+    try { inp2.focus({ preventScroll: true }); } catch(e){ inp2.focus(); }
+    try { inp2.setSelectionRange(pos, pos); } catch(e){}
+  }
+  scrollTo(0, y);
   const btn = document.getElementById('saveBtn');
   if(btn) btn.outerHTML = saveBtnHtml();
 }
@@ -1133,8 +1156,8 @@ function toggleCheck(cid){
   s.checked[cid] = !s.checked[cid];
   render();
 }
-function onSearch(v){ view.search = v; repaintCountries(); }
-function setCountryMode(m){ svc(view.service).countries.mode = m; repaintCountries(); }
+function onSearch(v){ view.search = v; view.ctyOpen = true; repaintCountries(); }
+function setCountryMode(m){ svc(view.service).countries.mode = m; view.ctyOpen = false; repaintCountries(); }
 function toggleCountry(code){
   const k = svc(view.service).countries;
   k.list = k.list.includes(code) ? k.list.filter(c => c !== code) : [...k.list, code];
@@ -1145,12 +1168,23 @@ function dropCountry(code){
   k.list = k.list.filter(c => c !== code);
   repaintCountries();
 }
-function selectAllCountries(){ svc(view.service).countries.list = COUNTRIES.map(c => c.code); repaintCountries(); }
+function openCty(){ if(!view.ctyOpen){ view.ctyOpen = true; repaintCountries(); } }
+function closeCty(){ if(view.ctyOpen){ view.ctyOpen = false; repaintCountries(); } }
+function selectMatches(){
+  const q = view.search.trim().toLowerCase();
+  if(!q) return;
+  const k = svc(view.service).countries;
+  const add = COUNTRIES.filter(c => c.name.toLowerCase().includes(q)).map(c => c.code);
+  k.list = [...new Set([...k.list, ...add])];
+  repaintCountries();
+}
 function clearCountries(){ svc(view.service).countries.list = []; repaintCountries(); }
 
 document.addEventListener('click', e => {
   if(view.dd && !e.target.closest('.dd')) { view.dd = null; render(); }
+  if(view.ctyOpen && !e.target.closest('.search')) closeCty();
 }, true);
+document.addEventListener('keydown', e => { if(e.key === 'Escape' && view.ctyOpen) closeCty(); });
 
 render();
 </script>
