@@ -599,9 +599,18 @@ const isDirty = () => designState() !== savedState;
 const SPIN = '<svg class="spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 3a9 9 0 11-9 9"/></svg>';
 const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg>';
 function saveBtnHtml(){
-  const label = saving ? SPIN + 'Saving…' : savedFlash ? TICK + 'Saved' : 'Save changes';
-  return `<button class="btn primary${savedFlash ? ' saved' : ''}" id="saveBtn"
+  /* a fresh edit lands before the Saved flash times out — the button must not
+     read Saved while there are unsaved changes sitting in front of it */
+  const flash = savedFlash && !isDirty();
+  const label = saving ? SPIN + 'Saving…' : flash ? TICK + 'Saved' : 'Save changes';
+  return `<button class="btn primary${flash ? ' saved' : ''}" data-save
     ${saving || !isDirty() ? 'disabled' : ''} onclick="doSave()">${label}</button>`;
+}
+/* The list view and the detail view each hold one, so a partial repaint has to
+   refresh EVERY copy — addressing it by id found the hidden one and left the
+   button the merchant is actually looking at disabled. */
+function refreshSave(){
+  document.querySelectorAll('[data-save]').forEach(b => { b.outerHTML = saveBtnHtml(); });
 }
 async function doSave(){
   if(saving || !isDirty()) return;
@@ -871,8 +880,7 @@ function paintRisk(){
     bands[1].textContent = r.review + ' – ' + (r.fail - 1);
     bands[2].textContent = r.fail + ' – ' + RISK_MAX;
   }
-  const b = document.getElementById('saveBtn');
-  if(b) b.outerHTML = saveBtnHtml();
+  refreshSave();
 }
 
 function wireRisk(){
@@ -1128,8 +1136,7 @@ function repaintCountries(){
     try { inp2.setSelectionRange(pos, pos); } catch(e){}
   }
   scrollTo(0, y);
-  const btn = document.getElementById('saveBtn');
-  if(btn) btn.outerHTML = saveBtnHtml();
+  refreshSave();
 }
 
 function render(){
@@ -1140,7 +1147,7 @@ function render(){
   const act = document.activeElement, keepId = act && act.id, pos = act && act.selectionStart;
   const res = document.querySelector('.results'), sc = res ? res.scrollTop : 0;
   /* both views carry a Save button, so both are rebuilt — otherwise the hidden
-     one goes stale and anything looking up #saveBtn finds the wrong element */
+     one goes stale; partial repaints call refreshSave() for the same reason */
   renderList();
   if(onDetail) renderDetail();
   if(onDetail && svc(view.service) && svc(view.service).advanced) wireRisk();
