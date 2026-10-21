@@ -78,7 +78,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 
 /* ── FILTER CONTROLS (used inside toolbar) ── */
 .filter-group { display: flex; align-items: center; gap: 8px; }
-.filter-sep { width: 1px; height: 20px; background: var(--border-md); }
 .filter-label { font-size: 11px; font-weight: 500; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.06em; white-space: nowrap; }
 .pill-group { display: flex; border: 1px solid var(--border-md); border-radius: var(--radius-sm); overflow: hidden; background: var(--surface); }
 .pill-group button { background: var(--surface); border: none; border-right: 1px solid var(--border-md); font-family: var(--font); font-size: 12px; font-weight: 500; color: var(--text-secondary); padding: 5px 11px; cursor: pointer; transition: all .15s; white-space: nowrap; }
@@ -269,7 +268,10 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 
 /* Verdict stat cards under Scans heading (5 across) */
 .scan-verdict-row { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 12px; margin-bottom: 16px; }
-.scan-vcard { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.scan-vcard { display: block; text-decoration: none; color: inherit; transition: border-color .12s, transform .12s;
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; box-shadow: var(--shadow-sm); }
+.scan-vcard:hover { border-color: var(--border-md); transform: translateY(-1px); }
+.scan-vcard:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 .scan-vcard-label { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); margin-bottom: 8px; }
 .scan-vcard-val { font-size: 26px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; margin-bottom: 5px; }
 .scan-vcard-val.sv-total      { color: var(--text-primary); }
@@ -367,7 +369,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 /* Hide Period/Profile labels as soon as they cause wrapping */
 @media (max-width: 900px) {
   .filter-label { display: none; }
-  .filter-sep { display: none; }
 }
 @media (max-width: 780px)  { .verdict-pills-row { grid-template-columns: repeat(2,1fr); } .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(3,1fr); } .incomplete-grid { grid-template-columns: 1fr; } }
 @media (max-width: 680px) {
@@ -495,7 +496,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
           </div>
         </div>
       </div>
-      <div class="filter-sep"></div>
       <div class="filter-group">
         <span class="filter-label">Profile</span>
         <div class="dd" id="profileDd"></div>
@@ -851,6 +851,7 @@ function openPicker(){
   renderPresets(); renderCals(); updateRangeDisplay();
   document.getElementById('dateTrigger').classList.add('open');
   document.getElementById('dateTrigger').setAttribute('aria-expanded','true');
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
   const pop = document.getElementById('datePopover');
   pop.classList.remove('custom');        /* always opens on the presets */
   pop.classList.add('open');
@@ -939,6 +940,21 @@ function updateFunnel(d) {
 }
 
 /* ── SCANS ── */
+/* A metric is a question — "which 2,104 were invalid?" — so each card links to
+   the list behind it, carrying the date range and profile currently in view. */
+const ISO = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+function historyLink(verdict){
+  const q = new URLSearchParams();
+  if(verdict) q.set('result', verdict);
+  if(committed){
+    q.set('from', ISO(committed.start));
+    q.set('to', ISO(committed.end));
+    if(committed.preset) q.set('preset', committed.preset);
+  }
+  if(profile && profile !== 'all') q.set('profile', PROFILE_LABELS[profile] || profile);
+  return 'history.html?' + q.toString();
+}
+
 const SCAN_BOXES = [
   { key:'total',      label:'Total scans', valCls:'sv-total' },
   { key:'Valid',      badge:'valid',       valCls:'sv-valid' },
@@ -968,21 +984,21 @@ function updateScanMetrics(d) {
       const sub = periodLabel
         ? `<span class="${tr.cls}">${tr.txt}</span><span> from last ${periodLabel}</span>`
         : '&nbsp;';
-      return `<div class="scan-vcard">
+      return `<a class="scan-vcard" href="${historyLink()}" title="See these verifications in History">
         <div class="scan-vcard-label">Total scans</div>
         <div class="scan-vcard-val sv-total">${total.toLocaleString()}</div>
         <div class="scan-vcard-sub">${sub}</div>
-      </div>`;
+      </a>`;
     }
     const val = v[b.key] || 0;
     const pct = total ? (Math.round(val / total * 1000) / 10) : 0;
     const tr = SCAN_TREND[b.key];
     const trend = (periodLabel && tr.txt !== '—') ? ` &nbsp;<span class="${tr.cls}">${tr.txt}</span>` : '';
-    return `<div class="scan-vcard">
+    return `<a class="scan-vcard" href="${historyLink(b.key)}" title="See these ${b.key.toLowerCase()} verifications in History">
       <div class="scan-vcard-label"><span class="badge-${b.badge} metric-badge">${b.key.toUpperCase()}</span></div>
       <div class="scan-vcard-val ${b.valCls}">${val.toLocaleString()}</div>
       <div class="scan-vcard-sub"><span>${pct}%</span>${trend}</div>
-    </div>`;
+    </a>`;
   }).join('');
 
   document.getElementById('m-avg-time').textContent     = d.avgTime;
@@ -1297,7 +1313,7 @@ function createDropdown(el, cfg){
   trigger.addEventListener('click', function(e){
     e.stopPropagation();
     const isOpen = el.classList.contains('open');
-    document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+    closeAllPopovers();
     if(!isOpen) el.classList.add('open');
   });
   menu.addEventListener('click', function(e){
@@ -1313,8 +1329,14 @@ function createDropdown(el, cfg){
   renderMenu(); renderLabel();
   return { reset(){ selected = cfg.multi?[]:allValue; renderMenu(); renderLabel(); } };
 }
+/* Only one of these can be open at a time — two overlapping panels is a mess,
+   and the one behind is unreachable anyway. */
+function closeAllPopovers(){
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  if(typeof closePicker === 'function') closePicker();
+}
 document.addEventListener('click', e=>{ if(!e.target.closest('.dd')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAllPopovers(); });
 
 createDropdown(document.getElementById('profileDd'), {
   allLabel:'All profiles',
