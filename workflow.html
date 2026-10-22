@@ -715,27 +715,101 @@ function serviceRow(s){
 
 /* The point of the page: these switches decide what the customer is asked to
    do, so the page shows that rather than leaving it to be inferred. */
-function journeySteps(){
+/* Every step carries the methods that put it there, and a DOCUMENT method's own
+   page shows only its own path — a passport step on the ID page describes a
+   customer who was never there. A database check isn't a branch, so its page
+   shows the whole flow. On the workflow list, both branches show: the customer
+   takes one or the other, and printing a single path hides a method. */
+function journeySteps(scope){
   const live = SERVICES.filter(s => s.on && s.groups && !s.lists);
+  if(scope && !scope.on) return [];
   if(!live.length && !svc('kyc').on && !svc('kyb').on) return [];
-  const any = id => live.some(s => { const c = checkById(s, id); return c && isActive(s, c); });
+  const branch = scope && scope.groups && !scope.lists ? scope.id : null;
+  const own = id => !branch || branch === id;
+  const by = id => live.filter(s => own(s.id) && (() => { const c = checkById(s, id); return c && isActive(s, c); })());
+  const names = list => list.map(s => s.name);
   const steps = [];
-  if(live.length > 1) steps.push('Choose document type');
-  if(any('selfieCapture')) steps.push('Scan face');
-  if(any('frontCapture')) steps.push(svc('id').on && isActive(svc('id'), checkById(svc('id'),'frontCapture')) ? 'Scan ID front' : 'Scan passport page');
-  if(svc('id').on && isActive(svc('id'), checkById(svc('id'),'backScan'))) steps.push('Scan ID back');
-  if(svc('kyc').on || svc('kyb').on) steps.push('Enter personal details');
-  steps.push('Result');
+  if(live.length > 1) steps.push({ label:'Choose document type', by:names(live) });
+  const face = by('selfieCapture');
+  if(face.length) steps.push({ label:'Scan face', by:names(face) });
+  /* On the workflow list, two document methods are ONE stage to the customer —
+     they scan whichever document they chose. Spelling out both branches there
+     reads as five scans in a row. The branch belongs on each method's page. */
+  if(!branch && on('id') && on('passport')){
+    steps.push({ label:'Scan ID or passport', by:['ID Verification', 'Passport Verification'] });
+  } else {
+    if(own('id') && on('id','frontCapture'))             steps.push({ label:'Scan ID front',      by:['ID Verification'] });
+    if(own('id') && on('id','backScan'))                 steps.push({ label:'Scan ID back',       by:['ID Verification'] });
+    if(own('passport') && on('passport','frontCapture')) steps.push({ label:'Scan passport page', by:['Passport Verification'] });
+  }
+  const kyc = [svc('kyc'), svc('kyb')].filter(x => x.on);
+  if(kyc.length) steps.push({ label:'Enter personal details', by:names(kyc) });
+  steps.push({ label:'Result', by:names(live) });
   return steps;
 }
+/* ---------------------------------------------------------------------------
+   WHAT BRANDING NEEDS TO KNOW
+   Branding can only show the screens this workflow actually produces, so the
+   workflow publishes a flat summary of its OUTCOMES — not its settings. The
+   shipped version reads the same shape off the API; here the two standalone
+   prototypes share it through localStorage, written on every change because
+   Vyyer applies workflow edits instantly.
+   --------------------------------------------------------------------------- */
+const WF_KEY = 'vyyer.workflow';
+function on(id, check){
+  const s = svc(id);
+  if(!s || !s.on) return false;
+  if(!check) return true;
+  const c = checkById(s, check);
+  return !!c && isActive(s, c);
+}
+function workflowSummary(){
+  const docs = SERVICES.filter(s => s.on && s.groups && !s.lists && !s.advanced);
+  /* a country question is only worth asking when more than one answer is accepted */
+  const multiCountry = docs.some(s => s.countries &&
+    (s.countries.mode === 'all' || s.countries.list.length > 1));
+  return {
+    methods:      { id:on('id'), passport:on('passport'), kyc:on('kyc'), kyb:on('kyb') },
+    chooseDoc:    docs.length > 1,
+    chooseCountry:multiCountry,
+    face:         on('id','selfieCapture') || on('passport','selfieCapture'),
+    faceMatch:    on('id','selfieIdMatch') || on('passport','selfieIdMatch'),
+    idFront:      on('id','frontCapture'),
+    idBack:       on('id','backScan'),
+    passportPage: on('passport','frontCapture'),
+    age:          on('id','ageMatch') || on('passport','ageMatch'),
+    details:      on('kyc') || on('kyb'),
+    /* which methods keep each screen alive — so Branding can answer "I turned
+       this off, why is the screen still here?" without the client guessing */
+    by: {
+      chooseDoc: docs.map(s => s.name),
+      face:      [['id','ID Verification'], ['passport','Passport Verification']]
+                   .filter(([id]) => on(id,'selfieCapture')).map(([,n]) => n),
+      age:       [['id','ID Verification'], ['passport','Passport Verification']]
+                   .filter(([id]) => on(id,'ageMatch')).map(([,n]) => n),
+    },
+  };
+}
+function publishWorkflow(){
+  try { localStorage.setItem(WF_KEY, JSON.stringify(workflowSummary())); } catch(e){}
+}
+
 function journeyCard(){
-  const steps = journeySteps();
+  const scope = view.page === 'detail' ? svc(view.service) : null;
+  const steps = journeySteps(scope);
+  /* no subtitle over an empty strip — "the path they take" reads as a promise
+     next to "this method is off" */
+  const branch = scope && scope.groups && !scope.lists && steps.length;
   return `<div class="sec">
-    <div class="sec-head"><h2>What the customer sees</h2></div>
+    <div class="sec-head"><h2>What the customer sees</h2>${
+      branch ? `<p>The path a customer takes when they choose ${esc(scope.name.replace(/ Verification$/, ''))}</p>` : ''}</div>
     ${steps.length ? `<div class="journey">${steps.map((t, i) =>
-        `${i ? '<span class="step-sep">→</span>' : ''}<span class="step${i === steps.length-1 ? ' lead' : ''}">${esc(t)}</span>`
+        `${i ? '<span class="step-sep">→</span>' : ''}<span class="step${
+          i === steps.length-1 ? ' lead' : ''}" title="${esc(t.by.join(', '))}">${esc(t.label)}</span>`
       ).join('')}</div>`
-      : '<div class="empty">No verification method is on, so the widget has nothing to ask for.</div>'}
+      : `<div class="empty">${scope
+          ? 'This method is off, so no customer is taken through it.'
+          : 'No verification method is on, so the widget has nothing to ask for.'}</div>`}
   </div>`;
 }
 
@@ -1185,6 +1259,7 @@ function render(){
   const res = document.querySelector('.results'), sc = res ? res.scrollTop : 0;
   /* both views carry a Save button, so both are rebuilt — otherwise the hidden
      one goes stale; partial repaints call refreshSave() for the same reason */
+  publishWorkflow();
   renderList();
   if(onDetail) renderDetail();
   if(onDetail && svc(view.service) && svc(view.service).advanced) wireRisk();
