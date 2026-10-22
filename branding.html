@@ -688,12 +688,22 @@ const SCREENS = [
     desc:   {label:'Description', type:'text',  props:S('Make sure you’re in a well lit room. Avoid any bright lights behind you.')},
     btn:    {label:'Button',      type:'button',props:BTN('Let’s go')},
  }},
- {id:'scan', group:'Scanning', name:'Scanning', variants:['Face','ID front','ID back','Passport'], els:{
+ /* `extra` rows are STATES of a screen that deserve their own place in the rail:
+    the success overlay is only reachable through the Message-state switcher, and
+    nobody finds it there. */
+ {id:'scan', group:'Scanning', name:'Scanning', variants:['Face','ID front','ID back','Passport'],
+  extra:[{label:'Success animation', state:'done'}], els:{
     navbar: {label:'Navigation bar',type:'navbar', props:{
               logoShow:{value:false}, logoSrc:{bind:'logo'}, logoScale:{value:.8},
               closeShow:{value:true}, closeColor:{bind:'primaryText'}, closeCustom:{value:''},
               helpShow:{value:true}, helpColor:{bind:'primaryText'}, helpCustom:{value:''}}},
     guide:  {label:'Camera guide',type:'guide', props:{color:{value:'#B1B1B1'}, successColor:{value:'#5FC52E'}, width:{value:3}}},
+    /* plays over the camera the moment a capture lands — a state of this screen,
+       not a screen of its own, so it is edited with the Message state on Success */
+    success:{label:'Success animation',type:'successmark',props:{
+              custom:{value:''}, scale:{value:1}, color:{bind:'accent'},
+              textShow:{value:true}, text:{value:'Got it'}, textColor:{value:'#FFFFFF'},
+              font:{bind:'fontBody'}, size:{value:16}, weight:{value:600}}},
     status: {label:'Status message',type:'status',props:{
               text:{value:'Center your face in the frame'},
               bg:{value:'#3A3A3AE6'}, color:{value:'#FFFFFF'},
@@ -711,6 +721,14 @@ const SCREENS = [
     title:  {label:'Title',       type:'text',  props:T('Face Not Detected')},
     bullets:{label:'Bullets',     type:'list',  props:L('Position your face in the oval\nMake sure your face is fully visible\nAvoid dark lighting\nAvoid bright lights behind you')},
     btn:    {label:'Button',      type:'button',props:BTN('Retry')},
+ }},
+ /* First thing a customer sees. No logo — the spinner on the client's background
+    is the whole screen. The message carries a Visible toggle: most loaders are
+    the spinner alone. */
+ {id:'loading', group:'Loading', name:'Loading', els:{
+    img:    {label:'Spinner',     type:'image', props:{custom:{value:''}, scale:{value:1}}},
+    msg:    {label:'Message',     type:'text',  props:Object.assign(S('Getting things ready'),
+              {show:{value:false}})},
  }},
  {id:'verdict', group:'Verdicts', name:'Verdict', variants:['Verified','Failed','Underage','Expired','In review','Max attempts'], els:{
     icon:   {label:'Verdict icon',type:'verdicticon',props:{color:{bind:'accent'}, shape:{value:'check'}, custom:{value:''}, scale:{value:1}}},
@@ -894,8 +912,14 @@ const FLAT=[];
 SCREENS.forEach(s=>{
   if(s.variants) s.variants.forEach((v,i)=> FLAT.push({id:s.id, v:i, label:v, group:s.group, screen:s.name}));
   else FLAT.push({id:s.id, v:0, label:s.name, group:s.group, screen:s.name});
+  (s.extra||[]).forEach(x=> FLAT.push({id:s.id, v:0, label:x.label, group:s.group, screen:s.name, st:x.state}));
 });
-const flatIndex = ()=> FLAT.findIndex(f=>f.id===state.screen && f.v===state.variant);
+/* a state row wins over its screen's variant rows while that state is showing */
+function flatIndex(){
+  if(state.screen==='scan' && scanState==='done')
+    return FLAT.findIndex(f=>f.id==='scan' && f.st==='done');
+  return FLAT.findIndex(f=>f.id===state.screen && f.v===state.variant && !f.st);
+}
 
 /* ============================================================================
    3. STATE + HISTORY
@@ -1134,6 +1158,20 @@ function closeBtn(){
   </div>`;
 }
 
+/* The capture confirmation. A client can upload their own animation (a GIF, an
+   APNG or a Lottie exported to one of those); until they do, this is the mark
+   that plays — the ring sweeps in and the tick draws, once. */
+function successMark(scale, custom, color){
+  const sz = Math.round(78 * (scale || 1));
+  if(custom) return `<img src="${custom}" style="width:${sz}px;height:${sz}px;object-fit:contain;display:block">`;
+  return `<svg viewBox="0 0 48 48" style="width:${sz}px;height:${sz}px;display:block" fill="none"
+      stroke="${color}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="24" cy="24" r="20" stroke-dasharray="126" stroke-dashoffset="126">
+      <animate attributeName="stroke-dashoffset" from="126" to="0" dur=".45s" fill="freeze"/></circle>
+    <path d="M15 24.5l6.5 6.5L33 18" stroke-dasharray="34" stroke-dashoffset="34">
+      <animate attributeName="stroke-dashoffset" from="34" to="0" begin=".3s" dur=".3s" fill="freeze"/></path>
+  </svg>`;
+}
 /* a stand-in for whatever animation ships — swappable like any other image */
 function progressMark(scale, custom){
   const sz = Math.round(62 * (scale || 1));
@@ -1350,7 +1388,13 @@ function renderScreen(){
   const hidden = gate && !gateShow[gateKey()];
   let body='';
 
-  if(hidden){
+  if(id==='loading' && !hidden){
+    body=`<div style="${pad};display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center">
+      <div data-el="img" style="margin-bottom:20px">${progressMark(val('img','scale'), val('img','custom'))}</div>
+      ${txt('msg','line-height:1.5;max-width:28ch')}
+    </div>`;
+  }
+  else if(hidden){
     /* Off is a real state of the flow, so the screen shows it rather than
        disappearing from the rail. Consent is the studio's own switch, so it
        offers it here; everything else is decided in Workflow, so it sends the
@@ -1510,28 +1554,39 @@ function renderScreen(){
   else if(id==='scan'){
     const gc=val('guide','color'), gw=val('guide','width'), cap=val('guide','successColor');
     const face = state.variant===0;
-    const st = scanState;                        /* default | error | success */
+    const st = scanState;              /* default | error | capturing | done */
     /* the message is live scanning feedback, not a caption: only the initial
-       wording is editable, the error and success states are shown so their
-       colours can be set */
-    const CAPTURED = ['Face captured','Front captured','Back captured','Passport captured'];
-    const msg = st==='error'   ? {text:'Low light detected',             bg:val('status','errorBg'),   fg:val('status','errorColor')}
-              : st==='success' ? {text:CAPTURED[state.variant]||'Captured', bg:val('status','successBg'), fg:val('status','successColor')}
-              :                  {text:val('status','text'),             bg:val('status','bg'),        fg:val('status','color')};
+       wording is editable, the error and capturing states are shown so their
+       colours can be set. `done` is the frame AFTER capture — guide and message
+       are gone by then and the success animation has it to itself. */
+    const msg = st==='error'     ? {text:'Low light detected', bg:val('status','errorBg'),   fg:val('status','errorColor')}
+              : st==='capturing' ? {text:'Hold still',         bg:val('status','successBg'), fg:val('status','successColor')}
+              :                    {text:val('status','text'), bg:val('status','bg'),        fg:val('status','color')};
     const bubble = `<div data-el="status" style="background:${msg.bg};color:${msg.fg};border-radius:10px;
         padding:10px 8px;font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:600;text-align:center;max-width:80%">${esc(msg.text)}</div>`;
     /* A document is held portrait, so the frame is a tall card — measured off
        the production screen at 74% of the screen width and a 0.65 ratio. The
        focus reticle sits above centre and the message sits under it. */
-    const guide = face
-      ? `<div data-el="guide">${ovalRing(gc, cap, gw, st==='success')}</div>`
-      : `<div data-el="guide" style="width:290px;height:447px;border-radius:16px;border:${gw}px solid ${st==='success'?cap:gc};position:relative">
+    const guide = st==='done' ? '' : face
+      ? `<div data-el="guide">${ovalRing(gc, cap, gw, st==='capturing')}</div>`
+      : `<div data-el="guide" style="width:290px;height:447px;border-radius:16px;border:${gw}px solid ${st==='capturing'?cap:gc};position:relative">
            <div style="position:absolute;left:50%;top:43.4%;transform:translate(-50%,-50%);width:104px;height:104px;
              border-radius:50%;background:${msg.bg};display:grid;place-items:center">${scanReticle()}</div>
            <div style="position:absolute;left:50%;top:57.7%;transform:translateX(-50%);width:66%;display:flex;justify-content:center">${bubble}</div>
          </div>`;
     /* the live widget washes the whole frame when it reports a problem */
     const wash = st==='error' ? `<div style="position:absolute;inset:0;background:${val('status','errorBg')};opacity:.3;pointer-events:none"></div>` : '';
+    /* the confirmation has the camera to itself — by the time it plays the guide
+       and the message are gone, which is what the live widget does */
+    const capture = st!=='done' ? '' : `
+      <div style="position:absolute;inset:0;z-index:3;display:grid;place-items:center">
+        <div data-el="success" style="position:relative;display:flex;flex-direction:column;align-items:center;gap:14px">
+          ${successMark(val('success','scale'), val('success','custom'), val('success','color'))}
+          ${val('success','textShow') ? `<div style="color:${val('success','textColor')};
+            font-family:${fontStack(val('success','font'))};font-size:${val('success','size')}px;
+            font-weight:${val('success','weight')};text-align:center">${esc(val('success','text'))}</div>` : ''}
+        </div>
+      </div>`;
     const navLogo = val('navbar','logoShow')
       ? logoMark(val('navbar','logoScale'), ink, val('navbar','logoSrc'), !val('navbar','logoSrc')) : '';
     const navHelp = val('navbar','helpShow')
@@ -1548,8 +1603,9 @@ function renderScreen(){
         <span style="flex:1"></span>${navLogo}<span style="flex:1"></span>${navHelp}
       </div>
       <div style="flex:1;display:grid;place-items:center;position:relative">${guide}</div>
-      ${face ? `<div style="padding:0 22px 54px;display:flex;justify-content:center;position:relative">${bubble}</div>`
+      ${face && st!=='done' ? `<div style="padding:0 22px 54px;display:flex;justify-content:center;position:relative">${bubble}</div>`
              : '<div style="height:54px"></div>'}
+      ${capture}
     </div>`;
   }
   else if(id==='verdict'){
@@ -2120,6 +2176,7 @@ function ctlFor(type, value, elId, prop, opts){
 }
 /* rows that only matter while their toggle is on */
 const SHOW_WHEN = {
+  successmark:{ text:'textShow', textColor:'textShow', font:'textShow', weight:'textShow' },
   qrcode:{ imageSize:'image', imageMargin:'image', hideBgDots:'image' },
   navbar:{ logoSrc:'logoShow', logoScale:'logoShow',
            closeColor:'closeShow', closeCustom:'closeShow',
@@ -2127,6 +2184,7 @@ const SHOW_WHEN = {
 };
 /* colours an uploaded image overrides: the key prop decides */
 const DIM_WHEN = {
+  successmark:{color:'custom'},
   stepicon:{bg:'custom', fg:'custom'},
   icon:    {color:'custom'},
   verdicticon:{color:'custom'},
@@ -2169,6 +2227,9 @@ const PROP_UI = {
             ['helpShow','Show help icon','toggle'],['helpColor','Help icon color','color'],['helpCustom','Custom help icon','upload']],
   stepicon:[['bg','Fill','color'],['fg','Number color','color'],['custom','Custom icon','upload']],
   guide:   [['color','Guide color','color'],['successColor','Capture colour','color'],['width','Line weight','radius']],
+  successmark:[['custom','Custom animation','upload'],['scale','Size','scale'],['color','Mark colour','color'],
+           ['textShow','Show text','toggle'],['text','Text','text'],
+           ['textColor','Text color','color'],['font','Font','font'],['weight','Font weight','weight']],
   /* the QR has no capture state, and its box has a fill the camera guide doesn't */
   qrguide: [['boxBg','Guide box BG','color'],['color','Guide color','color'],['width','Line weight','radius']],
   qrcode:  [['bg','Background','color'],
@@ -2180,7 +2241,7 @@ const PROP_UI = {
            ['margin','Quiet zone','radius'],['ecLevel','Error correction','pick',QR_EC]],
   status:  [['text','Initial message','text'],['bg','Message fill','color'],['color','Message text','color'],
             ['errorBg','Error fill','color'],['errorColor','Error text','color'],
-            ['successBg','Success fill','color'],['successColor','Success text','color']],
+            ['successBg','Capture fill','color'],['successColor','Capture text','color']],
   search:  [['placeholder','Placeholder','text'],['bg','Field fill','color'],['border','Field border','color'],
            ['color','Text color','color'],['radius','Corner radius','radius']],
   countrylist:[['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
@@ -2491,13 +2552,14 @@ function updateChrome(){
 /* ---------- rail ---------- */
 function entryOverrides(f){ return Object.keys(overrides).filter(k=>k.startsWith(f.id+'|'+f.v+'|')).length }
 function renderRail(){
+  const cur = flatIndex();
   const groups={};
   FLAT.forEach((f,i)=>{(groups[f.group]=groups[f.group]||[]).push([f,i])});
   const html=Object.entries(groups).map(([g,list])=>{
     const open = list.some(([f])=>f.id===state.screen);
     const items=list.map(([f,i])=>{
-      const on = f.id===state.screen && f.v===state.variant;
-      const vl = (SCREENS.find(x=>x.id===f.id).variants||[])[f.v];
+      const on = i===cur;
+      const vl = f.st ? null : (SCREENS.find(x=>x.id===f.id).variants||[])[f.v];
       const g = gateFor(f.id, vl);
       const off = !!g;
       const kept = !off && keptBy(f.id, vl);
@@ -2516,6 +2578,9 @@ function renderRail(){
 }
 function goTo(i){
   const f=FLAT[(i+FLAT.length)%FLAT.length];
+  /* reset on EVERY move, not just onto a scan row — otherwise walking off the
+     success row leaves the state set, and Prev lands back on it */
+  scanState = f.st || 'default';
   state.screen=f.id; state.variant=f.v; state.sel=null; state.panel='brand';
   document.getElementById('screenName').textContent = f.screen===f.label ? f.screen : f.screen+' · '+f.label;
   renderRail(); renderScreen(); renderInspector();
@@ -2601,7 +2666,7 @@ let consentChecked=false;
    Nothing drives it today — the hand-off screen takes one field for either, and
    the button says Send Link whichever was typed. */
 let linkMethod='sms';
-function setScanState(s){ scanState=s; renderScreen(); renderInspector(); }
+function setScanState(s){ scanState=s; renderScreen(); renderInspector(); renderRail(); }
 function setConsentChecked(v){ consentChecked=v; renderScreen(); renderInspector(); }
 function setLinkMethod(v){ linkMethod=v; renderScreen(); renderInspector(); }
 function stateRow(label, opts, cur, fn){
@@ -2613,7 +2678,7 @@ function stateRow(label, opts, cur, fn){
    editing the error colours while the preview shows success — so the panel
    shows only the selected state's, with the switcher just above them. */
 const STATE_FIELDS = {
-  'scan|status':    {default:['text','bg','color'], error:['errorBg','errorColor'], success:['successBg','successColor']},
+  'scan|status':    {default:['text','bg','color'], error:['errorBg','errorColor'], capturing:['successBg','successColor']},
   'consent|release':{false:['bg','border','boxColor'],
                      true:['checkedBg','checkedBorder','checkedFill','checkedTick']},
 };
@@ -2629,8 +2694,9 @@ function stateScope(){
   return {keep, all, anchor:(set[cur]||[])[0]};
 }
 function statePicker(){
+  /* the animation has its own rail row now, so no state switcher on its panel */
   if(state.screen==='scan' && state.sel==='status')
-    return stateRow('Message state', [['default','Default'],['error','Error'],['success','Success']], scanState, 'setScanState');
+    return stateRow('Message state', [['default','Default'],['error','Error'],['capturing','Capturing']], scanState, 'setScanState');
   if(state.screen==='consent' && state.sel==='release')
     return stateRow('Checkbox state', [[false,'Unchecked'],[true,'Checked']], consentChecked, 'setConsentChecked');
   return '';
