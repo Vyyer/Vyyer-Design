@@ -183,7 +183,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--ink);height:100vh;
 
 /* ---------- inspector ---------- */
 .insp{background:var(--panel);border-left:1px solid var(--line);overflow-y:auto;overflow-x:hidden}
-.insp .hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:2}
+.insp .hd{padding:14px 16px 10px;border-bottom:1px solid var(--line);position:sticky;top:0;background:var(--panel);z-index:40}
+/* the sticky header and the content it pins over round to different subpixels,
+   which leaks a hairline of text above it — this covers that seam */
+.insp .hd::before{content:'';position:absolute;left:0;right:0;top:-3px;height:3px;background:var(--panel)}
 .insp .hd .k{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent-text)}
 .hdtop{display:flex;align-items:center;gap:8px}
 .hdtop .sp{flex:1}
@@ -392,6 +395,73 @@ select{appearance:none;background-image:var(--caret-img);
 .screen>*:not(.bokeh){position:relative;z-index:1}
 
 @media (max-width:1100px){ .app{grid-template-columns:200px 1fr 292px} }
+
+/* ---------- phone ----------
+   The studio is a two-way conversation — tap an element, watch it change — so
+   the preview stays PINNED and the inspector becomes a sheet under it. Nothing
+   scrolls the preview out of view: selecting an element swaps the sheet's
+   contents in place. The rail folds into a sheet behind the screen name. */
+.nmbtn .cv,.grab,.railsheet,.backbrand{display:none}
+/* on a desktop the screen name is a label; it only becomes a button on a phone,
+   so it carries no button chrome until the breakpoint gives it some */
+.nmbtn{background:none;border:0;padding:0;margin:0;color:inherit;font:inherit;text-align:left;cursor:default}
+
+@media (max-width:860px){
+  .app{display:flex;flex-direction:column;grid-template-columns:none}
+  .rail{display:none}
+  .canvas{flex:1 1 auto;min-height:0}
+  .grab{display:block;flex:0 0 auto;width:100%;height:20px;border:0;border-top:1px solid var(--line);
+    background:var(--panel);cursor:ns-resize;display:grid;place-items:center;padding:0;touch-action:none}
+  .grab i{display:block;width:34px;height:4px;border-radius:99px;background:var(--line-2)}
+  .insp{flex:0 0 auto;height:var(--sheet,38vh);border-left:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+
+  /* the top bar keeps only what a phone can act on: the two buttons that commit
+     work, with undo/redo as icons and the crumb's decoration dropped */
+  .backbrand{display:inline-flex;align-items:center;gap:4px;margin-bottom:8px;padding:5px 9px 5px 5px;
+    border:1px solid var(--line);border-radius:99px;background:var(--panel-2);color:var(--ink-2);
+    font:600 11.5px var(--font);cursor:pointer}
+  .backbrand svg{width:13px;height:13px}
+  .top{gap:8px;padding:0 10px}
+  .top .crumb i{display:none}
+  .top .seg button b{display:none}
+  .top .seg button{padding:5px 8px}
+  .btn{padding:7px 11px}
+
+  /* the bar carries the screen name, centred; the arrows stay where they are on
+     desktop — either side of the preview, where the thing they change is */
+  .cbar{gap:6px;padding:0 10px}
+  .cbar::before{content:'';flex:1}
+  .nmbtn{flex:0 1 auto;min-width:0;display:flex;align-items:center;justify-content:center;gap:5px;
+    background:transparent;border:0;color:inherit;font:inherit;cursor:pointer;padding:6px 4px}
+  .nmbtn .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .nmbtn .cv{display:block;width:13px;height:13px;flex:0 0 auto;color:var(--ink-3)}
+  .stage{padding:10px 6px;gap:6px}
+  .stage .nav{width:30px;height:30px}
+  .hint{display:none}
+
+  .railsheet{display:block;position:fixed;inset:0;z-index:70;visibility:hidden}
+  .railsheet.open{visibility:visible}
+  .rs-scrim{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .18s}
+  .railsheet.open .rs-scrim{opacity:1}
+  .rs-panel{position:absolute;left:0;right:0;bottom:0;max-height:76vh;display:flex;flex-direction:column;
+    background:var(--panel);border-top:1px solid var(--line-2);border-radius:16px 16px 0 0;
+    transform:translateY(100%);transition:transform .2s ease}
+  .railsheet.open .rs-panel{transform:none}
+  .rs-head{display:flex;align-items:center;padding:14px 14px 8px;border-bottom:1px solid var(--line)}
+  .rs-head h4{font-size:10.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .rs-x{margin-left:auto;width:28px;height:28px;display:grid;place-items:center;border:0;background:transparent;
+    color:var(--ink-2);border-radius:8px;cursor:pointer}
+  .rs-x svg{width:15px;height:15px}
+  .rs-body{overflow-y:auto;padding:8px 10px 20px}
+  /* the groups stay open in the sheet — collapsing 9 of them to find one screen
+     is the tapping the picker was meant to save */
+  .rs-body .grp .items{display:block}
+  .rs-body .grp>button{display:none}
+  .rs-body .grp{margin-bottom:10px}
+  .rs-body .grp::before{content:attr(data-g);display:block;font:700 10px var(--font);letter-spacing:.09em;
+    text-transform:uppercase;color:var(--ink-3);padding:6px 9px 4px}
+  .rs-body .screenbtn{padding:10px 9px;font-size:13.5px}
+}
 </style>
 </head>
 <body>
@@ -399,11 +469,11 @@ select{appearance:none;background-image:var(--caret-img);
 <header class="sh-nav" data-tab="branding"></header>
 
 <div class="top">
-  <span class="crumb"><b>Branding</b> · widget appearance</span>
+  <span class="crumb"><b>Branding</b><i> · widget appearance</i></span>
   <span class="sp"></span>
   <span class="seg">
-    <button id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h11a5 5 0 010 10h-3"/><path d="M3 10l5-5M3 10l5 5"/></svg>Undo</button>
-    <button id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10H10a5 5 0 000 10h3"/><path d="M21 10l-5-5M21 10l-5 5"/></svg>Redo</button>
+    <button id="undoBtn" title="Undo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10h11a5 5 0 010 10h-3"/><path d="M3 10l5-5M3 10l5 5"/></svg><b>Undo</b></button>
+    <button id="redoBtn" title="Redo"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10H10a5 5 0 000 10h3"/><path d="M21 10l-5-5M21 10l-5 5"/></svg><b>Redo</b></button>
   </span>
   <button class="btn" id="discardBtn">Discard</button>
   <button class="btn primary" id="saveBtn" disabled>Save</button>
@@ -419,7 +489,10 @@ select{appearance:none;background-image:var(--caret-img);
   <!-- canvas -->
   <main class="canvas">
     <div class="cbar">
-      <span class="nm" id="screenName">Start screen</span>
+      <button class="nmbtn" id="screenPick" aria-haspopup="listbox" aria-expanded="false">
+        <span class="nm" id="screenName">Start screen</span>
+        <svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
+      </button>
       <span class="skip" id="gateChip" hidden>Not in flow</span>
       <span class="sp"></span>
       <span class="seg" id="modeSeg"></span>
@@ -427,8 +500,22 @@ select{appearance:none;background-image:var(--caret-img);
     <div class="stage" id="stage"></div>
   </main>
 
+  <!-- the sheet's grab handle — phone only -->
+  <button class="grab" id="grab" aria-label="Resize the settings panel"><i></i></button>
+
   <!-- inspector -->
   <aside class="insp" id="insp"></aside>
+</div>
+
+<!-- the rail, folded into a sheet on phones -->
+<div class="railsheet" id="railSheet">
+  <div class="rs-scrim"></div>
+  <div class="rs-panel">
+    <div class="rs-head"><h4>Screens</h4>
+      <button class="rs-x" id="railClose" aria-label="Close">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button></div>
+    <div class="rs-body" id="railGroupsM"></div>
+  </div>
 </div>
 
 <div class="cpop" id="cpop">
@@ -1973,12 +2060,20 @@ function ddCtl(value, options, pick){
       <svg class="cv" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 9l6 6 6-6"/></svg>
     </button><div class="ddm">${items}</div></div>`;
 }
+const ddCloseAll = ()=>document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
 function ddToggle(e,id){
   e.stopPropagation();
   const el=document.getElementById(id), was=el.classList.contains('open');
-  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  ddCloseAll();
   if(!was) el.classList.add('open');
 }
+/* The menu is anchored to its row, so scrolling the panel carries it away from
+   whatever it is still covering — on a phone that is the sticky panel header.
+   Scrolling the PANEL closes it; scrolling inside the menu itself does not. */
+document.getElementById('insp').addEventListener('scroll', e => {
+  if(e.target.closest && e.target.closest('.ddm')) return;
+  ddCloseAll();
+}, true);
 function ddDel(e,i){ e.stopPropagation(); removeFont(i); }
 function ddPick(e,id,i){
   e.stopPropagation();
@@ -1986,7 +2081,7 @@ function ddPick(e,id,i){
   const o=(DD_PICK[id+'_opts']||[])[i], f=DD_PICK[id];
   if(o && f) f(o.v);
 }
-document.addEventListener('click', ()=>document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')));
+document.addEventListener('click', ddCloseAll);
 
 /* a font picker previews each face and offers the upload until three are in */
 function fontCtl(value, pick){
@@ -2314,7 +2409,9 @@ function renderInspector(){
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 6L9 17l-5-5"/></svg>
       Apply to all ${sibs.length} ${SIBLING_LABEL[state.screen]}</button></div>`;
   }
-  paintInspector(`<div class="hd"><div class="hdtop"><div class="k">${scr.name}${scr.variants?' · '+scr.variants[state.variant]:''}</div>${modeChip()}</div>
+  paintInspector(`<div class="hd"><button class="backbrand" onclick="select(null)">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M15 6l-6 6 6 6"/></svg>Brand settings</button>
+      <div class="hdtop"><div class="k">${scr.name}${scr.variants?' · '+scr.variants[state.variant]:''}</div>${modeChip()}</div>
       <h3>${el.label}</h3><p>Values marked <b>Global</b> follow your brand settings.</p></div>
     <div class="sec">${rows||'<div class="empty">No style options for this element.</div>'}</div>${applyAll}`);
 }
@@ -2399,7 +2496,7 @@ function entryOverrides(f){ return Object.keys(overrides).filter(k=>k.startsWith
 function renderRail(){
   const groups={};
   FLAT.forEach((f,i)=>{(groups[f.group]=groups[f.group]||[]).push([f,i])});
-  document.getElementById('railGroups').innerHTML=Object.entries(groups).map(([g,list])=>{
+  const html=Object.entries(groups).map(([g,list])=>{
     const open = list.some(([f])=>f.id===state.screen);
     const items=list.map(([f,i])=>{
       const on = f.id===state.screen && f.v===state.variant;
@@ -2413,10 +2510,12 @@ function renderRail(){
         ${tip?`title="${esc(tip)}"`:''}>
         <span class="nm">${f.label}</span>${off?'<span class="skip">Off</span>':''}${entryOverrides(f)&&!off?'<span class="dot"></span>':''}</button>`;
     }).join('');
-    return `<div class="grp ${open?'open':''}"><button onclick="this.parentElement.classList.toggle('open')">
+    return `<div class="grp ${open?'open':''}" data-g="${esc(g)}"><button onclick="this.parentElement.classList.toggle('open')">
       <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M9 6l6 6-6 6"/></svg>${g}</button>
       <div class="items">${items}</div></div>`;
   }).join('');
+  document.getElementById('railGroups').innerHTML = html;
+  document.getElementById('railGroupsM').innerHTML = html;
 }
 function goTo(i){
   const f=FLAT[(i+FLAT.length)%FLAT.length];
@@ -2425,6 +2524,77 @@ function goTo(i){
   renderRail(); renderScreen(); renderInspector();
 }
 function goScreen(id){ goTo(FLAT.findIndex(f=>f.id===id)); }
+
+/* ---------------------------------------------------------------------------
+   PHONE
+   The bar carries the screen name, centred, with the whole rail a tap behind it;
+   the ‹ › arrows stay beside the preview as they are on desktop. The inspector
+   is a sheet under a PINNED preview, so selecting an element never scrolls the
+   thing being styled off screen.
+   --------------------------------------------------------------------------- */
+const railSheet = () => document.getElementById('railSheet');
+function openRail(){
+  railSheet().classList.add('open');
+  document.getElementById('screenPick').setAttribute('aria-expanded','true');
+  const on = document.querySelector('#railGroupsM .screenbtn.on');
+  if(on) on.scrollIntoView({block:'center'});
+}
+function closeRail(){
+  railSheet().classList.remove('open');
+  document.getElementById('screenPick').setAttribute('aria-expanded','false');
+}
+/* the sheet's height is the one thing a phone user retunes constantly — a long
+   panel wants room, a colour wants a big preview — so it drags, and remembers */
+/* 70vh is where the preview stops being readable — past it the phone frame is
+   under 60px wide, which is a smudge, not a preview */
+const SHEET_MIN = 90, SHEET_KEY = 'vyyer.brandSheet';
+function setSheet(px){
+  const max = Math.round(window.innerHeight * .70);
+  const h = Math.max(SHEET_MIN, Math.min(max, Math.round(px)));
+  document.documentElement.style.setProperty('--sheet', h + 'px');
+  try { localStorage.setItem(SHEET_KEY, h); } catch(e){}
+  fitDevice();
+}
+function wirePhone(){
+  const pick = document.getElementById('screenPick');
+  pick.onclick = e => { e.stopPropagation(); if(innerWidth > 860) return;
+    railSheet().classList.contains('open') ? closeRail() : openRail(); };
+  document.getElementById('railClose').onclick = closeRail;
+  railSheet().querySelector('.rs-scrim').onclick = closeRail;
+  railSheet().addEventListener('click', e => { if(e.target.closest('.screenbtn')) closeRail(); });
+
+  const grab = document.getElementById('grab');
+  let dragging = false;
+  const heightFrom = y => window.innerHeight - y;
+  let moved = false, startY = 0;
+  grab.addEventListener('pointerdown', e => {
+    dragging = true; moved = false; startY = e.clientY;
+    try { grab.setPointerCapture(e.pointerId); } catch(err){}
+    e.preventDefault();
+  });
+  grab.addEventListener('pointermove', e => {
+    if(!dragging) return;
+    if(Math.abs(e.clientY - startY) > 4) moved = true;
+    setSheet(heightFrom(e.clientY));
+  });
+  const end = () => { dragging = false; };
+  grab.addEventListener('pointerup', end);
+  grab.addEventListener('pointercancel', end);
+  /* a TAP on the handle snaps between a working height and out of the way;
+     a drag must not also fire this, or letting go would undo the drag */
+  grab.addEventListener('click', () => {
+    if(moved){ moved = false; return; }
+    const now = document.getElementById('insp').offsetHeight;
+    setSheet(now > window.innerHeight * .25 ? SHEET_MIN : Math.round(window.innerHeight * .38));
+  });
+
+  /* 38vh is fractional on most phones; a whole number of pixels keeps the
+     sticky header and the scrolling content on the same subpixel grid */
+  let stored = null;
+  try { stored = +localStorage.getItem(SHEET_KEY) || null; } catch(e){}
+  if(innerWidth <= 860) setSheet(stored || Math.round(window.innerHeight * .38));
+  addEventListener('resize', () => { if(innerWidth > 860) closeRail(); });
+}
 /* A screen state belongs to the element that shows it, not to the canvas
    toolbar at the other end of the window — the client is editing the message
    or the checkbox, so the state sits in that element's panel. */
@@ -2490,7 +2660,7 @@ addEventListener('keydown',e=>{
 });
 
 /* boot */
-renderRail(); renderModeSwitch(); renderScreen(); renderInspector(); updateChrome();
+renderRail(); renderModeSwitch(); renderScreen(); renderInspector(); updateChrome(); wirePhone();
 </script>
 </body>
 </html>
