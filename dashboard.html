@@ -427,8 +427,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 [data-theme="dark"] .date-trigger.open { border-color: var(--focus); box-shadow: 0 0 0 3px rgba(90,169,255,0.18); }
 [data-theme="dark"] .filter-select:focus { border-color: var(--focus); }
 [data-theme="dark"] .dd-check { color: var(--focus); }
-[data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #07131f; }
-[data-theme="dark"] .dd-box { color: #07131f; }
+[data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #fff; }
 [data-theme="dark"] .dp-day.in-range { background: rgba(90,169,255,0.16); }
 [data-theme="dark"] .dp-day.endpoint.today::after { background: #07131f; }
 
@@ -1292,15 +1291,19 @@ function createDropdown(el, cfg){
   const trigger = el.querySelector('.dd-trigger'), labelEl = el.querySelector('.dd-label'), menu = el.querySelector('.dd-menu');
   function renderMenu(){
     menu.innerHTML = cfg.options.map(o=>{
-      let mark;
-      if(cfg.multi && o.value!==allValue){
+      /* a multi-select row leads with its CHECKBOX, because that is the control;
+         a single-select row trails a tick on the right, which is only a mark */
+      let mark, box = cfg.multi && o.value!==allValue;
+      if(box){
         const on = selected.includes(o.value);
         mark = '<span class="dd-box'+(on?' on':'')+'">'+(on?DD_CHECK:'')+'</span>';
       } else {
         const sel = cfg.multi ? (o.value===allValue && selected.length===0) : (selected===o.value);
         mark = '<span class="dd-check">'+(sel?DD_CHECK:'')+'</span>';
       }
-      return '<button type="button" class="dd-item" data-value="'+o.value+'">'+mark+'<span class="dd-item-label">'+o.label+'</span></button>';
+      const label = '<span class="dd-item-label">'+o.label+'</span>';
+      return '<button type="button" class="dd-item" data-value="'+o.value+'">'
+        + (box ? mark+label : label+mark) + '</button>';
     }).join('');
   }
   function renderLabel(){

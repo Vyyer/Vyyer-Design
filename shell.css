@@ -133,7 +133,9 @@
 .sh-prow .sh-pick{flex:1;min-width:0;display:flex;align-items:center;gap:9px;border:0;background:transparent;
   padding:8px;color:inherit;font:500 12.5px var(--sh-font);cursor:pointer;text-align:left}
 .sh-prow.on .sh-pick{font-weight:600}
-.sh-tick{width:14px;height:14px;flex:0 0 auto;color:var(--sh-accent-text)}
+/* selected = blue everywhere; the green accent is for actions. The tick stays
+   on the LEFT here only, to line up with Add New Profile and Log out. */
+.sh-tick{width:14px;height:14px;flex:0 0 auto;color:var(--field-focus)}
 .sh-gap{width:14px;flex:0 0 auto}
 .sh-nm{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sh-trash{width:26px;height:26px;margin-right:4px;flex:0 0 auto;border:0;background:transparent;border-radius:6px;
@@ -154,6 +156,7 @@
 .sh-btn.primary{background:var(--sh-accent);color:var(--sh-accent-ink);border-color:var(--sh-accent)}
 .sh-btn.primary:disabled{opacity:.4;cursor:not-allowed}
 .sh-btn.danger{background:var(--sh-danger);border-color:var(--sh-danger);color:#fff}
+.sh-btn.danger:disabled{opacity:.4;cursor:not-allowed}
 
 /* confirmation — sign out and profile deletes ask first, in place */
 .sh-confirm{padding:15px}
@@ -175,7 +178,10 @@
 .sh-f span{display:block;font:600 12.5px var(--sh-font);color:var(--sh-ink);margin-bottom:7px}
 .sh-f input{width:100%;background:var(--sh-sunken);border:1px solid var(--sh-line);color:var(--sh-ink);
   font:400 13.5px var(--sh-font);padding:11px 12px;border-radius:8px}
-.sh-f input:focus{outline:0;border-color:var(--sh-accent)}
+/* a focused field is blue everywhere in the dashboard — the green accent is
+   for actions, not for "you are typing here" */
+.sh-f input:focus{outline:0;border-color:var(--field-focus);box-shadow:0 0 0 3px rgba(0,122,255,.12)}
+[data-theme="dark"] .sh-f input:focus{box-shadow:0 0 0 3px rgba(90,169,255,.18)}
 .sh-sheet .sh-acts{display:flex;gap:10px;margin-top:22px}
 .sh-sheet .sh-acts .sh-btn{flex:1;padding:11px 14px;font-size:13px}
 

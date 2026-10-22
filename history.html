@@ -59,7 +59,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 .filter-toggle { display: none; }
 .dp-custom { display: none; }
 .search { position: relative; flex: 1 1 240px; min-width: 200px; }
-.search svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+.search > svg { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
 .search input {
   width: 100%; font-family: var(--font); font-size: 13px; color: var(--text-primary);
   background: var(--field-float); border: 1px solid var(--field-float-line); border-radius: var(--radius-sm);
@@ -364,7 +364,7 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 [data-theme="dark"] .dp-day.in-range { background: rgba(90,169,255,0.16); }
 [data-theme="dark"] .dp-day.endpoint.today::after { background: #07131f; }
 [data-theme="dark"] .dd-check { color: var(--focus); }
-[data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #07131f; }
+[data-theme="dark"] .dd-box.on { background: var(--focus); border-color: var(--focus); color: #fff; }
 [data-theme="dark"] .hist-table thead th { background: #191920; }
 [data-theme="dark"] .hist-row:hover { background: rgba(255,255,255,0.045); }
 /* verdict badges: the light set is a tint of the hue, the dark set is the hue
@@ -667,6 +667,7 @@ function openPicker(){
   syncMonthsTo(dpEnd); renderPresets(); renderCals(); updateRangeDisplay();
   document.getElementById('dateTrigger').classList.add('open');
   document.getElementById('dateTrigger').setAttribute('aria-expanded','true');
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
   const pop = document.getElementById('datePopover');
   pop.classList.remove('custom');        /* always opens on the presets */
   pop.classList.add('open');
@@ -854,15 +855,19 @@ function createDropdown(el, cfg){
   const trigger = el.querySelector('.dd-trigger'), labelEl = el.querySelector('.dd-label'), menu = el.querySelector('.dd-menu');
   function renderMenu(){
     menu.innerHTML = cfg.options.map(o=>{
-      let mark;
-      if(cfg.multi && o.value!==allValue){
+      /* a multi-select row leads with its CHECKBOX, because that is the control;
+         a single-select row trails a tick on the right, which is only a mark */
+      let mark, box = cfg.multi && o.value!==allValue;
+      if(box){
         const on = selected.includes(o.value);
         mark = '<span class="dd-box'+(on?' on':'')+'">'+(on?DD_CHECK:'')+'</span>';
       } else {
         const sel = cfg.multi ? (o.value===allValue && selected.length===0) : (selected===o.value);
         mark = '<span class="dd-check">'+(sel?DD_CHECK:'')+'</span>';
       }
-      return '<button type="button" class="dd-item" data-value="'+o.value+'">'+mark+'<span class="dd-item-label">'+o.label+'</span></button>';
+      const label = '<span class="dd-item-label">'+o.label+'</span>';
+      return '<button type="button" class="dd-item" data-value="'+o.value+'">'
+        + (box ? mark+label : label+mark) + '</button>';
     }).join('');
   }
   function renderLabel(){
@@ -875,7 +880,7 @@ function createDropdown(el, cfg){
   trigger.addEventListener('click', function(e){
     e.stopPropagation();
     const isOpen = el.classList.contains('open');
-    document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+    closeAllPopovers();
     if(!isOpen) el.classList.add('open');
   });
   menu.addEventListener('click', function(e){
@@ -889,10 +894,19 @@ function createDropdown(el, cfg){
     } else { selected = v; renderMenu(); renderLabel(); el.classList.remove('open'); cfg.onChange(selected); }
   });
   renderMenu(); renderLabel();
-  return { reset(){ selected = cfg.multi?[]:allValue; renderMenu(); renderLabel(); } };
+  return {
+    reset(){ selected = cfg.multi?[]:allValue; renderMenu(); renderLabel(); },
+    set(v){ selected = cfg.multi ? (Array.isArray(v)?v.slice():[]) : v; renderMenu(); renderLabel(); }
+  };
+}
+/* Only one of these can be open at a time — two overlapping panels is a mess,
+   and the one behind is unreachable anyway. */
+function closeAllPopovers(){
+  document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open'));
+  if(typeof closePicker === 'function') closePicker();
 }
 document.addEventListener('click', e=>{ if(!e.target.closest('.dd')) document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
-document.addEventListener('keydown', e=>{ if(e.key==='Escape') document.querySelectorAll('.dd.open').forEach(d=>d.classList.remove('open')); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeAllPopovers(); });
 
 /* ─── EVENTS ─── */
 let searchTimer;
@@ -953,6 +967,26 @@ function clearFilters(){
   render();
 }
 document.getElementById('clearBtn').addEventListener('click', clearFilters);
+
+/* A metric on the dashboard links here with its own scope, so the list opens
+   showing exactly the verifications that number counted. */
+(function applyIncomingFilters(){
+  const q = new URLSearchParams(location.search);
+  if(![...q.keys()].length) return;
+  const result = q.get('result'), profile = q.get('profile');
+  const from = q.get('from'), to = q.get('to'), preset = q.get('preset');
+
+  if(result){ state.result = [result]; resultDropdown.set(state.result); }
+  if(profile && profile !== 'all'){ state.profile = profile; profileDropdown.set(profile); }
+  if(from && to){
+    const [fy,fm,fd] = from.split('-').map(Number), [ty,tm,td] = to.split('-').map(Number);
+    setDateRange(new Date(fy, fm-1, fd), new Date(ty, tm-1, td), preset || null);
+  }
+  if(state.result.length || state.profile !== 'all' || (state.date && state.date.preset !== 'all')){
+    filterRow.classList.add('show');
+  }
+  render();
+})();
 document.getElementById('pageNav').addEventListener('click', e => {
   const b = e.target.closest('.page-btn');
   if(!b || b.disabled || b.classList.contains('ellipsis') || b.classList.contains('active')) return;

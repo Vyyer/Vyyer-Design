@@ -111,7 +111,7 @@ function build(nav){
   extra.innerHTML =
     '<div class="sh-modal" id="shModal"><div class="sh-sheet" role="dialog" aria-modal="true" aria-labelledby="shMTitle">'
   +   '<h2 id="shMTitle"></h2><p id="shMDesc"></p>'
-  +   '<label class="sh-f"><span>Profile Name</span>'
+  +   '<label class="sh-f"><span id="shMLabel">Profile Name</span>'
   +     '<input type="text" id="shMInput" placeholder="Enter profile name" autocomplete="off" maxlength="48"></label>'
   +   '<div class="sh-acts"><button class="sh-btn" type="button" id="shMNo">Cancel</button>'
   +   '<button class="sh-btn primary" type="button" id="shMOk"></button></div>'
@@ -157,25 +157,45 @@ function askConfirm(title, desc, label, fn){
 }
 function closeConfirm(){ $('shConfirm').classList.remove('open'); onYes = null; openAcct(); }
 
-/* ---- new / rename profile ---- */
-let kind = 'new';
-function openModal(k){
+/* ---- new / rename / delete profile ----
+   Delete takes a profile's branding, workflows and keys with it, so it is not a
+   two-click popover like signing out: it is the same sheet as the others, and it
+   asks for the name to be typed. The small in-place confirm stays for Log out. */
+let kind = 'new', delIdx = -1;
+function openModal(k, i){
   kind = k;
-  const isNew = k === 'new';
-  $('shMTitle').textContent = isNew ? 'Create New Profile' : 'Edit Profile';
+  const isNew = k === 'new', isDel = k === 'delete';
+  if(isDel) delIdx = i;
+  $('shMTitle').textContent = isNew ? 'Create New Profile' : isDel ? 'Delete this profile?' : 'Edit Profile';
   $('shMDesc').textContent = isNew
     ? 'Have multiple companies or locations? Add individually customizable profiles to your dashboard and easily switch between them!'
+    : isDel
+    ? '“'+PROFILES[i]+'” and its branding, workflows and API keys are removed. This can’t be undone.'
     : 'Rename the profile you’re working in. Its branding, workflows and API keys stay as they are.';
-  $('shMOk').textContent = isNew ? 'Create' : 'Save';
-  $('shMInput').value = isNew ? '' : PROFILES[active];
+  $('shMLabel').textContent = isDel ? 'Type the profile name to confirm' : 'Profile Name';
+  $('shMInput').placeholder = isDel ? PROFILES[i] : 'Enter profile name';
+  $('shMOk').textContent = isNew ? 'Create' : isDel ? 'Delete profile' : 'Save';
+  $('shMOk').className = 'sh-btn ' + (isDel ? 'danger' : 'primary');
+  $('shMInput').value = (isNew || isDel) ? '' : PROFILES[active];
   closeAcct();
   $('shModal').classList.add('open');
   validate();
   setTimeout(()=>{ $('shMInput').focus(); $('shMInput').select(); }, 0);
 }
 function closeModal(){ $('shModal').classList.remove('open'); }
-function validate(){ $('shMOk').disabled = !$('shMInput').value.trim(); }
+/* an exact match, because a near-miss is how the wrong profile gets deleted */
+function validate(){
+  const v = $('shMInput').value.trim();
+  $('shMOk').disabled = kind === 'delete' ? v !== PROFILES[delIdx] : !v;
+}
 function submit(){
+  if(kind === 'delete'){
+    if($('shMInput').value.trim() !== PROFILES[delIdx]) return;
+    PROFILES.splice(delIdx, 1);
+    if(active === delIdx) active = 0; else if(active > delIdx) active--;
+    delIdx = -1; renderAcct(); closeModal(); toast('Profile deleted');
+    return;
+  }
   const name = $('shMInput').value.trim(); if(!name) return;
   if(kind === 'new'){ PROFILES.push(name); active = PROFILES.length-1; toast('Profile created'); }
   else { PROFILES[active] = name; toast('Profile renamed'); }
@@ -298,15 +318,7 @@ function init(){
     'Log out', ()=>{ closeAcct(); toast('Logged out'); });
   $('shList').onclick = e=>{
     const p = e.target.closest('.sh-pick'), d = e.target.closest('.sh-trash');
-    if(d){ const i = +d.dataset.del;
-      askConfirm('Delete this profile?',
-        '“'+PROFILES[i]+'” and its branding, workflows and API keys are removed. This can’t be undone.',
-        'Delete', ()=>{
-          PROFILES.splice(i,1);
-          if(active === i) active = 0; else if(active > i) active--;
-          renderAcct(); $('shConfirm').classList.remove('open'); openAcct(); toast('Profile deleted');
-        });
-      return; }
+    if(d){ openModal('delete', +d.dataset.del); return; }
     if(p) pick(+p.dataset.i);
   };
   $('shCfNo').onclick  = closeConfirm;

@@ -345,7 +345,9 @@ select{appearance:none;background-image:var(--caret-img);
 .ddpick .v i{display:block;font-style:normal;font-size:11px;line-height:1.45;color:var(--ink-3);
   margin-top:3px;white-space:normal}
 .ddrow.on .ddpick .v i{color:var(--ink-2)}
-.ddm .tk{width:12px;height:12px;flex:0 0 auto;opacity:0;color:var(--accent-text)}
+/* the tick sits at the RIGHT edge of every dropdown row */
+.ddm .tk{width:12px;height:12px;flex:0 0 auto;opacity:0;color:var(--field-focus);margin-left:auto}
+.ddpick .v{flex:1;min-width:0}
 .ddrow.on .tk{opacity:1}
 /* a client manages their uploaded faces where they pick them — removing one
    anywhere removes it everywhere, so there is no second place to keep in sync */
@@ -418,6 +420,7 @@ select{appearance:none;background-image:var(--caret-img);
   <main class="canvas">
     <div class="cbar">
       <span class="nm" id="screenName">Start screen</span>
+      <span class="skip" id="gateChip" hidden>Not in flow</span>
       <span class="sp"></span>
       <span class="seg" id="modeSeg"></span>
     </div>
@@ -683,6 +686,95 @@ SCREENS.forEach(s=> s.els.__bg = {label:'Background', type:'bg', props:{
   style:{bind:'bgStyle'}, color:{bind:'pageBg'}, color2:{bind:'pageBg2'}, image:{bind:'pageImg'}
 }});
 
+/* ---------------------------------------------------------------------------
+   WHAT THE WORKFLOW PRODUCES
+   A screen can only be branded if the workflow actually shows it. The Workflow
+   page publishes a flat summary of its outcomes; the shipped version reads the
+   same shape off the API. Everything defaults to TRUE so a client who has never
+   opened Workflow sees the whole set rather than an empty studio.
+   --------------------------------------------------------------------------- */
+const WF_DEFAULT = {
+  methods:{id:true, passport:true, kyc:false, kyb:false},
+  chooseDoc:true, chooseCountry:true, face:true, faceMatch:true,
+  idFront:true, idBack:true, passportPage:true, age:true, details:false,
+  by:{},
+};
+let WF = WF_DEFAULT;
+function readWorkflow(){
+  try {
+    const raw = localStorage.getItem('vyyer.workflow');
+    if(raw) WF = Object.assign({}, WF_DEFAULT, JSON.parse(raw));
+  } catch(e){}
+}
+readWorkflow();
+/* the two pages are open side by side often enough that a stale studio is worse
+   than a repaint — another tab saving the workflow updates this one */
+window.addEventListener('storage', e => {
+  if(e.key !== 'vyyer.workflow') return;
+  readWorkflow(); renderRail(); renderScreen(); renderInspector();
+});
+
+/* Why a screen is not in this client's flow. Returns null when it IS. The text
+   is the whole explanation — it names the setting, not just the fact. */
+const GATE = {
+  choose:   () => WF.chooseDoc     ? null : 'Only one document type is on, so the customer is never asked to choose.',
+  country:  () => WF.chooseCountry ? null : 'Accepted countries is set to a single country, so there is nothing to choose.',
+};
+const VARIANT_GATE = {
+  'Face':      () => WF.face         ? null : 'Selfie capture is off, so nothing is scanned of the customer\u2019s face.',
+  'ID front':  () => WF.idFront      ? null : 'Front capture is off on ID Verification.',
+  'ID back':   () => WF.idBack       ? null : 'Back scan is off on ID Verification.',
+  'Passport':  () => WF.passportPage ? null : 'Passport Verification is off, or its photo page capture is.',
+  'Underage':  () => WF.age          ? null : 'Age on file match is off, so no customer is ever turned away for age.',
+};
+/* The other half of the question: not "why is this screen gone" but "I turned
+   that off — why is it STILL here?". A screen shared by two methods survives an
+   edit to one of them, and the client has no way to know which one kept it. */
+const KEPT_BY = {
+  'Face':     () => (WF.by && WF.by.face) || [],
+  'Underage': () => (WF.by && WF.by.age)  || [],
+};
+const SCREEN_KEPT_BY = {
+  choose: () => (WF.by && WF.by.chooseDoc) || [],
+};
+function keptBy(screenId, variantLabel){
+  const f = (variantLabel && KEPT_BY[variantLabel]) || SCREEN_KEPT_BY[screenId];
+  const who = f ? f() : [];
+  return who.length ? who : null;
+}
+function gateFor(screenId, variantLabel){
+  if(screenId === 'consent' && !tok('requireConsent'))
+    return {why:'Verification starts straight after the start screen. We strongly advise collecting consent first.', local:true};
+  const g = (GATE[screenId] && GATE[screenId]()) ||
+            (variantLabel && VARIANT_GATE[variantLabel] && VARIANT_GATE[variantLabel]());
+  return g ? {why:g, local:false} : null;
+}
+const screenGate = () => gateFor(state.screen, (curScreen().variants||[])[state.variant]);
+/* The same rule the Workflow page runs on: a client has to be able to brand a
+   screen BEFORE the workflow turns it on, or they are styling it live. So the
+   off panel offers to show the real screen anyway, per screen, for this session. */
+let gateShow = {};
+const gateKey = () => state.screen + '|' + state.variant;
+function showGated(){ gateShow[gateKey()] = true; renderScreen(); renderInspector(); }
+/* the sequence this workflow actually puts the customer through — the same
+   derivation the Workflow page draws its "What the customer sees" strip from */
+function wfJourney(){
+  const st=[];
+  if(WF.chooseDoc) st.push('Choose document type');
+  if(WF.face) st.push('Scan face');
+  if(WF.idFront) st.push('Scan ID front');
+  else if(WF.passportPage) st.push('Scan passport page');
+  if(WF.idBack) st.push('Scan ID back');
+  if(WF.details) st.push('Enter personal details');
+  return st;
+}
+const WF_LINK = `<a href="workflow.html" style="color:var(--accent);font-weight:600">Open Workflow</a>`;
+function wfNote(inner){
+  return `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+    <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
+    <div>${inner} ${WF_LINK}</div></div>`;
+}
+
 const VARIANT_COPY = {
   walk:{'Face':['Get ready to scan your face','Make sure you’re in a well lit room. Avoid any bright lights behind you.','Let’s go'],
         'ID front':['Scan the front of your ID','Keep the document well lit. All document fields should be visible.','Let’s go'],
@@ -837,10 +929,24 @@ function segment(el){
     ${half(a, linkMethod==='sms')}${half(b, linkMethod==='email')}</div>`;
 }
 function txtFrom(el, prop, extra){ return textBlock(el, esc(companify(val(el,prop))).replace(/\n/g,'<br>'), extra, false); }
+/* The consent gate has to list what is ACTUALLY collected, or it is a false
+   disclosure. Line 1 is the live face scan and line 2 the biometric read off the
+   ID photo, so each disappears when the workflow is not capturing it; lines 3
+   and 4 hold for every flow. Both lines stay editable — they are kept, not
+   deleted, so turning the capture back on restores the client's own wording. */
+const CONSENT_LINE = [() => WF.face, () => WF.faceMatch];
+function gateLines(el, lines){
+  if(!(state.screen==='consent' && el==='list')) return lines;
+  return lines.filter((_, i) => !CONSENT_LINE[i] || CONSENT_LINE[i]());
+}
+function hiddenConsentLines(){
+  const lines=String(val('list','text')).split('\n');
+  return lines.map((t,i)=>({t,i})).filter(({i}) => CONSENT_LINE[i] && !CONSENT_LINE[i]());
+}
 function list(el, extra){
   const g=BULLETS[val(el,'bullet')||'Disc'];
   const bc=val(el,'bulletColor')||val(el,'color');
-  const lines=String(companify(val(el,'text'))).split('\n');
+  const lines=gateLines(el, String(companify(val(el,'text'))).split('\n'));
   const rows=lines.map((l,i)=>{
     const mb = i===lines.length-1 ? '0' : '8px';     /* li:last-child{margin-bottom:0} */
     return g
@@ -1156,9 +1262,40 @@ function renderScreen(){
   const insp0=document.getElementById('insp'), inspTop=insp0?insp0.scrollTop:0;
   const id=state.screen, pad='padding:22px 18px', dpad='padding:30px 32px';
   const ink=tok('primaryText');
+  const gate=screenGate();
+  const hidden = gate && !gateShow[gateKey()];
   let body='';
 
-  if(id==='start'){
+  if(hidden){
+    /* Off is a real state of the flow, so the screen shows it rather than
+       disappearing from the rail. Consent is the studio's own switch, so it
+       offers it here; everything else is decided in Workflow, so it sends the
+       client there rather than pretending this panel can fix it. */
+    body=`<div style="position:absolute;inset:0;overflow:hidden">
+      ${ghostStart()}
+      <div style="position:absolute;inset:0;background:rgba(4,6,10,.62)"></div>
+      <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 22px 30px;text-align:center">
+        <div style="width:42px;height:42px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
+          background:rgba(229,163,60,.16);color:#E5A33C">
+          <svg viewBox="0 0 24 24" style="width:22px;height:22px" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
+            <path d="M12 3l9.5 17H2.5z"/><path d="M12 10v4M12 17v.01"/></svg></div>
+        <div style="color:${tok('primaryText')};font-family:${fontStack(tok('fontBody'))};font-size:16px;font-weight:600;line-height:1.35">${
+          gate.local ? 'Consent screen is off' : 'Not in this client\u2019s flow'}</div>
+        <div style="color:${tok('secondaryText')};font-family:${fontStack(tok('fontBody'))};font-size:13.5px;line-height:1.5;margin-top:7px">
+          ${esc(gate.why)}${gate.local ? '' : ' Styling it still saves — it appears the moment the workflow turns it on.'}</div>
+        <button onclick="event.stopPropagation();${gate.local
+            ? `setToken('requireConsent',true)`
+            : `location.href='workflow.html'`}"
+          style="margin-top:18px;width:100%;height:46px;border:0;border-radius:${tok('buttonRadius')}px;cursor:pointer;
+          background:${tok('buttonBg')};color:${tok('buttonText')};font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:600">${
+          gate.local ? 'Turn it back on' : 'Open Workflow'}</button>
+        <button onclick="event.stopPropagation();showGated()"
+          style="margin-top:12px;width:100%;background:none;border:0;cursor:pointer;padding:4px;
+          color:${tok('secondaryText')};font-family:${fontStack(tok('fontBody'))};font-size:13px;font-weight:600;
+          text-decoration:underline">Style it anyway</button>
+      </div></div>`;
+  }
+  else if(id==='start'){
     const cb=val('cards','bg'), cbd=val('cards','border'), cr=val('cards','radius'), n=val('cards','count');
     const steps=['c1','c2','c3'].slice(0,n).map((c,i)=>`
       <div style="background:${cb};border:1px solid ${cbd};border-radius:${cr}px;padding:15px 16px;display:flex;gap:14px;align-items:center;margin-bottom:12px">
@@ -1228,25 +1365,6 @@ function renderScreen(){
       </div>
       <div data-el="clist" style="margin-top:22px;color:${lc};font-family:${fontStack(lf)};font-size:${ls}px;font-weight:${lw}">${rows}</div>
     </div>`;
-  }
-  else if(id==='consent' && !tok('requireConsent')){
-    /* Off is a real state of the flow, so the screen shows it rather than
-       disappearing from the rail — and offers the switch back on right here. */
-    body=`<div style="position:absolute;inset:0;overflow:hidden">
-      ${ghostStart()}
-      <div style="position:absolute;inset:0;background:rgba(4,6,10,.62)"></div>
-      <div style="position:absolute;left:0;right:0;bottom:0;padding:26px 22px 30px;text-align:center">
-        <div style="width:42px;height:42px;margin:0 auto 14px;border-radius:50%;display:grid;place-items:center;
-          background:rgba(229,163,60,.16);color:#E5A33C">
-          <svg viewBox="0 0 24 24" style="width:22px;height:22px" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round">
-            <path d="M12 3l9.5 17H2.5z"/><path d="M12 10v4M12 17v.01"/></svg></div>
-        <div style="color:${tok('primaryText')};font-family:${fontStack(tok('fontBody'))};font-size:16px;font-weight:600;line-height:1.35">Consent screen is off</div>
-        <div style="color:${tok('secondaryText')};font-family:${fontStack(tok('fontBody'))};font-size:13.5px;line-height:1.5;margin-top:7px">
-          Verification starts straight after the start screen. We strongly advise collecting consent first.</div>
-        <button onclick="event.stopPropagation();setToken('requireConsent',true)"
-          style="margin-top:18px;width:100%;height:46px;border:0;border-radius:${tok('buttonRadius')}px;cursor:pointer;
-          background:${tok('buttonBg')};color:${tok('buttonText')};font-family:${fontStack(tok('fontBody'))};font-size:15px;font-weight:600">Turn it back on</button>
-      </div></div>`;
   }
   else if(id==='consent'){
     const sb=val('sheet','bg'), sbd=val('sheet','border'), sr=val('sheet','radius');
@@ -1435,6 +1553,8 @@ function renderScreen(){
     /* clicking the same element again clears the selection */
     n.onclick = e=>{ e.stopPropagation(); select(n.dataset.el===state.sel ? null : n.dataset.el); };
   });
+  const chip=document.getElementById('gateChip');
+  if(chip){ chip.hidden = !gate; if(gate) chip.title = gate.why; }
   if(id==='qr') paintQR();
   paintSelection();
   /* clicking the empty stage (outside the device) clears the selection,
@@ -1843,7 +1963,7 @@ function ddCtl(value, options, pick){
     : o.note ? `<div class="ddnote">${esc(o.note)}</div>`
     : `<div class="ddrow${o.v===value?' on':''}${o.desc?' tall':''}">
          <button type="button" class="ddpick${o.cls?' '+o.cls:''}" onclick="ddPick(event,'${id}',${i})"${o.style?` style="${o.style}"`:''}>
-           ${DD_TICK}<span class="v">${esc(o.label||o.v)}${o.desc?`<i>${esc(o.desc)}</i>`:''}</span>${o.muted?`<span class="mut">${esc(o.muted)}</span>`:''}</button>
+           <span class="v">${esc(o.label||o.v)}${o.desc?`<i>${esc(o.desc)}</i>`:''}</span>${o.muted?`<span class="mut">${esc(o.muted)}</span>`:''}${DD_TICK}</button>
          ${o.del==null?'':`<button type="button" class="ddx" title="Remove font" aria-label="Remove ${esc(o.label||o.v)}" onclick="ddDel(event,${o.del})">
            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 5l14 14M19 5L5 19"/></svg></button>`}
        </div>`).join('');
@@ -2143,6 +2263,33 @@ function renderInspector(){
         <path d="M12 3l9 16H3z" stroke-linejoin="round"/><path d="M12 10v4M12 17v.01" stroke-linecap="round"/></svg>
         These two colours are too close for a camera to read the code. Keep a clear
         light/dark contrast between the dots and the background.</div>`;
+    const kept = keptBy(state.screen, (curScreen().variants||[])[state.variant]);
+    if(kept && kept.length === 1)
+      rows = wfNote(`This screen is in the flow because of
+        <b style="font-weight:600">${esc(kept[0])}</b>. Turning it off elsewhere won\u2019t remove it.`) + rows;
+    const g = screenGate();
+    if(g && !g.local) rows = wfNote(`This screen isn\u2019t in the flow yet — ${esc(g.why)}
+      Styling it now is saved and shows the moment the workflow turns it on.`) + rows;
+    /* These are the client's own words, so the studio does not rewrite them — it
+       says what the flow actually does and leaves the wording to them. */
+    if(state.screen==='start' && ['cards','c1','c2','c3','i1','i2','i3'].includes(state.sel)){
+      const j = wfJourney();
+      rows += wfNote(j.length
+        ? `This workflow puts the customer through <b style="font-weight:600">${j.map(esc).join(' → ')}</b>.
+           Keep these steps in step with it — nothing here changes what actually runs.`
+        : `No verification method is on, so this workflow asks the customer for nothing at all.`);
+    }
+    if(state.screen==='consent' && state.sel==='release' && !WF.face)
+      rows += wfNote(`This workflow doesn\u2019t capture a face scan. Check this wording still
+        describes what is collected before a customer agrees to it.`);
+    if(state.screen==='consent' && state.sel==='list'){
+      const hid = hiddenConsentLines();
+      if(hid.length) rows += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
+        <div>${hid.length===1?'This line is':'These lines are'} not shown to customers, because this
+        workflow doesn\u2019t collect ${hid.map(h=>`“${esc(h.t.trim())}”`).join(' or ')}. Wording is kept — it
+        comes back if the capture does. <a href="workflow.html" style="color:var(--accent);font-weight:600">Open Workflow</a></div></div>`;
+    }
     if(state.screen==='handoff' && state.sel==='field')
       rows += `<div class="note"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8v.01" stroke-linecap="round"/></svg>
@@ -2256,8 +2403,14 @@ function renderRail(){
     const open = list.some(([f])=>f.id===state.screen);
     const items=list.map(([f,i])=>{
       const on = f.id===state.screen && f.v===state.variant;
-      const off = f.id==='consent' && !tok('requireConsent');
-      return `<button class="screenbtn ${on?'on':''}${off?' off':''}" onclick="goTo(${i})">
+      const vl = (SCREENS.find(x=>x.id===f.id).variants||[])[f.v];
+      const g = gateFor(f.id, vl);
+      const off = !!g;
+      const kept = !off && keptBy(f.id, vl);
+      const tip = off ? `Not in this flow — ${g.why}`
+                : kept ? `In this flow because of ${kept.join(' and ')}` : '';
+      return `<button class="screenbtn ${on?'on':''}${off?' off':''}" onclick="goTo(${i})"
+        ${tip?`title="${esc(tip)}"`:''}>
         <span class="nm">${f.label}</span>${off?'<span class="skip">Off</span>':''}${entryOverrides(f)&&!off?'<span class="dot"></span>':''}</button>`;
     }).join('');
     return `<div class="grp ${open?'open':''}"><button onclick="this.parentElement.classList.toggle('open')">
