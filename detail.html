@@ -617,7 +617,8 @@ function renderTimeline(){
     E({ dot:'info', label:'Changed document', anchor:true, step: back ? S2 : S1, secs:0,
         sub:'Switched from <strong>' + DOC(ATT.doc) + '</strong> to <strong>' + DOC(ATT.doc==='passport'?'id':'passport') +
             '</strong> on the <strong>' + (back ? S2 : S1) + '</strong> step · No verdict was issued',
-        flag:['tf-abandon','⇄ Counts as attempt ' + (ATT.n + 1)], next:true });
+        /* no chip — the "Go to attempt N" button below already says where it went */
+        next:true });
     return finish(ev);
   }
 
