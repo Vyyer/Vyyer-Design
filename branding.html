@@ -698,6 +698,13 @@ const SCREENS = [
               closeShow:{value:true}, closeColor:{bind:'primaryText'}, closeCustom:{value:''},
               helpShow:{value:true}, helpColor:{bind:'primaryText'}, helpCustom:{value:''}}},
     guide:  {label:'Camera guide',type:'guide', props:{color:{value:'#B1B1B1'}, successColor:{value:'#5FC52E'}, width:{value:3}}},
+    /* Says what is being scanned, and is the way back to Choose document. The
+       live one is a white pill with a flag in it — it fights the camera and it
+       doesn't read as a control. This is a glass chip with the swap action on it. */
+    docchip:{label:'Document chip',type:'docchip',props:{
+              show:{value:true}, bg:{value:'rgba(16,18,22,.72)'}, border:{value:'rgba(255,255,255,.22)'},
+              color:{value:'#FFFFFF'}, radius:{value:99}, font:{bind:'fontBody'}, weight:{value:600},
+              action:{value:'Change'}, actionColor:{bind:'accent'}}},
     /* plays over the camera the moment a capture lands — a state of this screen,
        not a screen of its own, so it is edited with the Message state on Success */
     success:{label:'Success animation',type:'successmark',props:{
@@ -723,12 +730,15 @@ const SCREENS = [
     btn:    {label:'Button',      type:'button',props:BTN('Retry')},
  }},
  /* First thing a customer sees. No logo — the spinner on the client's background
-    is the whole screen. The message carries a Visible toggle: most loaders are
-    the spinner alone. */
+    is the whole screen. The message is PART of the spinner block rather than an
+    element of its own: most loaders are the spinner alone, and a ghost line of
+    text that never appears in the live widget is worse than no row at all. Off
+    hides its rows with it. */
  {id:'loading', group:'Loading', name:'Loading', els:{
-    img:    {label:'Spinner',     type:'image', props:{custom:{value:''}, scale:{value:1}}},
-    msg:    {label:'Message',     type:'text',  props:Object.assign(S('Getting things ready'),
-              {show:{value:false}})},
+    spin:   {label:'Loading spinner', type:'spinner', props:{
+              custom:{value:''}, scale:{value:1},
+              msgShow:{value:false}, text:{value:'Getting things ready'},
+              color:{bind:'secondaryText'}, size:{value:15}, font:{bind:'fontBody'}, weight:{value:400}}},
  }},
  {id:'verdict', group:'Verdicts', name:'Verdict', variants:['Verified','Failed','Underage','Expired','In review','Max attempts'], els:{
     icon:   {label:'Verdict icon',type:'verdicticon',props:{color:{bind:'accent'}, shape:{value:'check'}, custom:{value:''}, scale:{value:1}}},
@@ -1390,8 +1400,12 @@ function renderScreen(){
 
   if(id==='loading' && !hidden){
     body=`<div style="${pad};display:flex;flex-direction:column;height:100%;align-items:center;justify-content:center">
-      <div data-el="img" style="margin-bottom:20px">${progressMark(val('img','scale'), val('img','custom'))}</div>
-      ${txt('msg','line-height:1.5;max-width:28ch')}
+      <div data-el="spin" style="display:flex;flex-direction:column;align-items:center;gap:20px">
+        ${progressMark(val('spin','scale'), val('spin','custom'))}
+        ${val('spin','msgShow') ? `<div style="color:${val('spin','color')};font-family:${fontStack(val('spin','font'))};
+          font-size:${val('spin','size')}px;font-weight:${val('spin','weight')};line-height:1.5;max-width:28ch;
+          text-align:center">${esc(companify(val('spin','text')))}</div>` : ''}
+      </div>
     </div>`;
   }
   else if(hidden){
@@ -1576,6 +1590,32 @@ function renderScreen(){
          </div>`;
     /* the live widget washes the whole frame when it reports a problem */
     const wash = st==='error' ? `<div style="position:absolute;inset:0;background:${val('status','errorBg')};opacity:.3;pointer-events:none"></div>` : '';
+    /* The document chip only belongs on a DOCUMENT scan — there is nothing to
+       change when the customer is scanning their own face — and it is gone by
+       the time the capture lands. The Change half only appears when the
+       workflow actually offers a second document type. */
+    const DOCNAME = ['', 'Driver\u2019s License', 'Driver\u2019s License', 'Passport'];
+    const docChip = face || st==='done' ? '' : (()=>{
+      const bg=val('docchip','bg'), bd=val('docchip','border'), c=val('docchip','color');
+      const r=val('docchip','radius'), f=val('docchip','font'), w=val('docchip','weight');
+      const act=val('docchip','action'), ac=val('docchip','actionColor');
+      return `<div data-el="docchip" style="display:inline-flex;align-items:center;gap:10px;background:${bg};
+        border:1px solid ${bd};border-radius:${r}px;padding:8px 8px 8px 14px;backdrop-filter:blur(8px);
+        -webkit-backdrop-filter:blur(8px);${ghostCss('docchip')}">
+        <svg viewBox="0 0 24 24" style="width:15px;height:15px;flex:0 0 auto;color:${c}" fill="none"
+          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="5.5" width="18" height="13" rx="2.2"/><circle cx="8.6" cy="11.3" r="1.9"/>
+          <path d="M5.8 15.6a3.1 3.1 0 015.6 0M14 10.5h4.4M14 13.8h3.2"/></svg>
+        <span style="color:${c};font-family:${fontStack(f)};font-size:13.5px;font-weight:${w};white-space:nowrap">${
+          esc(DOCNAME[state.variant]||'Document')}</span>
+        ${WF.chooseDoc ? `<span style="display:inline-flex;align-items:center;gap:4px;color:${ac};
+          font-family:${fontStack(f)};font-size:12.5px;font-weight:${w};background:rgba(255,255,255,.1);
+          border-radius:99px;padding:4px 10px 4px 8px;white-space:nowrap">
+          <svg viewBox="0 0 24 24" style="width:12px;height:12px" fill="none" stroke="currentColor"
+            stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 9h12l-3-3M20 15H8l3 3"/></svg>${esc(act)}</span>` : ''}
+      </div>`;
+    })();
     /* the confirmation has the camera to itself — by the time it plays the guide
        and the message are gone, which is what the live widget does */
     const capture = st!=='done' ? '' : `
@@ -1604,7 +1644,8 @@ function renderScreen(){
       </div>
       <div style="flex:1;display:grid;place-items:center;position:relative">${guide}</div>
       ${face && st!=='done' ? `<div style="padding:0 22px 54px;display:flex;justify-content:center;position:relative">${bubble}</div>`
-             : '<div style="height:54px"></div>'}
+        : docChip ? `<div style="padding:0 22px 38px;display:flex;justify-content:center;position:relative">${docChip}</div>`
+        : '<div style="height:54px"></div>'}
       ${capture}
     </div>`;
   }
@@ -2177,6 +2218,7 @@ function ctlFor(type, value, elId, prop, opts){
 /* rows that only matter while their toggle is on */
 const SHOW_WHEN = {
   successmark:{ text:'textShow', textColor:'textShow', font:'textShow', weight:'textShow' },
+  spinner:{ text:'msgShow', color:'msgShow', size:'msgShow', font:'msgShow', weight:'msgShow' },
   qrcode:{ imageSize:'image', imageMargin:'image', hideBgDots:'image' },
   navbar:{ logoSrc:'logoShow', logoScale:'logoShow',
            closeColor:'closeShow', closeCustom:'closeShow',
@@ -2227,6 +2269,12 @@ const PROP_UI = {
             ['helpShow','Show help icon','toggle'],['helpColor','Help icon color','color'],['helpCustom','Custom help icon','upload']],
   stepicon:[['bg','Fill','color'],['fg','Number color','color'],['custom','Custom icon','upload']],
   guide:   [['color','Guide color','color'],['successColor','Capture colour','color'],['width','Line weight','radius']],
+  docchip: [['bg','Fill','color'],['border','Border','color'],['color','Text color','color'],
+           ['radius','Corner radius','radius'],['font','Font','font'],['weight','Font weight','weight'],
+           ['action','Change label','text'],['actionColor','Change colour','color']],
+  spinner:[['custom','Custom animation','upload'],['scale','Spinner size','scale'],
+           ['msgShow','Show message','toggle'],['text','Message','text'],
+           ['color','Text color','color'],['size','Size','size'],['font','Font','font'],['weight','Font weight','weight']],
   successmark:[['custom','Custom animation','upload'],['scale','Size','scale'],['color','Mark colour','color'],
            ['textShow','Show text','toggle'],['text','Text','text'],
            ['textColor','Text color','color'],['font','Font','font'],['weight','Font weight','weight']],
