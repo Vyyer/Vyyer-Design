@@ -530,6 +530,19 @@ for(let i = 0; i < 55; i++){
   });
 }
 
+/* One fixed entry for the dev hand-off: its journey emits every event the
+   widget can produce — the privacy notice, a declined then accepted consent, a
+   help tap, the camera timing out, a document change, an abandon, a failed
+   verdict and a pass — across four attempts. Kept at the top of the list so
+   it is easy to find. */
+HISTORY.unshift({
+  id: 'VYR-ALLEV', name: 'Nadia Brooks', email: 'nadia.brooks@gmail.com',
+  result: 'Valid', workflow: 'ID Verification',
+  platform: 'web', platformLabel: 'Web SDK', version: 'v2.3.1',
+  profile: 'Default profile', attempts: 5, maxAttempts: 5, demo: true,
+  ts: new Date(NOW.getTime() - 9*60000)
+});
+
 /* ─── HELPERS ─── */
 function initials(name){ const p = name.split(/\s+/); return ((p[0][0]||'') + (p[p.length-1][0]||'')).toUpperCase(); }
 function avatarColors(name){ let h = 0; for(const c of name) h = (h*31 + c.charCodeAt(0)) % 360; return { bg:`hsl(${h} 52% 91%)`, fg:`hsl(${h} 42% 34%)` }; }

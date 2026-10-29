@@ -381,9 +381,44 @@ const RETRY_RESULTS = ['Incomplete','Invalid'];
 function seeded(str){ let h=2166136261>>>0;
   for(const c of String(str)) h=Math.imul(h ^ c.charCodeAt(0), 16777619)>>>0;
   return ()=>{ h=(Math.imul(h,1103515245)+12345)>>>0; return h/4294967296; }; }
-const ATTEMPTS = (function(){
+/* The hand-off record. One session that emits every event the widget can
+   produce — the privacy notice, a declined then accepted consent, a help tap,
+   the camera timing out, a document change, an abandon, a failed verdict and
+   a pass — so the devs have a single entry to build the event list against. */
+const DEMO_PLAN = [
+  { result:'Expired',    doc:'id',       miss:{front:2}, help:'face' },   /* a full ID run, verdict Expired */
+  { result:'Incomplete', doc:'id',       switched:true, switchStep:'back', miss:{back:1} },
+  { result:'Incomplete', doc:'passport', miss:{front:1} },                /* abandoned mid-scan */
+  { result:'Invalid',    doc:'passport' },                                /* a check failed */
+  { result:'Valid',      doc:'passport', help:'front' }                   /* and finally through */
+];
+function demoAttempts(){
+  const out = DEMO_PLAN.map((p,i)=>({
+    n:i+1, latest:i===DEMO_PLAN.length-1, result:p.result, arch:ARCH[p.result], ts:null, seed:.5,
+    doc:p.doc, switched:!!p.switched, switchStep:p.switchStep||'front',
+    miss:p.miss||{}, help:p.help||null }));
+  let t = REC.ts.getTime();                       /* the last attempt ends when the record says */
+  for(let i=out.length-1; i>=0; i--){ out[i].ts = new Date(t); t -= 7*60000; }
+  return out.reverse();                           /* most recent first */
+}
+
+/* The consent gate opens over the start screen, so it belongs to the session,
+   not to an attempt — a retry never sees it again. */
+const SESSION = (function(){
+  if(REC.demo) return { consent:true, notice:true, declined:true };
+  const r = seeded(REC.id + '|s');
+  return { consent:true, declined: r() < .12, notice: r() < .15 };
+})();
+
+const ATTEMPTS = REC.demo ? demoAttempts() : (function(){
   const n = Math.max(1, Math.min(MAX_ATTEMPTS, REC.attempts || 1));
   const rnd = seeded(REC.id + '|' + n);
+  /* A customer who can't get their licence to read will try their passport.
+     The widget treats that switch as a fresh attempt, so it shows up here as
+     the reason one attempt ended — not as a retry of the same document. */
+  const switchAt = n > 1 && seeded(REC.id + '|doc')() > .45
+    ? 1 + Math.floor(seeded(REC.id + '|at')() * (n - 1))   /* first attempt on the NEW document */
+    : 0;
   const out = []; let t = REC.ts.getTime(), prev = REC.result;
   for(let k = n; k >= 1; k--){
     const latest = k === n;
@@ -394,11 +429,24 @@ const ATTEMPTS = (function(){
       do { result = RETRY_RESULTS[Math.floor(rnd()*RETRY_RESULTS.length)]; } while(result === prev);
       prev = result;
     }
-    out.push({ n:k, latest, result, arch: ARCH[result] || ARCH.Valid, ts: new Date(t), seed: rnd() });
+      const switched = !!switchAt && k === switchAt;
+    /* a switch happens mid-scan, so that attempt never reaches a verdict — it
+       closes as Incomplete, whatever the retry pattern would have given it */
+    if(switched) result = 'Incomplete';
+    /* the small stumbles inside an attempt: a tap on help, and the stretches
+       where the camera saw nothing and the "Not detected" screen came up */
+    const rs = seeded(REC.id + '|e' + k);
+    out.push({ n:k, latest, result, arch: ARCH[result] || ARCH.Valid, ts: new Date(t), seed: rnd(),
+               doc: switchAt && k >= switchAt+1 ? 'passport' : 'id', switched,
+               /* which scan step they were on when they changed their mind */
+               switchStep: switched && rnd() > .5 ? 'back' : 'front',
+               miss: { face: rs()<.12?1:0, front: rs()<.34 ? 1+(rs()<.3?1:0) : 0, back: rs()<.22?1:0 },
+               help: rs()<.16 ? (rs()<.5 ? 'face' : 'front') : null });
     t -= (3 + Math.floor(rnd()*12)) * 60000;      /* a few minutes between tries */
   }
   return out;                                     /* already most-recent-first */
 })();
+
 let ATT = ATTEMPTS[0];
 let A = ATT.arch;
 
@@ -464,55 +512,186 @@ function renderData(){
   ].join('');
 }
 
-/* ─── TIMELINE ─── */
+/* ─── TIMELINE ───────────────────────────────────────────────────────────────
+   Every capture is two events: the walkthrough screen the customer starts
+   from, and the capture itself with what came off the document. Between them
+   sit the stretches where the camera saw nothing — each "Not detected" screen
+   is followed by the Try again that puts them back on it.
+
+   Opening the session, agreeing to the consent and choosing a document happen
+   ONCE. A retry drops the customer back at the first scan step — they are not
+   asked to pick a document again, which is exactly why the change stays
+   reachable during the scan instead of being a step of its own.
+
+   An event's `secs` is the time that passes BEFORE the next one — the time the
+   customer spent on the screen this event just opened. The bars below the
+   journey add those up per step, so a step they bounced around on is still
+   one bar. */
 function renderTimeline(){
   const end = ATT.ts.getTime();
-  const at = s => fmtDT(new Date(end - s*1000));
   const vc = A.verdictColor ? `var(${A.verdictColor})` : 'var(--valid)';
+  const pp = ATT.doc === 'passport';
+  const DOC = d => d === 'passport' ? 'Passport' : 'Driver’s License';
+  const issuer = pp ? 'United States' : 'Indiana';     /* matches the OCR panel below */
+  const subj = pp ? 'passport' : 'ID';
+  const miss = ATT.miss || {};
   const ev = [];
-  ev.push({ t:at(262), dot:'neutral', label:'Workflow created', sub:'Verification session initialized · '+domainFor(REC) });
-  ev.push({ t:at(170), dot:'info', label:'Link opened', sub:'User opened the verification widget · 1m 32s after it was created' });
-  const jitter = Math.round(ATT.seed*14) - 7;           /* same attempt, same numbers */
-  ev.push({ t:at(154), dot:'info', label:'Started verification', sub:'User tapped “Start verification” · ' + (16+Math.max(-9,jitter)) + 's on the start screen' });
+  const E = o => { ev.push(o); return o; };
+  /* time spent on the screen the last event opened */
+  const wait = s => { const e = ev[ev.length-1]; e.secs = (e.secs||0) + s; };
 
-  ev.push({ t:at(118), dot:'success', label:'Scan face', sub:'Liveness check passed · Face captured', secs:36, flag:['tf-success','✓ Passed'] });
+  /* the camera steps, named once so the passport wording stays in one place */
+  const S1 = pp ? 'Scan passport' : 'Scan ID front';
+  const S1done = pp ? 'Passport scanned' : 'ID front scanned';
+  const S1sub = pp ? 'Photo page captured · MRZ read' : 'Front of ID captured · OCR complete';
+  const S2 = pp ? 'Verify passport' : 'Scan ID back';
+  const S2done = pp ? 'Passport checked' : 'ID back scanned';
+  const S2sub = pp ? 'Photo page checked · MRZ verified' : 'Back of ID captured · Barcode read';
 
-  if(A.j==='incomplete'){
-    ev.push({ t:at(0), dot:'abandoned', label:'Scan ID front', sub:'User exited the widget before capturing their ID', dur:'Last activity', flag:['tf-abandon','✗ Abandoned'] });
-    finish(ev); return;
+  /* a camera step: the walkthrough, then whatever happened on the camera —
+     a tap on help, and the 20s stretches that put up the "Not detected"
+     screen. The capture is pushed by the caller, because only it knows
+     whether the document ever read. */
+  function camera(name, opt){
+    opt = opt || {};
+    E({ dot:'info', label:name, sub:'Start clicked', secs:0, step:name });
+    if(opt.help){
+      wait(6);
+      E({ dot:'info', label:'Help clicked', sub:opt.help + ' tips displayed', secs:0, step:name });
+      wait(11);
+    }
+    for(let i=0; i<(opt.miss||0); i++){
+      wait(20);                                   /* the camera saw nothing */
+      E({ dot:'warn', label:'Not detected', secs:0, step:name,
+          sub:'No ' + opt.subject + ' detected after 20s · “Not detected” screen displayed',
+          flag:['tf-slow','⚠ No capture'] });
+      wait(4);
+      E({ dot:'info', label:'Try again clicked', sub:'User tapped “Try again” · Camera reopened', secs:0, step:name });
+    }
+  }
+  /* the capture that ends a camera step */
+  function captured(label, sub, step, secs){
+    wait(secs); E({ dot:'success', label, sub, secs:3, step, flag:['tf-success','✓ Passed'] });
   }
 
-  /* the step still passed — being slow is a timing note, not the outcome */
-  ev.push({ t:at(60), dot:'success', label:'Scan ID front', sub:'Front of ID captured · OCR successful', secs:58, flag:['tf-success','✓ Passed'] });
-
-  if(A.j==='fail'){
-    ev.push({ t:at(4), dot:'fail', label:'Scan ID back', sub:'Back of ID captured · '+A.failMsg, secs:56, flag:['tf-abandon','✗ '+(A.stepFail||A.pill.label)] });
-    ev.push({ t:at(0), dot:'fail', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">${A.pill.label}</strong> · ${A.stepFail||A.failMsg}`, secs:4, step:'Processing' });
-  } else if(A.j==='underage'){
-    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', secs:56, flag:['tf-success','✓ Passed'] });
-    ev.push({ t:at(0), dot:'warn', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Underage</strong> · ${A.failMsg}`, secs:4, step:'Processing' });
+  /* ── the session ── */
+  if(ATT.n === 1){
+    E({ dot:'neutral', label:'Workflow created', sub:'Verification session initialized · ' + domainFor(REC), secs:92 });
+    E({ dot:'info', label:'Link opened', sub:'User opened the verification widget · 1m 32s after it was created', secs:6 });
+    const jitter = Math.round(ATT.seed*14) - 7;         /* same attempt, same numbers */
+    E({ dot:'info', label:'Started verification', sub:'User tapped “Start verification”', secs:10+Math.max(-5,jitter), step:'Start screen' });
+    if(SESSION.notice)
+      E({ dot:'info', label:'Privacy notice opened', sub:'User tapped “Learn more” on the consent gate', secs:14, step:'Consent' });
+    if(SESSION.declined)
+      E({ dot:'warn', label:'Consent declined', sub:'User tapped “I don’t consent” · “No scan was taken” shown', secs:9,
+          step:'Consent', flag:['tf-abandon','✗ No scan taken'] });
+    if(SESSION.consent)
+      E({ dot:'success', label:'Consent accepted', step:'Consent', secs:5,
+          sub:'User agreed to the face and ID data consent' + (SESSION.declined ? ' after returning to the gate' : ''),
+          flag:['tf-success','✓ Agreed'] });
+    E({ dot:'info', label:'Document selected', sub:'<strong>' + issuer + ' · ' + DOC(ATT.doc) + '</strong>', secs:7, step:'Choose document' });
   } else {
-    ev.push({ t:at(4), dot:'success', label:'Scan ID back', sub:'Back of ID captured · Barcode read', secs:56, flag:['tf-success','✓ Passed'] });
-    ev.push({ t:at(0), dot:'success', label:'Verdict issued', sub:`Final result: <strong style="color:${vc}">Valid</strong> · All checks passed`, secs:4, step:'Processing' });
+    const prevAtt = ATTEMPTS.find(a => a.n === ATT.n - 1);
+    E({ dot:'info', label:'Attempt ' + ATT.n + ' started', secs:8,
+        sub: prevAtt && prevAtt.switched
+          ? 'Resumed at the face scan · now scanning <strong>' + DOC(ATT.doc) + '</strong>'
+          : 'Resumed at the face scan · document type kept' });
+  }
+
+  /* ── face ── */
+  camera('Scan face', { subject:'face', miss:miss.face||0, help: ATT.help==='face' ? 'Face scanning' : null });
+  captured('Face scanned', 'Liveness check passed · Face captured', 'Scan face', 26);
+
+  const docHelp = ATT.help==='front' ? (pp ? 'Passport scanning' : 'ID scanning') : null;
+
+  /* ── the document change ends the attempt where it happens: it is offered on
+        the scan screen, so there is no capture and no verdict after it ── */
+  if(ATT.switched){
+    const back = ATT.switchStep === 'back' && !pp;
+    camera(S1, { subject:subj, miss:miss.front||0, help:docHelp });
+    if(back){
+      captured(S1done, S1sub, S1, 31);
+      camera(S2, { subject:subj, miss:miss.back||0 });
+    }
+    wait(9);
+    E({ dot:'info', label:'Changed document', anchor:true, step: back ? S2 : S1, secs:0,
+        sub:'Switched from <strong>' + DOC(ATT.doc) + '</strong> to <strong>' + DOC(ATT.doc==='passport'?'id':'passport') +
+            '</strong> on the <strong>' + (back ? S2 : S1) + '</strong> step · No verdict was issued',
+        flag:['tf-abandon','⇄ Counts as attempt ' + (ATT.n + 1)], next:true });
+    return finish(ev);
+  }
+
+  /* ── abandoned ── */
+  if(A.j === 'incomplete'){
+    camera(S1, { subject:subj, miss:miss.front||0, help:docHelp });
+    wait(26);
+    E({ dot:'abandoned', label:'Abandoned', anchor:true, step:S1, secs:0,
+        sub:'User exited the widget on the <strong>' + S1 + '</strong> step before capturing their ' + subj,
+        flag:['tf-abandon','✗ Abandoned'] });
+    return finish(ev);
+  }
+
+  /* ── the full run ── */
+  camera(S1, { subject:subj, miss:miss.front||0, help:docHelp });
+  captured(S1done, S1sub, S1, 31);
+  if(!pp) camera(S2, { subject:subj, miss:miss.back||0 });
+  else wait(2);
+
+  if(A.j === 'fail'){
+    wait(pp ? 6 : 29);
+    E({ dot:'fail', label:S2done, step:S2, secs:4, sub:(pp?'Photo page checked · ':'Back of ID captured · ') + A.failMsg,
+        flag:['tf-abandon','✗ ' + (A.stepFail || A.pill.label)] });
+    E({ dot:'fail', label:'Verdict issued', anchor:true, secs:0, step:'Processing',
+        sub:`Final result: <strong style="color:${vc}">${A.pill.label}</strong> · ${A.stepFail || A.failMsg}` });
+  } else if(A.j === 'underage'){
+    wait(pp ? 6 : 29);
+    E({ dot:'success', label:S2done, sub:S2sub, secs:4, step:S2, flag:['tf-success','✓ Passed'] });
+    E({ dot:'warn', label:'Verdict issued', anchor:true, secs:0, step:'Processing',
+        sub:`Final result: <strong style="color:${vc}">Underage</strong> · ${A.failMsg}` });
+  } else {
+    wait(pp ? 6 : 29);
+    E({ dot:'success', label:S2done, sub:S2sub, secs:4, step:S2, flag:['tf-success','✓ Passed'] });
+    E({ dot:'success', label:'Verdict issued', anchor:true, secs:0, step:'Processing',
+        sub:`Final result: <strong style="color:${vc}">Valid</strong> · All checks passed` });
   }
   finish(ev);
 
-  function finish(events){
-    /* An earlier attempt ends where the customer went round again. */
-    if(!ATT.latest){
-      events = events.concat([{ t:at(-42), dot:'info', label:'Retry clicked',
-        sub:'Customer started attempt ' + (ATT.n + 1), next:true }]);
+  /* the clock runs forward through the events; the one marked as the anchor —
+     the verdict, or whatever ended the attempt — lands on the attempt's own
+     timestamp, so anything after it (a retry) reads as later */
+  function stamp(events){
+    const dur = e => e.secs || 0;
+    let a = events.findIndex(e => e.anchor); if(a < 0) a = events.length - 1;
+    let ms = end; events[a].time = new Date(ms);
+    for(let i=a-1; i>=0; i--){ ms -= dur(events[i])*1000; events[i].time = new Date(ms); }
+    ms = end;
+    for(let i=a+1; i<events.length; i++){
+      ms += (events[i].gap != null ? events[i].gap : dur(events[i-1]))*1000;
+      events[i].time = new Date(ms);
     }
+    events.forEach(e => e.t = fmtDT(e.time));
+  }
+
+  function finish(events){
+    /* An earlier attempt ends where the customer went round again — either by
+       retrying the same document, or by switching to a different one, which the
+       widget counts as a new attempt rather than a retry of this one. */
+    if(!ATT.latest && !ATT.switched){
+      events.push({ dot:'info', label:'Retry clicked', gap:40,
+        sub:'Customer started attempt ' + (ATT.n + 1), next:true });
+    }
+    stamp(events);
     /* exactly one step gets the slow chip — the slowest, and only if it is
-       actually slow. The chip carries the time, so nothing repeats it. */
-    const slowest = events.reduce((n,e)=>Math.max(n, e.secs||0), 0);
-    const slowIdx = slowest>=45 ? events.findIndex(e=>e.secs===slowest) : -1;
+       actually slow. It goes on the event that closed the step, and carries
+       the whole time spent there, so nothing repeats it. */
+    const totals = stepTotals(events);
+    const slowStep = totals.reduce((w,[k,v]) => v >= 60 && (!w || v > w[1]) ? [k,v] : w, null);
+    const slowIdx = slowStep ? events.map(e=>e.step).lastIndexOf(slowStep[0]) : -1;
     document.getElementById('timelineBody').innerHTML = events.map((e,i)=>{
-      const slow = i===slowIdx;
       /* Times live in one place now — the section below. The only timing worth
          calling out inline is a step that dragged, and it sits with the verdict
          rather than in a second column of small grey numbers. */
-      const slowFlag = slow ? `<span class="tl-flag tf-slow">⚠ Slow — ${e.secs}s</span>` : '';
+      const slowFlag = i===slowIdx ? `<span class="tl-flag tf-slow">⚠ Slow — ${fmtDur(slowStep[1])}</span>` : '';
       return `
       <div class="tl-event">
         <div class="tl-left"><div class="tl-dot tl-dot-${e.dot}"></div></div>
@@ -538,22 +717,33 @@ function renderTimeline(){
       body.style.setProperty('--tl-top', Math.round(f.top-b.top+f.height/2)+'px');
       body.style.setProperty('--tl-bottom', Math.round(b.bottom-l.bottom+l.height/2)+'px');
     }
-    renderTimings(events);
+    renderTimings(totals);
   }
+}
+
+/* one entry per step, not per event — a step the customer bounced around on
+   (walkthrough, two timeouts, then the capture) is still one step, and its
+   total is the whole time they spent there */
+function stepTotals(events){
+  const steps=[], idx={};
+  events.forEach(e=>{
+    if(!e.step || !e.secs) return;
+    if(idx[e.step]==null){ idx[e.step]=steps.length; steps.push([e.step, 0]); }
+    steps[idx[e.step]][1] += e.secs;
+  });
+  return steps;
 }
 
 /* the bars under the journey are the same durations, read off the events */
 const fmtDur = s => s>=60 ? Math.floor(s/60)+'m '+String(s%60).padStart(2,'0')+'s' : s+'s';
-function renderTimings(events){
-  const steps=[];
-  events.forEach(e=>{ if(e.secs!=null) steps.push([e.step || e.label, e.secs]); });
+function renderTimings(steps){
   /* a full bar is the whole time spent, so each bar is that step's share of it
      — the old max-relative scaling made the slowest step look like 100% */
   const total=steps.reduce((n,[,v])=>n+v,0) || 1;
   const max=steps.reduce((n,[,v])=>Math.max(n,v),1);
   /* only the one slowest step is flagged — two amber bars reads as a pattern
      rather than as the step that held things up */
-  const slow = max>=45 ? steps.findIndex(([,v])=>v===max) : -1;
+  const slow = max>=60 ? steps.findIndex(([,v])=>v===max) : -1;
   document.getElementById('timingRows').innerHTML = steps.map(([label,v],i)=>`
     <div class="timing-row"><div class="timing-step">${label}</div>
       <div class="timing-bar-wrap"><div class="timing-bar${i===slow?' slow':''}" style="width:${(v/total*100).toFixed(1)}%"></div></div>

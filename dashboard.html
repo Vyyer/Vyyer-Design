@@ -364,7 +364,16 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
   .scan-charts-row  { grid-template-columns: 1fr; }
   .scan-charts-row > .card, .scan-charts-row > .scan-mini-stack { grid-column: auto; }
   .scan-mini-stack  { flex-direction: row; }
-  .funnel-row       { grid-template-columns: repeat(2,1fr); }
+  /* 2x2, like the scan metric boxes — the dividers move with the wrap:
+     right edge on the left cell only, bottom edge on the top row only */
+  .funnel-row  { grid-template-columns: repeat(2,1fr); }
+  .funnel-step { border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  .funnel-step:nth-child(2n) { border-right: none; }
+  .funnel-step:nth-last-child(-n+2) { border-bottom: none; }
+  .funnel-step:first-child     { border-radius: var(--radius-lg) 0 0 0; }
+  .funnel-step:nth-child(2)    { border-radius: 0 var(--radius-lg) 0 0; }
+  .funnel-step:nth-last-child(2) { border-radius: 0 0 0 var(--radius-lg); }
+  .funnel-step:last-child      { border-radius: 0 0 var(--radius-lg) 0; }
 }
 /* Hide Period/Profile labels as soon as they cause wrapping */
 @media (max-width: 900px) {
@@ -372,7 +381,6 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 }
 @media (max-width: 780px)  { .verdict-pills-row { grid-template-columns: repeat(2,1fr); } .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(3,1fr); } .incomplete-grid { grid-template-columns: 1fr; } }
 @media (max-width: 680px) {
-  .funnel-row { grid-template-columns: 1fr 1fr; }
   .failure-grid { grid-template-columns: 1fr; }
   /* Toolbar: title + Export share the top row, filters wrap below */
   .toolbar { flex-wrap: wrap; gap: 10px; padding: 10px 16px; }
@@ -382,9 +390,9 @@ main { max-width: 1200px; margin: 0 auto; padding: 0 20px 56px; }
 }
 @media (max-width: 520px) { .scan-verdict-row { grid-auto-flow: row; grid-template-columns: repeat(2,1fr); } }
 @media (max-width: 420px)  {
-  .funnel-row { grid-template-columns: 1fr; }
-  .funnel-step { border-right: none; border-bottom: 1px solid var(--border); }
-  .funnel-step:last-child { border-bottom: none; }
+  /* stays 2x2 at phone width — just tighter, like the scan boxes */
+  .funnel-step { padding: 14px 14px; }
+  .funnel-step-val { font-size: 24px; }
   main { padding: 16px 12px 32px; }
   .pill-group button { padding: 5px 8px; font-size: 11px; }
   /* Keep the full-bleed toolbar aligned to the tighter page gutters */
